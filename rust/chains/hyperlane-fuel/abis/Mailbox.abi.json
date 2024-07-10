@@ -1,4 +1,5 @@
 {
+  "encoding": "1",
   "types": [
     {
       "typeId": 0,
@@ -17,7 +18,7 @@
         },
         {
           "name": "__tuple_element",
-          "type": 20,
+          "type": 27,
           "typeArguments": null
         }
       ],
@@ -37,16 +38,11 @@
     },
     {
       "typeId": 4,
-      "type": "enum Identity",
+      "type": "enum AccessError",
       "components": [
         {
-          "name": "Address",
-          "type": 14,
-          "typeArguments": null
-        },
-        {
-          "name": "ContractId",
-          "type": 15,
+          "name": "NotOwner",
+          "type": 0,
           "typeArguments": null
         }
       ],
@@ -54,77 +50,172 @@
     },
     {
       "typeId": 5,
-      "type": "enum Option",
+      "type": "enum Identity",
       "components": [
         {
-          "name": "None",
-          "type": 0,
+          "name": "Address",
+          "type": 12,
           "typeArguments": null
         },
         {
-          "name": "Some",
-          "type": 6,
+          "name": "ContractId",
+          "type": 14,
           "typeArguments": null
         }
       ],
-      "typeParameters": [
-        6
-      ]
+      "typeParameters": null
     },
     {
       "typeId": 6,
-      "type": "generic T",
-      "components": null,
+      "type": "enum InitializationError",
+      "components": [
+        {
+          "name": "CannotReinitialized",
+          "type": 0,
+          "typeArguments": null
+        }
+      ],
       "typeParameters": null
     },
     {
       "typeId": 7,
+      "type": "enum MailboxError",
+      "components": [
+        {
+          "name": "InvalidISMAddress",
+          "type": 0,
+          "typeArguments": null
+        },
+        {
+          "name": "InvalidHookAddress",
+          "type": 0,
+          "typeArguments": null
+        },
+        {
+          "name": "InvalidProtocolVersion",
+          "type": 28,
+          "typeArguments": null
+        },
+        {
+          "name": "InvalidMessageOrigin",
+          "type": 26,
+          "typeArguments": null
+        },
+        {
+          "name": "MessageAlreadyDelivered",
+          "type": 0,
+          "typeArguments": null
+        },
+        {
+          "name": "MessageVerificationFailed",
+          "type": 0,
+          "typeArguments": null
+        },
+        {
+          "name": "AlreadyInitialized",
+          "type": 0,
+          "typeArguments": null
+        },
+        {
+          "name": "MessageTooLarge",
+          "type": 27,
+          "typeArguments": null
+        }
+      ],
+      "typeParameters": null
+    },
+    {
+      "typeId": 8,
+      "type": "enum PauseError",
+      "components": [
+        {
+          "name": "Paused",
+          "type": 0,
+          "typeArguments": null
+        },
+        {
+          "name": "NotPaused",
+          "type": 0,
+          "typeArguments": null
+        }
+      ],
+      "typeParameters": null
+    },
+    {
+      "typeId": 9,
+      "type": "enum ReentrancyError",
+      "components": [
+        {
+          "name": "NonReentrant",
+          "type": 0,
+          "typeArguments": null
+        }
+      ],
+      "typeParameters": null
+    },
+    {
+      "typeId": 10,
+      "type": "enum State",
+      "components": [
+        {
+          "name": "Uninitialized",
+          "type": 0,
+          "typeArguments": null
+        },
+        {
+          "name": "Initialized",
+          "type": 5,
+          "typeArguments": null
+        },
+        {
+          "name": "Revoked",
+          "type": 0,
+          "typeArguments": null
+        }
+      ],
+      "typeParameters": null
+    },
+    {
+      "typeId": 11,
       "type": "raw untyped ptr",
       "components": null,
       "typeParameters": null
     },
     {
-      "typeId": 8,
-      "type": "str[12]",
-      "components": null,
-      "typeParameters": null
-    },
-    {
-      "typeId": 9,
-      "type": "str[16]",
-      "components": null,
-      "typeParameters": null
-    },
-    {
-      "typeId": 10,
-      "type": "str[6]",
-      "components": null,
-      "typeParameters": null
-    },
-    {
-      "typeId": 11,
-      "type": "str[7]",
-      "components": null,
-      "typeParameters": null
-    },
-    {
       "typeId": 12,
-      "type": "str[8]",
-      "components": null,
+      "type": "struct Address",
+      "components": [
+        {
+          "name": "bits",
+          "type": 2,
+          "typeArguments": null
+        }
+      ],
       "typeParameters": null
     },
     {
       "typeId": 13,
-      "type": "str[9]",
-      "components": null,
+      "type": "struct Bytes",
+      "components": [
+        {
+          "name": "buf",
+          "type": 24,
+          "typeArguments": null
+        },
+        {
+          "name": "len",
+          "type": 27,
+          "typeArguments": null
+        }
+      ],
       "typeParameters": null
     },
     {
       "typeId": 14,
-      "type": "struct Address",
+      "type": "struct ContractId",
       "components": [
         {
-          "name": "value",
+          "name": "bits",
           "type": 2,
           "typeArguments": null
         }
@@ -133,11 +224,11 @@
     },
     {
       "typeId": 15,
-      "type": "struct ContractId",
+      "type": "struct DefaultHookSetEvent",
       "components": [
         {
-          "name": "value",
-          "type": 2,
+          "name": "module",
+          "type": 14,
           "typeArguments": null
         }
       ],
@@ -145,21 +236,120 @@
     },
     {
       "typeId": 16,
-      "type": "struct Message",
+      "type": "struct DefaultIsmSetEvent",
       "components": [
         {
-          "name": "version",
-          "type": 22,
+          "name": "module",
+          "type": 14,
+          "typeArguments": null
+        }
+      ],
+      "typeParameters": null
+    },
+    {
+      "typeId": 17,
+      "type": "struct DispatchEvent",
+      "components": [
+        {
+          "name": "message_id",
+          "type": 2,
           "typeArguments": null
         },
         {
-          "name": "nonce",
-          "type": 20,
+          "name": "destination_domain",
+          "type": 26,
+          "typeArguments": null
+        },
+        {
+          "name": "recipient_address",
+          "type": 2,
+          "typeArguments": null
+        },
+        {
+          "name": "message",
+          "type": 19,
+          "typeArguments": null
+        }
+      ],
+      "typeParameters": null
+    },
+    {
+      "typeId": 18,
+      "type": "struct DispatchIdEvent",
+      "components": [
+        {
+          "name": "message_id",
+          "type": 2,
+          "typeArguments": null
+        }
+      ],
+      "typeParameters": null
+    },
+    {
+      "typeId": 19,
+      "type": "struct EncodedMessage",
+      "components": [
+        {
+          "name": "bytes",
+          "type": 13,
+          "typeArguments": null
+        }
+      ],
+      "typeParameters": null
+    },
+    {
+      "typeId": 20,
+      "type": "struct OwnershipRenounced",
+      "components": [
+        {
+          "name": "previous_owner",
+          "type": 5,
+          "typeArguments": null
+        }
+      ],
+      "typeParameters": null
+    },
+    {
+      "typeId": 21,
+      "type": "struct OwnershipSet",
+      "components": [
+        {
+          "name": "new_owner",
+          "type": 5,
+          "typeArguments": null
+        }
+      ],
+      "typeParameters": null
+    },
+    {
+      "typeId": 22,
+      "type": "struct OwnershipTransferred",
+      "components": [
+        {
+          "name": "new_owner",
+          "type": 5,
+          "typeArguments": null
+        },
+        {
+          "name": "previous_owner",
+          "type": 5,
+          "typeArguments": null
+        }
+      ],
+      "typeParameters": null
+    },
+    {
+      "typeId": 23,
+      "type": "struct ProcessEvent",
+      "components": [
+        {
+          "name": "message_id",
+          "type": 2,
           "typeArguments": null
         },
         {
           "name": "origin",
-          "type": 20,
+          "type": 26,
           "typeArguments": null
         },
         {
@@ -168,116 +358,56 @@
           "typeArguments": null
         },
         {
-          "name": "destination",
-          "type": 20,
-          "typeArguments": null
-        },
-        {
           "name": "recipient",
           "type": 2,
           "typeArguments": null
-        },
-        {
-          "name": "body",
-          "type": 19,
-          "typeArguments": [
-            {
-              "name": "",
-              "type": 22,
-              "typeArguments": null
-            }
-          ]
         }
       ],
       "typeParameters": null
     },
     {
-      "typeId": 17,
-      "type": "struct OwnershipTransferredEvent",
-      "components": [
-        {
-          "name": "previous_owner",
-          "type": 5,
-          "typeArguments": [
-            {
-              "name": "",
-              "type": 4,
-              "typeArguments": null
-            }
-          ]
-        },
-        {
-          "name": "new_owner",
-          "type": 5,
-          "typeArguments": [
-            {
-              "name": "",
-              "type": 4,
-              "typeArguments": null
-            }
-          ]
-        }
-      ],
-      "typeParameters": null
-    },
-    {
-      "typeId": 18,
-      "type": "struct RawVec",
+      "typeId": 24,
+      "type": "struct RawBytes",
       "components": [
         {
           "name": "ptr",
-          "type": 7,
+          "type": 11,
           "typeArguments": null
         },
         {
           "name": "cap",
-          "type": 21,
+          "type": 27,
           "typeArguments": null
         }
       ],
-      "typeParameters": [
-        6
-      ]
+      "typeParameters": null
     },
     {
-      "typeId": 19,
-      "type": "struct Vec",
+      "typeId": 25,
+      "type": "struct RequiredHookSetEvent",
       "components": [
         {
-          "name": "buf",
-          "type": 18,
-          "typeArguments": [
-            {
-              "name": "",
-              "type": 6,
-              "typeArguments": null
-            }
-          ]
-        },
-        {
-          "name": "len",
-          "type": 21,
+          "name": "module",
+          "type": 14,
           "typeArguments": null
         }
       ],
-      "typeParameters": [
-        6
-      ]
+      "typeParameters": null
     },
     {
-      "typeId": 20,
+      "typeId": 26,
       "type": "u32",
       "components": null,
       "typeParameters": null
     },
     {
-      "typeId": 21,
+      "typeId": 27,
       "type": "u64",
       "components": null,
       "typeParameters": null
     },
     {
-      "typeId": 22,
+      "typeId": 28,
       "type": "u8",
       "components": null,
       "typeParameters": null
@@ -289,9 +419,69 @@
       "name": "count",
       "output": {
         "name": "",
-        "type": 20,
+        "type": 27,
         "typeArguments": null
-      }
+      },
+      "attributes": [
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " Returns the number of inserted leaves (i.e. messages) in the merkle tree."
+          ]
+        },
+        {
+          "name": "storage",
+          "arguments": [
+            "read"
+          ]
+        }
+      ]
+    },
+    {
+      "inputs": [],
+      "name": "default_hook",
+      "output": {
+        "name": "",
+        "type": 14,
+        "typeArguments": null
+      },
+      "attributes": [
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " Gets the default hook used for message processing."
+          ]
+        },
+        {
+          "name": "storage",
+          "arguments": [
+            "read"
+          ]
+        }
+      ]
+    },
+    {
+      "inputs": [],
+      "name": "default_ism",
+      "output": {
+        "name": "",
+        "type": 14,
+        "typeArguments": null
+      },
+      "attributes": [
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " Gets the default ISM used for message verification."
+          ]
+        },
+        {
+          "name": "storage",
+          "arguments": [
+            "read"
+          ]
+        }
+      ]
     },
     {
       "inputs": [
@@ -306,30 +496,72 @@
         "name": "",
         "type": 3,
         "typeArguments": null
-      }
+      },
+      "attributes": [
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " Returns true if the message has been processed."
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            ""
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " ### Arguments"
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            ""
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " * `message_id` - The unique identifier of the message."
+          ]
+        },
+        {
+          "name": "storage",
+          "arguments": [
+            "read"
+          ]
+        }
+      ]
     },
     {
       "inputs": [
         {
           "name": "destination_domain",
-          "type": 20,
+          "type": 26,
           "typeArguments": null
         },
         {
-          "name": "recipient",
+          "name": "recipient_address",
           "type": 2,
           "typeArguments": null
         },
         {
           "name": "message_body",
-          "type": 19,
-          "typeArguments": [
-            {
-              "name": "",
-              "type": 22,
-              "typeArguments": null
-            }
-          ]
+          "type": 13,
+          "typeArguments": null
+        },
+        {
+          "name": "metadata",
+          "type": 13,
+          "typeArguments": null
+        },
+        {
+          "name": "hook",
+          "type": 14,
+          "typeArguments": null
         }
       ],
       "name": "dispatch",
@@ -337,16 +569,118 @@
         "name": "",
         "type": 2,
         "typeArguments": null
-      }
+      },
+      "attributes": [
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " Dispatches a message to the destination domain and recipient."
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " Returns the message's ID."
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            ""
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " ### Arguments"
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            ""
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " * `destination_domain` - The domain of the destination chain."
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " * `recipient` - Address of the recipient on the destination chain."
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " * `message_body` - Raw bytes content of the message body."
+          ]
+        },
+        {
+          "name": "payable",
+          "arguments": []
+        },
+        {
+          "name": "storage",
+          "arguments": [
+            "read",
+            "write"
+          ]
+        }
+      ]
     },
     {
-      "inputs": [],
-      "name": "get_default_ism",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": 2,
+          "typeArguments": null
+        },
+        {
+          "name": "default_ism",
+          "type": 2,
+          "typeArguments": null
+        },
+        {
+          "name": "default_hook",
+          "type": 2,
+          "typeArguments": null
+        },
+        {
+          "name": "required_hook",
+          "type": 2,
+          "typeArguments": null
+        }
+      ],
+      "name": "initialize",
       "output": {
         "name": "",
-        "type": 15,
+        "type": 0,
         "typeArguments": null
-      }
+      },
+      "attributes": [
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " Initializes the contract."
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " TODO - Possibly add an init guard so that contract functions can only be called after initialization."
+          ]
+        },
+        {
+          "name": "storage",
+          "arguments": [
+            "write"
+          ]
+        }
+      ]
     },
     {
       "inputs": [],
@@ -355,24 +689,78 @@
         "name": "",
         "type": 1,
         "typeArguments": null
-      }
+      },
+      "attributes": [
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " Returns a checkpoint representing the current merkle tree:"
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " (root of merkle tree, index of the last element in the tree)."
+          ]
+        },
+        {
+          "name": "storage",
+          "arguments": [
+            "read"
+          ]
+        }
+      ]
+    },
+    {
+      "inputs": [],
+      "name": "latest_dispatched_id",
+      "output": {
+        "name": "",
+        "type": 2,
+        "typeArguments": null
+      },
+      "attributes": [
+        {
+          "name": "storage",
+          "arguments": [
+            "read"
+          ]
+        }
+      ]
+    },
+    {
+      "inputs": [],
+      "name": "local_domain",
+      "output": {
+        "name": "",
+        "type": 26,
+        "typeArguments": null
+      },
+      "attributes": [
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " Returns the domain of the chain where the contract is deployed."
+          ]
+        },
+        {
+          "name": "storage",
+          "arguments": [
+            "read"
+          ]
+        }
+      ]
     },
     {
       "inputs": [
         {
           "name": "metadata",
-          "type": 19,
-          "typeArguments": [
-            {
-              "name": "",
-              "type": 22,
-              "typeArguments": null
-            }
-          ]
+          "type": 13,
+          "typeArguments": null
         },
         {
-          "name": "_message",
-          "type": 16,
+          "name": "message",
+          "type": 13,
           "typeArguments": null
         }
       ],
@@ -381,7 +769,160 @@
         "name": "",
         "type": 0,
         "typeArguments": null
-      }
+      },
+      "attributes": [
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " Processes a message."
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            ""
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " ### Arguments"
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            ""
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " * `metadata` - The metadata for ISM verification."
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " * `message` - The message as emitted by dispatch."
+          ]
+        },
+        {
+          "name": "storage",
+          "arguments": [
+            "read",
+            "write"
+          ]
+        }
+      ]
+    },
+    {
+      "inputs": [
+        {
+          "name": "destination_domain",
+          "type": 26,
+          "typeArguments": null
+        },
+        {
+          "name": "recipient_address",
+          "type": 2,
+          "typeArguments": null
+        },
+        {
+          "name": "message_body",
+          "type": 13,
+          "typeArguments": null
+        },
+        {
+          "name": "metadata",
+          "type": 13,
+          "typeArguments": null
+        },
+        {
+          "name": "hook",
+          "type": 14,
+          "typeArguments": null
+        }
+      ],
+      "name": "quote_dispatch",
+      "output": {
+        "name": "",
+        "type": 27,
+        "typeArguments": null
+      },
+      "attributes": [
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " Quotes the cost of dispatching a message to the destination domain and recipient."
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            ""
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " ### Arguments"
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            ""
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " * `destination_domain` - The domain of the destination chain."
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " * `recipient` - Address of the recipient on the destination chain."
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " * `message_body` - Raw bytes content of the message body."
+          ]
+        },
+        {
+          "name": "storage",
+          "arguments": [
+            "read"
+          ]
+        }
+      ]
+    },
+    {
+      "inputs": [],
+      "name": "required_hook",
+      "output": {
+        "name": "",
+        "type": 14,
+        "typeArguments": null
+      },
+      "attributes": [
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " Gets the required hook used for message processing."
+          ]
+        },
+        {
+          "name": "storage",
+          "arguments": [
+            "read"
+          ]
+        }
+      ]
     },
     {
       "inputs": [],
@@ -390,13 +931,56 @@
         "name": "",
         "type": 2,
         "typeArguments": null
-      }
+      },
+      "attributes": [
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " Calculates and returns the merkle tree's current root."
+          ]
+        },
+        {
+          "name": "storage",
+          "arguments": [
+            "read"
+          ]
+        }
+      ]
     },
     {
       "inputs": [
         {
           "name": "module",
-          "type": 15,
+          "type": 14,
+          "typeArguments": null
+        }
+      ],
+      "name": "set_default_hook",
+      "output": {
+        "name": "",
+        "type": 0,
+        "typeArguments": null
+      },
+      "attributes": [
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " Sets the default hook used for message processing."
+          ]
+        },
+        {
+          "name": "storage",
+          "arguments": [
+            "write"
+          ]
+        }
+      ]
+    },
+    {
+      "inputs": [
+        {
+          "name": "module",
+          "type": 14,
           "typeArguments": null
         }
       ],
@@ -405,35 +989,209 @@
         "name": "",
         "type": 0,
         "typeArguments": null
-      }
+      },
+      "attributes": [
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " Sets the default ISM used for message verification."
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            ""
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " ### Arguments"
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            ""
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " * `module` - Address implementing ISM interface."
+          ]
+        },
+        {
+          "name": "storage",
+          "arguments": [
+            "read",
+            "write"
+          ]
+        }
+      ]
+    },
+    {
+      "inputs": [
+        {
+          "name": "module",
+          "type": 14,
+          "typeArguments": null
+        }
+      ],
+      "name": "set_required_hook",
+      "output": {
+        "name": "",
+        "type": 0,
+        "typeArguments": null
+      },
+      "attributes": [
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " Sets the required hook used for message processing."
+          ]
+        },
+        {
+          "name": "storage",
+          "arguments": [
+            "write"
+          ]
+        }
+      ]
     },
     {
       "inputs": [],
-      "name": "owner",
+      "name": "is_paused",
       "output": {
         "name": "",
-        "type": 5,
-        "typeArguments": [
-          {
-            "name": "",
-            "type": 4,
-            "typeArguments": null
-          }
-        ]
-      }
+        "type": 3,
+        "typeArguments": null
+      },
+      "attributes": [
+        {
+          "name": "storage",
+          "arguments": [
+            "read"
+          ]
+        }
+      ]
+    },
+    {
+      "inputs": [],
+      "name": "pause",
+      "output": {
+        "name": "",
+        "type": 0,
+        "typeArguments": null
+      },
+      "attributes": [
+        {
+          "name": "storage",
+          "arguments": [
+            "write"
+          ]
+        }
+      ]
+    },
+    {
+      "inputs": [],
+      "name": "unpause",
+      "output": {
+        "name": "",
+        "type": 0,
+        "typeArguments": null
+      },
+      "attributes": [
+        {
+          "name": "storage",
+          "arguments": [
+            "write"
+          ]
+        }
+      ]
     },
     {
       "inputs": [
         {
           "name": "new_owner",
           "type": 5,
-          "typeArguments": [
-            {
-              "name": "",
-              "type": 4,
-              "typeArguments": null
-            }
+          "typeArguments": null
+        }
+      ],
+      "name": "initialize_ownership",
+      "output": {
+        "name": "",
+        "type": 0,
+        "typeArguments": null
+      },
+      "attributes": [
+        {
+          "name": "storage",
+          "arguments": [
+            "read",
+            "write"
           ]
+        }
+      ]
+    },
+    {
+      "inputs": [],
+      "name": "only_owner",
+      "output": {
+        "name": "",
+        "type": 0,
+        "typeArguments": null
+      },
+      "attributes": [
+        {
+          "name": "storage",
+          "arguments": [
+            "read"
+          ]
+        }
+      ]
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "output": {
+        "name": "",
+        "type": 10,
+        "typeArguments": null
+      },
+      "attributes": [
+        {
+          "name": "storage",
+          "arguments": [
+            "read"
+          ]
+        }
+      ]
+    },
+    {
+      "inputs": [],
+      "name": "renounce_ownership",
+      "output": {
+        "name": "",
+        "type": 0,
+        "typeArguments": null
+      },
+      "attributes": [
+        {
+          "name": "storage",
+          "arguments": [
+            "read",
+            "write"
+          ]
+        }
+      ]
+    },
+    {
+      "inputs": [
+        {
+          "name": "new_owner",
+          "type": 5,
+          "typeArguments": null
         }
       ],
       "name": "transfer_ownership",
@@ -441,90 +1199,141 @@
         "name": "",
         "type": 0,
         "typeArguments": null
-      }
+      },
+      "attributes": [
+        {
+          "name": "storage",
+          "arguments": [
+            "write"
+          ]
+        }
+      ]
     }
   ],
   "loggedTypes": [
     {
-      "logId": 0,
-      "loggedType": {
-        "name": "",
-        "type": 8,
-        "typeArguments": null
-      }
-    },
-    {
-      "logId": 1,
+      "logId": "5557842539076482339",
       "loggedType": {
         "name": "",
         "type": 9,
-        "typeArguments": null
+        "typeArguments": []
       }
     },
     {
-      "logId": 2,
-      "loggedType": {
-        "name": "",
-        "type": 12,
-        "typeArguments": null
-      }
-    },
-    {
-      "logId": 3,
+      "logId": "10032608944051208538",
       "loggedType": {
         "name": "",
         "type": 8,
-        "typeArguments": null
+        "typeArguments": []
       }
     },
     {
-      "logId": 4,
+      "logId": "4904025822840310122",
       "loggedType": {
         "name": "",
-        "type": 13,
-        "typeArguments": null
+        "type": 7,
+        "typeArguments": []
       }
     },
     {
-      "logId": 5,
-      "loggedType": {
-        "name": "",
-        "type": 11,
-        "typeArguments": null
-      }
-    },
-    {
-      "logId": 6,
-      "loggedType": {
-        "name": "",
-        "type": 2,
-        "typeArguments": null
-      }
-    },
-    {
-      "logId": 7,
-      "loggedType": {
-        "name": "",
-        "type": 10,
-        "typeArguments": null
-      }
-    },
-    {
-      "logId": 8,
-      "loggedType": {
-        "name": "",
-        "type": 10,
-        "typeArguments": null
-      }
-    },
-    {
-      "logId": 9,
+      "logId": "10811788483172643035",
       "loggedType": {
         "name": "",
         "type": 17,
         "typeArguments": []
       }
+    },
+    {
+      "logId": "2522729423758891677",
+      "loggedType": {
+        "name": "",
+        "type": 18,
+        "typeArguments": []
+      }
+    },
+    {
+      "logId": "2161305517876418151",
+      "loggedType": {
+        "name": "",
+        "type": 6,
+        "typeArguments": []
+      }
+    },
+    {
+      "logId": "16280289466020123285",
+      "loggedType": {
+        "name": "",
+        "type": 21,
+        "typeArguments": []
+      }
+    },
+    {
+      "logId": "7929134096091764817",
+      "loggedType": {
+        "name": "",
+        "type": 23,
+        "typeArguments": []
+      }
+    },
+    {
+      "logId": "4571204900286667806",
+      "loggedType": {
+        "name": "",
+        "type": 4,
+        "typeArguments": []
+      }
+    },
+    {
+      "logId": "14400248731700551312",
+      "loggedType": {
+        "name": "",
+        "type": 15,
+        "typeArguments": []
+      }
+    },
+    {
+      "logId": "1889958695533330661",
+      "loggedType": {
+        "name": "",
+        "type": 16,
+        "typeArguments": []
+      }
+    },
+    {
+      "logId": "1134555198745859881",
+      "loggedType": {
+        "name": "",
+        "type": 25,
+        "typeArguments": []
+      }
+    },
+    {
+      "logId": "4883303303013154842",
+      "loggedType": {
+        "name": "",
+        "type": 20,
+        "typeArguments": []
+      }
+    },
+    {
+      "logId": "12970362301975156672",
+      "loggedType": {
+        "name": "",
+        "type": 22,
+        "typeArguments": []
+      }
     }
   ],
-  "messagesTypes": []
+  "messagesTypes": [],
+  "configurables": [
+    {
+      "name": "LOCAL_DOMAIN",
+      "configurableType": {
+        "name": "",
+        "type": 26,
+        "typeArguments": null
+      },
+      "offset": 51720
+    }
+  ]
 }

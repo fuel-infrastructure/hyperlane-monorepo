@@ -84,6 +84,10 @@ pub enum KnownHyperlaneDomain {
     Test1 = 13371,
     Test2 = 13372,
     Test3 = 13373,
+
+    /// Fuel
+    FuelTestnet = 102117101108,
+    /// Fuel local chain 1
     FuelTest1 = 13374,
     SealevelTest1 = 13375,
     SealevelTest2 = 13376,
@@ -215,7 +219,7 @@ impl KnownHyperlaneDomain {
             ],
             Testnet: [
                 Alfajores, BinanceSmartChainTestnet, Chiado, Fuji, Holesky, MoonbaseAlpha,
-                PlumeTestnet, ScrollSepolia, Sepolia,
+                PlumeTestnet, ScrollSepolia, Sepolia, FuelTestnet,
             ],
             LocalTestChain: [
                 Test1, Test2, Test3, FuelTest1, SealevelTest1, SealevelTest2, CosmosTest99990,
@@ -241,7 +245,7 @@ impl KnownHyperlaneDomain {
                 ScrollSepolia, Sepolia
 
             ],
-            HyperlaneDomainProtocol::Fuel: [FuelTest1],
+            HyperlaneDomainProtocol::Fuel: [FuelTestnet,FuelTest1],
             HyperlaneDomainProtocol::Sealevel: [SealevelTest1, SealevelTest2],
             HyperlaneDomainProtocol::Cosmos: [
                 Injective, Neutron, Osmosis,
@@ -268,7 +272,7 @@ impl KnownHyperlaneDomain {
 
                 // Test chains
                 Alfajores, BinanceSmartChainTestnet, Chiado, Holesky, MoonbaseAlpha, ScrollSepolia,
-                Sepolia
+                Sepolia, FuelTestnet
            ],
         })
     }
