@@ -35,6 +35,10 @@ fn make_client(conf: &ConnectionConf) -> ChainResult<FuelClient> {
 }
 
 /// Create a new fuel provider and connection
-pub fn make_provider(conf: &ConnectionConf) -> ChainResult<Provider> {
-    Ok(Provider::new(make_client(conf)?))
+pub async fn make_provider(conf: &ConnectionConf) -> ChainResult<Provider> {
+    Provider::connect(&conf.url)
+        .await
+        .map_err(|e| FuelNewConnectionError(e.into()).into())
+    // Ok(Provider::connect(&conf.url).await.unwrap())
+    // Ok(Provider::new(make_client(conf)?))
 }

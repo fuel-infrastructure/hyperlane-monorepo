@@ -419,7 +419,7 @@
       "name": "count",
       "output": {
         "name": "",
-        "type": 27,
+        "type": 26,
         "typeArguments": null
       },
       "attributes": [
