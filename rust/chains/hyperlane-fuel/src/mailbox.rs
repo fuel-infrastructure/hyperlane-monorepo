@@ -20,18 +20,18 @@ use crate::{
 
 /// A reference to a Mailbox contract on some Fuel chain
 pub struct FuelMailbox {
-    contract: FuelMailboxInner,
+    contract: FuelMailboxInner<WalletUnlocked>,
     domain: HyperlaneDomain,
 }
 
 impl FuelMailbox {
     /// Create a new fuel mailbox
-    pub fn new(
+    pub async fn new(
         conf: &ConnectionConf,
-        locator: ContractLocator,
+        locator: ContractLocator<'_>,
         mut wallet: WalletUnlocked,
     ) -> ChainResult<Self> {
-        let provider = make_provider(conf)?;
+        let provider = make_provider(conf).await?;
         wallet.set_provider(provider);
         let address = Bech32ContractId::from_h256(&locator.address);
 
