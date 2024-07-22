@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use std::num::NonZeroU64;
-use std::ops::RangeInclusive;
+use std::ops::{Deref, RangeInclusive};
 
 use async_trait::async_trait;
 use fuels::prelude::{Bech32ContractId, WalletUnlocked};
-use hyperlane_core::Indexed;
+use hyperlane_core::{Indexed, SequenceAwareIndexer};
 use tracing::instrument;
 
 use hyperlane_core::{
@@ -15,12 +15,13 @@ use hyperlane_core::{
 };
 
 use crate::{
-    contracts::mailbox::Mailbox as FuelMailboxInner, conversions::*, make_provider, ConnectionConf,
+    contracts::mailbox::Mailbox as FuelMailboxInner, conversions::*, ConnectionConf, FuelProvider,
 };
 
 /// A reference to a Mailbox contract on some Fuel chain
 pub struct FuelMailbox {
     contract: FuelMailboxInner<WalletUnlocked>,
+    provider: FuelProvider,
     domain: HyperlaneDomain,
 }
 
@@ -31,13 +32,15 @@ impl FuelMailbox {
         locator: ContractLocator<'_>,
         mut wallet: WalletUnlocked,
     ) -> ChainResult<Self> {
-        let provider = make_provider(conf).await?;
-        wallet.set_provider(provider);
+        let fuel_provider = FuelProvider::new(locator.domain.clone(), conf).await;
+
+        wallet.set_provider(fuel_provider.provider().clone());
         let address = Bech32ContractId::from_h256(&locator.address);
 
         Ok(FuelMailbox {
             contract: FuelMailboxInner::new(address, wallet),
             domain: locator.domain.clone(),
+            provider: fuel_provider,
         })
     }
 }
@@ -54,7 +57,7 @@ impl HyperlaneChain for FuelMailbox {
     }
 
     fn provider(&self) -> Box<dyn HyperlaneProvider> {
-        todo!()
+        Box::new(self.provider.clone())
     }
 }
 
@@ -83,17 +86,35 @@ impl Mailbox for FuelMailbox {
 
     #[instrument(level = "debug", err, ret, skip(self))]
     async fn delivered(&self, id: H256) -> ChainResult<bool> {
-        todo!()
+        self.contract
+            .methods()
+            .delivered(fuels::types::Bits256 { 0: id.0 })
+            .simulate()
+            .await
+            .map(|r| r.value)
+            .map_err(ChainCommunicationError::from_other)
     }
 
     #[instrument(err, ret, skip(self))]
     async fn default_ism(&self) -> ChainResult<H256> {
-        todo!()
+        self.contract
+            .methods()
+            .default_ism()
+            .simulate()
+            .await
+            .map(|r| r.value.into_h256())
+            .map_err(ChainCommunicationError::from_other)
     }
 
     #[instrument(err, ret, skip(self))]
     async fn recipient_ism(&self, recipient: H256) -> ChainResult<H256> {
-        todo!()
+        self.contract
+            .methods()
+            .recipient_ism(Bech32ContractId::from_h256(&recipient))
+            .simulate()
+            .await
+            .map(|r| r.value.into_h256())
+            .map_err(ChainCommunicationError::from_other)
     }
 
     #[instrument(err, ret, skip(self))]
@@ -103,7 +124,7 @@ impl Mailbox for FuelMailbox {
         metadata: &[u8],
         tx_gas_limit: Option<U256>,
     ) -> ChainResult<TxOutcome> {
-        todo!()
+        todo!() // XXX implement override functions
     }
 
     #[instrument(err, ret, skip(self), fields(msg=%message, metadata=%bytes_to_hex(metadata)))]
@@ -112,17 +133,40 @@ impl Mailbox for FuelMailbox {
         message: &HyperlaneMessage,
         metadata: &[u8],
     ) -> ChainResult<TxCostEstimate> {
-        todo!()
+        todo!() // XXX IGP needed
     }
 
     fn process_calldata(&self, message: &HyperlaneMessage, metadata: &[u8]) -> Vec<u8> {
+        // Seems like this is not needed for Fuel, as it's only used in mocks
         todo!()
     }
 }
 
 /// Struct that retrieves event data for a Fuel Mailbox contract
 #[derive(Debug)]
-pub struct FuelMailboxIndexer {}
+pub struct FuelMailboxIndexer {
+    contract: FuelMailboxInner<WalletUnlocked>,
+    provider: FuelProvider,
+}
+
+impl FuelMailboxIndexer {
+    /// Create a new FuelMailboxIndexer
+    pub async fn new(
+        conf: &ConnectionConf,
+        locator: ContractLocator<'_>,
+        wallet: WalletUnlocked,
+    ) -> ChainResult<Self> {
+        let fuel_provider = FuelProvider::new(locator.domain.clone(), conf).await;
+
+        let address = Bech32ContractId::from_h256(&locator.address);
+        let contract = FuelMailboxInner::new(address, wallet);
+
+        Ok(FuelMailboxIndexer {
+            contract,
+            provider: fuel_provider,
+        })
+    }
+}
 
 #[async_trait]
 impl Indexer<HyperlaneMessage> for FuelMailboxIndexer {
@@ -130,11 +174,14 @@ impl Indexer<HyperlaneMessage> for FuelMailboxIndexer {
         &self,
         range: RangeInclusive<u32>,
     ) -> ChainResult<Vec<(Indexed<HyperlaneMessage>, LogMeta)>> {
-        todo!()
+        let mailbox_address = self.contract.contract_id().clone();
+        self.provider
+            .index_logs_in_range(range, &mailbox_address.to_string().deref())
+            .await
     }
 
     async fn get_finalized_block_number(&self) -> ChainResult<u32> {
-        todo!()
+        self.provider.get_finalized_block_number().await
     }
 }
 
@@ -144,11 +191,37 @@ impl Indexer<H256> for FuelMailboxIndexer {
         &self,
         range: RangeInclusive<u32>,
     ) -> ChainResult<Vec<(Indexed<H256>, LogMeta)>> {
-        todo!()
+        todo!() // Needed for scraper
     }
 
     async fn get_finalized_block_number(&self) -> ChainResult<u32> {
-        todo!()
+        self.provider.get_finalized_block_number().await
+    }
+}
+
+#[async_trait]
+impl SequenceAwareIndexer<H256> for FuelMailboxIndexer {
+    async fn latest_sequence_count_and_tip(&self) -> ChainResult<(Option<u32>, u32)> {
+        let tip = Indexer::<H256>::get_finalized_block_number(&self).await?;
+
+        // No sequence for message deliveries.
+        Ok((None, tip))
+    }
+}
+
+#[async_trait]
+impl SequenceAwareIndexer<HyperlaneMessage> for FuelMailboxIndexer {
+    async fn latest_sequence_count_and_tip(&self) -> ChainResult<(Option<u32>, u32)> {
+        let tip = Indexer::<HyperlaneMessage>::get_finalized_block_number(&self).await?;
+
+        self.contract
+            .methods()
+            .count()
+            .simulate()
+            .await
+            .map(|r| r.value)
+            .map_err(ChainCommunicationError::from_other)
+            .map(|sequence| (Some(sequence as u32), tip))
     }
 }
 

@@ -4516,6 +4516,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "fuels",
+ "futures",
  "hyperlane-core",
  "serde",
  "thiserror",

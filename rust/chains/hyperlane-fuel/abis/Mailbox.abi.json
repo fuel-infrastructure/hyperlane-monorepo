@@ -902,6 +902,30 @@
       ]
     },
     {
+      "inputs": [
+        {
+          "name": "recipient",
+          "type": 14,
+          "typeArguments": null
+        }
+      ],
+      "name": "recipient_ism",
+      "output": {
+        "name": "",
+        "type": 14,
+        "typeArguments": null
+      },
+      "attributes": [
+        {
+          "name": "storage",
+          "arguments": [
+            "read",
+            "write"
+          ]
+        }
+      ]
+    },
+    {
       "inputs": [],
       "name": "required_hook",
       "output": {
@@ -1333,7 +1357,7 @@
         "type": 26,
         "typeArguments": null
       },
-      "offset": 51720
+      "offset": 52360
     }
   ]
 }

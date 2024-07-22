@@ -132,6 +132,7 @@ impl ChainConnectionConf {
             Self::Ethereum(conf) => Some(&conf.operation_batch),
             Self::Cosmos(conf) => Some(&conf.operation_batch),
             Self::Sealevel(conf) => Some(&conf.operation_batch),
+            // TODO Fuel - investigate https://docs.fuel.network/docs/fuels-rs/calling-contracts/multicalls/
             _ => None,
         }
     }
@@ -179,7 +180,10 @@ impl ChainConf {
                 self.build_ethereum(conf, &locator, metrics, h_eth::HyperlaneProviderBuilder {})
                     .await
             }
-            ChainConnectionConf::Fuel(_) => todo!(),
+            ChainConnectionConf::Fuel(conf) => {
+                let provider = h_fuel::FuelProvider::new(locator.domain.clone(), conf).await;
+                Ok(Box::new(provider) as Box<dyn HyperlaneProvider>)
+            }
             ChainConnectionConf::Sealevel(conf) => Ok(Box::new(h_sealevel::SealevelProvider::new(
                 locator.domain.clone(),
                 conf,
@@ -282,7 +286,12 @@ impl ChainConf {
                 )
                 .await
             }
-            ChainConnectionConf::Fuel(_) => todo!(),
+            ChainConnectionConf::Fuel(conf) => {
+                let wallet = self.fuel_signer().await.context(ctx)?;
+                let indexer =
+                    Box::new(h_fuel::FuelMailboxIndexer::new(conf, locator, wallet).await?);
+                Ok(indexer as Box<dyn SequenceAwareIndexer<HyperlaneMessage>>)
+            }
             ChainConnectionConf::Sealevel(conf) => {
                 let indexer = Box::new(h_sealevel::SealevelMailboxIndexer::new(conf, locator)?);
                 Ok(indexer as Box<dyn SequenceAwareIndexer<HyperlaneMessage>>)
@@ -321,7 +330,12 @@ impl ChainConf {
                 )
                 .await
             }
-            ChainConnectionConf::Fuel(_) => todo!(),
+            ChainConnectionConf::Fuel(conf) => {
+                let wallet = self.fuel_signer().await.context(ctx)?;
+                let indexer =
+                    Box::new(h_fuel::FuelMailboxIndexer::new(conf, locator, wallet).await?);
+                Ok(indexer as Box<dyn SequenceAwareIndexer<H256>>)
+            }
             ChainConnectionConf::Sealevel(conf) => {
                 let indexer = Box::new(h_sealevel::SealevelMailboxIndexer::new(conf, locator)?);
                 Ok(indexer as Box<dyn SequenceAwareIndexer<H256>>)
