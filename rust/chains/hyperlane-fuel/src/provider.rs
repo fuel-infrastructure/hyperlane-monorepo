@@ -1,4 +1,4 @@
-use std::{collections::HashMap, ops::Deref, str::FromStr};
+use std::{collections::HashMap, ops::Deref};
 
 use async_trait::async_trait;
 
@@ -7,7 +7,9 @@ use fuels::{
     prelude::Provider,
     tx::Receipt,
     types::{
+        bech32::Bech32ContractId,
         block::Block,
+        gas_price::LatestGasPrice,
         transaction::{Transaction, TransactionType},
         transaction_response::TransactionResponse,
         tx_status::TxStatus,
@@ -20,7 +22,7 @@ use hyperlane_core::{
     HyperlaneMessage, HyperlaneProvider, Indexed, LogMeta, TxnInfo, H256, H512, U256,
 };
 
-use crate::{make_client, make_provider, ConnectionConf};
+use crate::{make_client, make_provider, prelude::FuelIntoH256, ConnectionConf};
 
 /// A wrapper around a fuel provider to get generic blockchain information.
 #[derive(Debug, Clone)]
@@ -48,14 +50,29 @@ impl FuelProvider {
         &self.provider
     }
 
+    /// Get the latest gas price
+    pub async fn get_gas_price(&self) -> ChainResult<u64> {
+        let LatestGasPrice { gas_price, .. } = self
+            .provider()
+            .latest_gas_price()
+            .await
+            .map_err(ChainCommunicationError::from_other)?;
+
+        Ok(gas_price)
+    }
+
     /// Check if a transaction is from a contract
     /// @note: Only works for checking script transactions
-    fn is_transaction_from_contract(res: &TransactionResponse, contract: &str) -> bool {
+    /// Assumes that the first input is the contract id
+    fn is_transaction_from_contract(
+        res: &TransactionResponse,
+        contract: &Bech32ContractId,
+    ) -> bool {
         if let TransactionType::Script(script_transaction) = &res.transaction {
             if script_transaction.inputs().get(0).is_some_and(|input| {
                 input
                     .contract_id()
-                    .is_some_and(|id| id == &ContractId::from_str(contract).unwrap())
+                    .is_some_and(|id| id == &ContractId::from(&contract.into()))
             }) {
                 return true;
             }
@@ -141,7 +158,7 @@ impl FuelProvider {
     pub async fn index_logs_in_range(
         &self,
         range: std::ops::RangeInclusive<u32>,
-        mailbox_contract: &str,
+        mailbox_contract: Bech32ContractId,
     ) -> ChainResult<Vec<(Indexed<HyperlaneMessage>, LogMeta)>> {
         let (blocks, transaction_map) = self.get_block_data(range.clone()).await.unwrap();
 
@@ -180,7 +197,7 @@ impl FuelProvider {
             .filter(|(_, tx_data)| {
                 matches!(tx_data.transaction, TransactionType::Script(_))
                     && matches!(tx_data.status, TxStatus::Success { .. })
-                    && Self::is_transaction_from_contract(&tx_data, mailbox_contract)
+                    && Self::is_transaction_from_contract(&tx_data, &mailbox_contract)
                     && Self::is_dispatch_call(&tx_data)
             })
             .collect::<Vec<_>>();
@@ -231,15 +248,11 @@ impl FuelProvider {
             .map(|(tx_id, tx, message, log_index)| {
                 let (block_hash, transaction_index) = transaction_map.get(&tx_id).unwrap();
 
-                // The transaction id is 32 bytes long
-                let mut tx_slice = [0u8; 64];
-                tx_slice[..32].copy_from_slice(tx_id.as_slice());
-
                 let log_meta = LogMeta {
-                    address: H256::from_str(mailbox_contract).unwrap(),
+                    address: mailbox_contract.clone().into_h256(),
                     block_number: *tx.block_height.unwrap().deref() as u64,
-                    block_hash: H256::from_slice(block_hash.as_slice()),
-                    transaction_id: H512 { 0: tx_slice },
+                    block_hash: block_hash.into_h256(),
+                    transaction_id: H512::from(tx_id.into_h256()),
                     transaction_index: transaction_index.clone(),
                     log_index,
                 };
