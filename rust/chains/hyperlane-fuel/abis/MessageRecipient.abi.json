@@ -1,0 +1,191 @@
+{
+    "encoding": "1",
+    "types": [
+      {
+        "typeId": 0,
+        "type": "()",
+        "components": [],
+        "typeParameters": null
+      },
+      {
+        "typeId": 1,
+        "type": "b256",
+        "components": null,
+        "typeParameters": null
+      },
+      {
+        "typeId": 2,
+        "type": "raw untyped ptr",
+        "components": null,
+        "typeParameters": null
+      },
+      {
+        "typeId": 3,
+        "type": "struct Bytes",
+        "components": [
+          {
+            "name": "buf",
+            "type": 5,
+            "typeArguments": null
+          },
+          {
+            "name": "len",
+            "type": 7,
+            "typeArguments": null
+          }
+        ],
+        "typeParameters": null
+      },
+      {
+        "typeId": 4,
+        "type": "struct ContractId",
+        "components": [
+          {
+            "name": "bits",
+            "type": 1,
+            "typeArguments": null
+          }
+        ],
+        "typeParameters": null
+      },
+      {
+        "typeId": 5,
+        "type": "struct RawBytes",
+        "components": [
+          {
+            "name": "ptr",
+            "type": 2,
+            "typeArguments": null
+          },
+          {
+            "name": "cap",
+            "type": 7,
+            "typeArguments": null
+          }
+        ],
+        "typeParameters": null
+      },
+      {
+        "typeId": 6,
+        "type": "u32",
+        "components": null,
+        "typeParameters": null
+      },
+      {
+        "typeId": 7,
+        "type": "u64",
+        "components": null,
+        "typeParameters": null
+      }
+    ],
+    "functions": [
+      {
+        "inputs": [
+          {
+            "name": "origin",
+            "type": 6,
+            "typeArguments": null
+          },
+          {
+            "name": "sender",
+            "type": 1,
+            "typeArguments": null
+          },
+          {
+            "name": "message_body",
+            "type": 3,
+            "typeArguments": null
+          }
+        ],
+        "name": "handle",
+        "output": {
+          "name": "",
+          "type": 0,
+          "typeArguments": null
+        },
+        "attributes": [
+          {
+            "name": "doc-comment",
+            "arguments": [
+              " Handles a message once it has been verified by Mailbox.process"
+            ]
+          },
+          {
+            "name": "doc-comment",
+            "arguments": [
+              ""
+            ]
+          },
+          {
+            "name": "doc-comment",
+            "arguments": [
+              " ### Arguments"
+            ]
+          },
+          {
+            "name": "doc-comment",
+            "arguments": [
+              ""
+            ]
+          },
+          {
+            "name": "doc-comment",
+            "arguments": [
+              " * `origin` - The origin domain identifier."
+            ]
+          },
+          {
+            "name": "doc-comment",
+            "arguments": [
+              " * `sender` - The sender address on the origin chain."
+            ]
+          },
+          {
+            "name": "doc-comment",
+            "arguments": [
+              " * `message_body` - Raw bytes content of the message body."
+            ]
+          },
+          {
+            "name": "storage",
+            "arguments": [
+              "read",
+              "write"
+            ]
+          }
+        ]
+      },
+      {
+        "inputs": [],
+        "name": "interchain_security_module",
+        "output": {
+          "name": "",
+          "type": 4,
+          "typeArguments": null
+        },
+        "attributes": [
+          {
+            "name": "doc-comment",
+            "arguments": [
+              " Returns the address of the ISM used for message verification."
+            ]
+          },
+          {
+            "name": "doc-comment",
+            "arguments": [
+              " If zero address is returned, the mailbox default ISM is used."
+            ]
+          },
+          {
+            "name": "storage",
+            "arguments": [
+              "read"
+            ]
+          }
+        ]
+      }
+    ],
+    "loggedTypes": [],
+    "messagesTypes": [],
+    "configurables": []
+  }
