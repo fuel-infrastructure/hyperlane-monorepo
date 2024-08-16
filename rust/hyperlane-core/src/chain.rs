@@ -103,19 +103,9 @@ pub enum KnownHyperlaneDomain {
 
     // -- Local chains --
     //
-<<<<<<< HEAD
     Test1 = 9913371,
     Test2 = 9913372,
     Test3 = 9913373,
-=======
-    Test1 = 13371,
-    Test2 = 13372,
-    Test3 = 13373,
-
-    /// Fuel
-    FuelTestnet = 102117101108,
-    /// Fuel local chain 1
->>>>>>> origin
     FuelTest1 = 13374,
     SealevelTest1 = 13375,
     SealevelTest2 = 13376,
@@ -130,6 +120,7 @@ pub enum KnownHyperlaneDomain {
     Chiado = 10200,
     ConnextSepolia = 6398,
     Holesky = 17000,
+    FuelTestnet = 1718969708,
     MoonbaseAlpha = 1287,
     PlumeTestnet = 161221135,
     ScrollSepolia = 534351,
