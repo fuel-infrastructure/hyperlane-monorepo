@@ -18,8 +18,9 @@ thiserror.workspace = true
 tracing-futures.workspace = true
 tracing.workspace = true
 url.workspace = true
+futures.workspace = true
 
-hyperlane-core = { path = "../../hyperlane-core", features = ["async"]}
+hyperlane-core = { path = "../../hyperlane-core", features = ["async"] }
 
 [build-dependencies]
 abigen = { path = "../../utils/abigen", features = ["fuels"] }
