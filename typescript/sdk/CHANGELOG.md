@@ -1,5 +1,33 @@
 # @hyperlane-xyz/sdk
 
+## 5.2.0
+
+### Minor Changes
+
+- a19e882f: Improve Router Checker/Governor tooling to support enrolling multiple routers for missing domains
+- 203084df: Added sdk support for Stake weighted ISM
+- 74a592e5: Adds OwnerCollateral to token mapping which will output the correct standard to the warp deploy artifact.
+- 44588c31: Enroll new validators for cyber degenchain kroma lisk lukso merlin metis mint proofofplay real sanko tangle xai taiko
+- 9563a8be: Sorted cwNative funds by denom in transfer tx
+- 73c232b3: Deploy to oortmainnet
+- 445b6222: ArbL2ToL1Ism handles value via the executeTransaction branch
+- d6de34ad: Sort values in EvmModuleDeployer.deployStaticAddressSet
+- 2e6176f6: Deploy to everclear mainnet
+- f2783c03: Add ChainSubmissionStrategySchema
+- 3c07ded5: Add Safe submit functionality to warp apply
+
+### Patch Changes
+
+- 518a1bef: add 10% gas bump to initialize call in EvmModuleDeployer
+- 2bd540e0: Estimate and add 10% gas bump for ICA initialization and enrollment
+- 3ad5918d: Support DefaultFallbackRoutingIsm in metadata builder
+- 2ffb78f5: Improved check for mailbox initialization
+- Updated dependencies [d6de34ad]
+- Updated dependencies [203084df]
+- Updated dependencies [445b6222]
+  - @hyperlane-xyz/utils@5.2.0
+  - @hyperlane-xyz/core@5.2.0
+
 ## 5.1.0
 
 ### Minor Changes

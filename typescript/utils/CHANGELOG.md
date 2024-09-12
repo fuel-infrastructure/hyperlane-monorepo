@@ -1,5 +1,11 @@
 # @hyperlane-xyz/utils
 
+## 5.2.0
+
+### Minor Changes
+
+- d6de34ad: Add sortArraysInConfig method, normalizeConfig implementation to call sortArraysInConfig after current behavior
+
 ## 5.1.0
 
 ## 5.0.0

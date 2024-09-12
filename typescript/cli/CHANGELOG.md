@@ -1,5 +1,36 @@
 # @hyperlane-xyz/cli
 
+## 5.2.0
+
+### Minor Changes
+
+- a5afd20f: Add CLI e2e typescript tests
+- 203084df: Added sdk support for Stake weighted ISM
+- a46fe434: Add hyperlane registry rpc and addresses --contract utils
+- f2783c03: Add ChainSubmissionStrategySchema
+- 3c07ded5: Add Safe submit functionality to warp apply
+
+### Patch Changes
+
+- Updated dependencies [a19e882f]
+- Updated dependencies [d6de34ad]
+- Updated dependencies [518a1bef]
+- Updated dependencies [203084df]
+- Updated dependencies [74a592e5]
+- Updated dependencies [44588c31]
+- Updated dependencies [2bd540e0]
+- Updated dependencies [3ad5918d]
+- Updated dependencies [9563a8be]
+- Updated dependencies [73c232b3]
+- Updated dependencies [445b6222]
+- Updated dependencies [d6de34ad]
+- Updated dependencies [2e6176f6]
+- Updated dependencies [f2783c03]
+- Updated dependencies [2ffb78f5]
+- Updated dependencies [3c07ded5]
+  - @hyperlane-xyz/sdk@5.2.0
+  - @hyperlane-xyz/utils@5.2.0
+
 ## 5.1.0
 
 ### Minor Changes
