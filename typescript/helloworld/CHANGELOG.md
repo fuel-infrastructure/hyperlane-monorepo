@@ -1,5 +1,18 @@
 # @hyperlane-xyz/helloworld
 
+## 5.6.0
+
+### Patch Changes
+
+- e89f9e35: Update registry to v4.7.0
+- Updated dependencies [46044a2e]
+- Updated dependencies [8001bbbd]
+- Updated dependencies [b1ff48bd]
+- Updated dependencies [7d7bcc1a]
+- Updated dependencies [2317eca3]
+  - @hyperlane-xyz/sdk@5.6.0
+  - @hyperlane-xyz/core@5.4.2
+
 ## 5.5.0
 
 ### Patch Changes
