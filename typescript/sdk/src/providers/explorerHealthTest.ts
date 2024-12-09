@@ -9,8 +9,10 @@ import {
 
 const PROTOCOL_TO_ADDRESS: Record<ProtocolType, Address> = {
   [ProtocolType.Ethereum]: '0x0000000000000000000000000000000000000000',
-  [ProtocolType.Sealevel]: '11111111111111111111111111111111',
+  [ProtocolType.Sealevel]: '00000000000000000000000000000000',
   [ProtocolType.Cosmos]: 'cosmos100000000000000000000000000000000000000',
+  [ProtocolType.Fuel]:
+    '0x0000000000000000000000000000000000000000000000000000000000000000',
 };
 
 const PROTOCOL_TO_TX_HASH: Partial<Record<ProtocolType, Address>> = {

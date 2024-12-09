@@ -9,6 +9,7 @@ import {
   TestChainName,
   test1,
   testCosmosChain,
+  testFuelChain,
   testSealevelChain,
 } from '../consts/testChains.js';
 import { MultiProtocolProvider } from '../providers/MultiProtocolProvider.js';
@@ -177,6 +178,15 @@ const STANDARD_TO_TOKEN: Record<TokenStandard, TokenArgs | null> = {
     decimals: 6,
     symbol: 'ASTRO',
     name: 'ASTRO',
+  },
+  [TokenStandard.FuelNative]: {
+    chainName: testFuelChain.name,
+    standard: TokenStandard.FuelNative,
+    addressOrDenom:
+      '0xf8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad07',
+    decimals: 9,
+    symbol: 'ETH',
+    name: 'Ethereum',
   },
   [TokenStandard.CW721]: null,
   [TokenStandard.CwHypNative]: {

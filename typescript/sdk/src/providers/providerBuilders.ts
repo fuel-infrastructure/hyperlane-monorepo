@@ -2,6 +2,7 @@ import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import { StargateClient } from '@cosmjs/stargate';
 import { Connection } from '@solana/web3.js';
 import { providers } from 'ethers';
+import { Provider } from 'fuels';
 import { createPublicClient, http } from 'viem';
 
 import { ProtocolType, isNumeric } from '@hyperlane-xyz/utils';
@@ -12,6 +13,7 @@ import {
   CosmJsProvider,
   CosmJsWasmProvider,
   EthersV5Provider,
+  FuelsProvider,
   ProviderType,
   SolanaWeb3Provider,
   TypedProvider,
@@ -82,9 +84,17 @@ export function defaultSolProviderBuilder(
 export function defaultFuelProviderBuilder(
   rpcUrls: RpcUrl[],
   _network: number | string,
-): EthersV5Provider {
+): FuelsProvider {
   if (!rpcUrls.length) throw new Error('No RPC URLs provided');
-  throw new Error('TODO fuel support');
+  return {
+    type: ProviderType.Fuels,
+    provider: Provider.create(rpcUrls[0].http, {
+      retryOptions: {
+        maxRetries: DEFAULT_RETRY_OPTIONS.maxRetries ?? 3,
+        baseDelay: DEFAULT_RETRY_OPTIONS.baseRetryDelayMs ?? 250,
+      },
+    }),
+  };
 }
 
 export function defaultCosmJsProviderBuilder(
@@ -126,6 +136,7 @@ export const defaultProviderBuilderMap: ProviderBuilderMap = {
   [ProviderType.GnosisTxBuilder]: defaultEthersV5ProviderBuilder,
   [ProviderType.Viem]: defaultViemProviderBuilder,
   [ProviderType.SolanaWeb3]: defaultSolProviderBuilder,
+  [ProviderType.Fuels]: defaultFuelProviderBuilder,
   [ProviderType.CosmJs]: defaultCosmJsProviderBuilder,
   [ProviderType.CosmJsWasm]: defaultCosmJsWasmProviderBuilder,
 };
@@ -137,4 +148,5 @@ export const protocolToDefaultProviderBuilder: Record<
   [ProtocolType.Ethereum]: defaultEthersV5ProviderBuilder,
   [ProtocolType.Sealevel]: defaultSolProviderBuilder,
   [ProtocolType.Cosmos]: defaultCosmJsWasmProviderBuilder,
+  [ProtocolType.Fuel]: defaultFuelProviderBuilder,
 };
