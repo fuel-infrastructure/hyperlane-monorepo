@@ -7,6 +7,7 @@ import {
   CosmJsProvider,
   CosmJsWasmProvider,
   EthersV5Provider,
+  FuelsProvider,
   ProviderType,
   SolanaWeb3Provider,
 } from './ProviderType.js';
@@ -28,6 +29,8 @@ export async function isRpcHealthy(
     provider.type === ProviderType.CosmJs
   )
     return isCosmJsProviderHealthy(provider.provider, metadata);
+  else if (provider.type === ProviderType.Fuels)
+    return isFuelProviderHealthy(provider.provider, metadata);
   else
     throw new Error(
       `Unsupported provider type ${provider.type}, new health check required`,
@@ -69,6 +72,17 @@ export async function isSolanaWeb3ProviderHealthy(
 ): Promise<boolean> {
   const blockNumber = await provider.getBlockHeight();
   if (!blockNumber || blockNumber < 0) return false;
+  rootLogger.debug(`Block number is okay for ${metadata.name}`);
+  return true;
+}
+
+export async function isFuelProviderHealthy(
+  provider: FuelsProvider['provider'],
+  metadata: ChainMetadata,
+): Promise<boolean> {
+  const readyProvider = await provider;
+  const blockNumber = await readyProvider.getBlockNumber();
+  if (!blockNumber || blockNumber.lt(0)) return false;
   rootLogger.debug(`Block number is okay for ${metadata.name}`);
   return true;
 }

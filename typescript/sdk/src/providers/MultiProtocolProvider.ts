@@ -20,6 +20,7 @@ import {
   CosmJsProvider,
   CosmJsWasmProvider,
   EthersV5Provider,
+  FuelsProvider,
   PROTOCOL_TO_DEFAULT_PROVIDER_TYPE,
   ProviderMap,
   ProviderType,
@@ -193,6 +194,13 @@ export class MultiProtocolProvider<
     return this.getSpecificProvider<CosmJsProvider['provider']>(
       chainNameOrId,
       ProviderType.CosmJs,
+    );
+  }
+
+  getFuelProvider(chainNameOrId: ChainNameOrId): FuelsProvider['provider'] {
+    return this.getSpecificProvider<FuelsProvider['provider']>(
+      chainNameOrId,
+      ProviderType.Fuels,
     );
   }
 

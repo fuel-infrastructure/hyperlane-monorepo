@@ -15,6 +15,7 @@ import {
   CosmJsProvider,
   CosmJsWasmProvider,
   EthersV5Provider,
+  FuelsProvider,
   SolanaWeb3Provider,
   TypedProvider,
 } from '../providers/ProviderType.js';
@@ -65,6 +66,14 @@ export class BaseCosmosAdapter extends BaseAppAdapter {
 
   public getProvider(): CosmJsProvider['provider'] {
     return this.multiProvider.getCosmJsProvider(this.chainName);
+  }
+}
+
+export class BaseFuelAdapter extends BaseAppAdapter {
+  public readonly protocol: ProtocolType = ProtocolType.Fuel;
+
+  public getProvider(): FuelsProvider['provider'] {
+    return this.multiProvider.getFuelProvider(this.chainName);
   }
 }
 

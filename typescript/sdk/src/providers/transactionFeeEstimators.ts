@@ -5,6 +5,7 @@ import { Uint53 } from '@cosmjs/math';
 import { Registry } from '@cosmjs/proto-signing';
 import { StargateClient, defaultRegistryTypes } from '@cosmjs/stargate';
 import { MsgExecuteContract } from 'cosmjs-types/cosmwasm/wasm/v1/tx.js';
+import { BN } from 'fuels';
 
 import { Address, HexString, Numberish, assert } from '@hyperlane-xyz/utils';
 
@@ -17,6 +18,8 @@ import {
   CosmJsWasmTransaction,
   EthersV5Provider,
   EthersV5Transaction,
+  FuelsProvider,
+  FuelsTransaction,
   ProviderType,
   SolanaWeb3Provider,
   SolanaWeb3Transaction,
@@ -183,6 +186,28 @@ export async function estimateTransactionFeeCosmJs({
   };
 }
 
+export async function estimateTransactionFeeFuel({
+  transaction,
+  provider,
+  estimatedGasPrice,
+}: {
+  transaction: FuelsTransaction;
+  provider: FuelsProvider;
+  estimatedGasPrice: Numberish;
+}): Promise<TransactionFeeEstimate> {
+  const fuelsProvider = await provider.provider;
+  const { gasPrice, maxFee, maxGas } = await fuelsProvider.estimateTxGasAndFee({
+    transactionRequest: transaction.transaction,
+    gasPrice: new BN(estimatedGasPrice.toString()),
+  });
+
+  return {
+    gasUnits: BigInt(maxGas.toString()),
+    gasPrice: BigInt(gasPrice.toString()),
+    fee: BigInt(maxFee.toString()),
+  };
+}
+
 export async function estimateTransactionFeeCosmJsWasm({
   transaction,
   provider,
@@ -245,6 +270,19 @@ export function estimateTransactionFee({
     provider.type === ProviderType.Viem
   ) {
     return estimateTransactionFeeViem({ transaction, provider, sender });
+  } else if (
+    transaction.type === ProviderType.Fuels &&
+    provider.type === ProviderType.Fuels
+  ) {
+    const { transactionOverrides } = chainMetadata;
+    const estimatedGasPrice = transactionOverrides?.gasPrice as Numberish;
+    assert(estimatedGasPrice, 'gasPrice required for Fuel gas estimation');
+
+    return estimateTransactionFeeFuel({
+      transaction,
+      provider,
+      estimatedGasPrice,
+    });
   } else if (
     transaction.type === ProviderType.SolanaWeb3 &&
     provider.type === ProviderType.SolanaWeb3

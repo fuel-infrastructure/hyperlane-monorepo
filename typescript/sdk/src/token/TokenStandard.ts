@@ -30,6 +30,9 @@ export enum TokenStandard {
   SealevelHypCollateral = 'SealevelHypCollateral',
   SealevelHypSynthetic = 'SealevelHypSynthetic',
 
+  // Fuel
+  FuelNative = 'FuelNative',
+
   // Cosmos
   CosmosIcs20 = 'CosmosIcs20',
   CosmosIcs721 = 'CosmosIcs721',
@@ -68,6 +71,9 @@ export const TOKEN_STANDARD_TO_PROTOCOL: Record<TokenStandard, ProtocolType> = {
   SealevelHypNative: ProtocolType.Sealevel,
   SealevelHypCollateral: ProtocolType.Sealevel,
   SealevelHypSynthetic: ProtocolType.Sealevel,
+
+  // Fuel
+  FuelNative: ProtocolType.Fuel,
 
   // Cosmos
   CosmosIcs20: ProtocolType.Cosmos,
@@ -171,4 +177,5 @@ export const PROTOCOL_TO_NATIVE_STANDARD: Record<ProtocolType, TokenStandard> =
     [ProtocolType.Ethereum]: TokenStandard.EvmNative,
     [ProtocolType.Cosmos]: TokenStandard.CosmosNative,
     [ProtocolType.Sealevel]: TokenStandard.SealevelNative,
+    [ProtocolType.Fuel]: TokenStandard.FuelNative,
   };

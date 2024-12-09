@@ -9,6 +9,7 @@ import {
   BaseAppAdapter,
   BaseCosmWasmAdapter,
   BaseEvmAdapter,
+  BaseFuelAdapter,
   BaseSealevelAdapter,
   MultiProtocolApp,
 } from './MultiProtocolApp.js';
@@ -18,6 +19,7 @@ class TestMultiProtocolApp extends MultiProtocolApp<BaseAppAdapter> {
     if (protocol === ProtocolType.Ethereum) return BaseEvmAdapter;
     if (protocol === ProtocolType.Sealevel) return BaseSealevelAdapter;
     if (protocol === ProtocolType.Cosmos) return BaseCosmWasmAdapter;
+    if (protocol === ProtocolType.Fuel) return BaseFuelAdapter;
     throw new Error(`No adapter for protocol ${protocol}`);
   }
 }
