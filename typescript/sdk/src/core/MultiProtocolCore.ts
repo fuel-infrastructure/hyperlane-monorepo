@@ -7,6 +7,7 @@ import { ChainMap, ChainName } from '../types.js';
 
 import { CosmWasmCoreAdapter } from './adapters/CosmWasmCoreAdapter.js';
 import { EvmCoreAdapter } from './adapters/EvmCoreAdapter.js';
+import { FuelCoreAdapter } from './adapters/FuelCoreAdapter.js';
 import { SealevelCoreAdapter } from './adapters/SealevelCoreAdapter.js';
 import { ICoreAdapter } from './adapters/types.js';
 import { CoreAddresses } from './contracts.js';
@@ -39,6 +40,7 @@ export class MultiProtocolCore extends MultiProtocolApp<
     if (protocol === ProtocolType.Ethereum) return EvmCoreAdapter;
     if (protocol === ProtocolType.Sealevel) return SealevelCoreAdapter;
     if (protocol === ProtocolType.Cosmos) return CosmWasmCoreAdapter;
+    if (protocol === ProtocolType.Fuel) return FuelCoreAdapter;
     throw new Error(`No adapter for protocol ${protocol}`);
   }
 
