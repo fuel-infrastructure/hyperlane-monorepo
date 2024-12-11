@@ -19,7 +19,6 @@ import type {
   Contract as FContract,
   Provider as FProvider,
   TransactionRequest as FTransaction,
-  Receipt as FTransactionReceipt,
 } from 'fuels';
 import type {
   GetContractReturnType,
@@ -284,9 +283,9 @@ export interface SolanaWeb3TransactionReceipt
 }
 
 export interface FuelsTransactionReceipt
-  extends TypedTransactionReceiptBase<FTransactionReceipt> {
+  extends TypedTransactionReceiptBase<Array<any>> {
   type: ProviderType.Fuels;
-  receipt: FTransactionReceipt;
+  receipt: Array<any>; // Fuel logs are of any type
 }
 
 export interface CosmJsTransactionReceipt

@@ -140,6 +140,7 @@ export const multiProtocolTestChainMetadata: ChainMap<ChainMetadata> = {
   ...testChainMetadata,
   testcosmos: testCosmosChain,
   testsealevel: testSealevelChain,
+  testfuel: testFuelChain,
 };
 
 export const multiProtocolTestChains: Array<ChainName> = Object.keys(
