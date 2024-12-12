@@ -32,6 +32,7 @@ export enum TokenStandard {
 
   // Fuel
   FuelNative = 'FuelNative',
+  FuelHypNative = 'FuelHypNative',
 
   // Cosmos
   CosmosIcs20 = 'CosmosIcs20',
@@ -74,6 +75,7 @@ export const TOKEN_STANDARD_TO_PROTOCOL: Record<TokenStandard, ProtocolType> = {
 
   // Fuel
   FuelNative: ProtocolType.Fuel,
+  FuelHypNative: ProtocolType.Fuel,
 
   // Cosmos
   CosmosIcs20: ProtocolType.Cosmos,
@@ -137,6 +139,7 @@ export const TOKEN_HYP_STANDARDS = [
   TokenStandard.CwHypNative,
   TokenStandard.CwHypCollateral,
   TokenStandard.CwHypSynthetic,
+  TokenStandard.FuelHypNative,
 ];
 
 export const TOKEN_MULTI_CHAIN_STANDARDS = [

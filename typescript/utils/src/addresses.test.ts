@@ -16,6 +16,11 @@ const COS_NON_ZERO_ADDR =
 const SOL_ZERO_ADDR = '111111';
 const SOL_NON_ZERO_ADDR = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb';
 
+const FUEL_ZERO_ADDR =
+  '0x0000000000000000000000000000000000000000000000000000000000000000';
+const FUEL_NON_ZERO_ADDR =
+  '0x0000000000000000000000000000000000000000000000000000000000000001';
+
 // TODO increase address utility test coverage
 describe('Address utilities', () => {
   describe('isZeroishAddress', () => {
@@ -24,11 +29,13 @@ describe('Address utilities', () => {
       expect(isZeroishAddress(ETH_ZERO_ADDR)).to.be.true;
       expect(isZeroishAddress(COS_ZERO_ADDR)).to.be.true;
       expect(isZeroishAddress(SOL_ZERO_ADDR)).to.be.true;
+      expect(isZeroishAddress(FUEL_ZERO_ADDR)).to.be.true;
     });
     it('Identifies non-0-ish addresses', () => {
       expect(isZeroishAddress(ETH_NON_ZERO_ADDR)).to.be.false;
       expect(isZeroishAddress(COS_NON_ZERO_ADDR)).to.be.false;
       expect(isZeroishAddress(SOL_NON_ZERO_ADDR)).to.be.false;
+      expect(isZeroishAddress(FUEL_NON_ZERO_ADDR)).to.be.false;
     });
   });
 
@@ -40,6 +47,7 @@ describe('Address utilities', () => {
       expect(() => addressToBytes(ETH_ZERO_ADDR)).to.throw(Error);
       expect(() => addressToBytes(COS_ZERO_ADDR)).to.throw(Error);
       expect(() => addressToBytes(SOL_ZERO_ADDR)).to.throw(Error);
+      expect(() => addressToBytes(FUEL_ZERO_ADDR)).to.throw(Error);
     });
   });
 

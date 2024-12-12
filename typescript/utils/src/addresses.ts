@@ -1,6 +1,7 @@
 import { fromBech32, normalizeBech32, toBech32 } from '@cosmjs/encoding';
 import { PublicKey } from '@solana/web3.js';
 import { utils as ethersUtils } from 'ethers';
+import { Address as FuelAddress } from 'fuels';
 
 import { isNullish } from './typeof.js';
 import { Address, HexString, ProtocolType } from './types.js';
@@ -9,6 +10,7 @@ import { assert } from './validation.js';
 const EVM_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/;
 const SEALEVEL_ADDRESS_REGEX = /^[a-zA-Z0-9]{36,44}$/;
 
+const FUEL_ADDRESS_REGEX = /^0x[a-fA-F0-9]{64}$/;
 const HEX_BYTES32_REGEX = /^0x[a-fA-F0-9]{64}$/;
 
 // https://github.com/cosmos/cosmos-sdk/blob/84c33215658131d87daf3c629e909e12ed9370fa/types/coin.go#L601C17-L601C44
@@ -24,10 +26,12 @@ const COSMOS_FACTORY_TOKEN_REGEX = new RegExp(
 const EVM_TX_HASH_REGEX = /^0x([A-Fa-f0-9]{64})$/;
 const SEALEVEL_TX_HASH_REGEX = /^[a-zA-Z1-9]{88}$/;
 const COSMOS_TX_HASH_REGEX = /^(0x)?[A-Fa-f0-9]{64}$/;
+const FUEL_TX_HASH_REGEX = /^[a-zA-Z1-9]{64}$/;
 
 const EVM_ZEROISH_ADDRESS_REGEX = /^(0x)?0*$/;
 const SEALEVEL_ZEROISH_ADDRESS_REGEX = /^1+$/;
 const COSMOS_ZEROISH_ADDRESS_REGEX = /^[a-z]{1,10}?1[0]+$/;
+const FUEL_ZEROISH_ADDRESS_REGEX = /^0x0*$/;
 
 export function isAddressEvm(address: Address) {
   return EVM_ADDRESS_REGEX.test(address);
@@ -45,6 +49,10 @@ export function isAddressCosmos(address: Address) {
   );
 }
 
+export function isAddressFuel(address: Address) {
+  return FUEL_ADDRESS_REGEX.test(address);
+}
+
 export function getAddressProtocolType(address: Address) {
   if (!address) return undefined;
   if (isAddressEvm(address)) {
@@ -53,6 +61,8 @@ export function getAddressProtocolType(address: Address) {
     return ProtocolType.Cosmos;
   } else if (isAddressSealevel(address)) {
     return ProtocolType.Sealevel;
+  } else if (isAddressFuel(address)) {
+    return ProtocolType.Fuel;
   } else {
     return undefined;
   }
@@ -109,12 +119,22 @@ export function isValidAddressCosmos(address: Address) {
   }
 }
 
+export function isValidAddressFuel(address: Address) {
+  try {
+    const isValid = address && FUEL_ADDRESS_REGEX.test(address);
+    return !!isValid;
+  } catch {
+    return false;
+  }
+}
+
 export function isValidAddress(address: Address, protocol?: ProtocolType) {
   return routeAddressUtil(
     {
       [ProtocolType.Ethereum]: isValidAddressEvm,
       [ProtocolType.Sealevel]: isValidAddressSealevel,
       [ProtocolType.Cosmos]: isValidAddressCosmos,
+      [ProtocolType.Fuel]: isValidAddressFuel,
     },
     address,
     false,
@@ -149,12 +169,22 @@ export function normalizeAddressCosmos(address: Address) {
   }
 }
 
+export function normalizeAddressFuel(address: Address) {
+  if (isZeroishAddress(address)) return address;
+  try {
+    return FuelAddress.fromString(address).toString();
+  } catch {
+    return address;
+  }
+}
+
 export function normalizeAddress(address: Address, protocol?: ProtocolType) {
   return routeAddressUtil(
     {
       [ProtocolType.Ethereum]: normalizeAddressEvm,
       [ProtocolType.Sealevel]: normalizeAddressSealevel,
       [ProtocolType.Cosmos]: normalizeAddressCosmos,
+      [ProtocolType.Fuel]: normalizeAddressFuel,
     },
     address,
     address,
@@ -174,6 +204,10 @@ export function eqAddressCosmos(a1: Address, a2: Address) {
   return normalizeAddressCosmos(a1) === normalizeAddressCosmos(a2);
 }
 
+export function eqAddressFuel(a1: Address, a2: Address) {
+  return normalizeAddressFuel(a1) === normalizeAddressFuel(a2);
+}
+
 export function eqAddress(a1: Address, a2: Address) {
   const p1 = getAddressProtocolType(a1);
   const p2 = getAddressProtocolType(a2);
@@ -183,6 +217,7 @@ export function eqAddress(a1: Address, a2: Address) {
       [ProtocolType.Ethereum]: (_a1) => eqAddressEvm(_a1, a2),
       [ProtocolType.Sealevel]: (_a1) => eqAddressSol(_a1, a2),
       [ProtocolType.Cosmos]: (_a1) => eqAddressCosmos(_a1, a2),
+      [ProtocolType.Fuel]: (_a1) => eqAddressFuel(_a1, a2),
     },
     a1,
     false,
@@ -202,6 +237,10 @@ export function isValidTransactionHashCosmos(input: string) {
   return COSMOS_TX_HASH_REGEX.test(input);
 }
 
+export function isValidTransactionHashFuel(input: string) {
+  return FUEL_TX_HASH_REGEX.test(input);
+}
+
 export function isValidTransactionHash(input: string, protocol: ProtocolType) {
   if (protocol === ProtocolType.Ethereum) {
     return isValidTransactionHashEvm(input);
@@ -209,6 +248,8 @@ export function isValidTransactionHash(input: string, protocol: ProtocolType) {
     return isValidTransactionHashSealevel(input);
   } else if (protocol === ProtocolType.Cosmos) {
     return isValidTransactionHashCosmos(input);
+  } else if (protocol === ProtocolType.Fuel) {
+    return isValidTransactionHashFuel(input);
   } else {
     return false;
   }
@@ -218,7 +259,8 @@ export function isZeroishAddress(address: Address) {
   return (
     EVM_ZEROISH_ADDRESS_REGEX.test(address) ||
     SEALEVEL_ZEROISH_ADDRESS_REGEX.test(address) ||
-    COSMOS_ZEROISH_ADDRESS_REGEX.test(address)
+    COSMOS_ZEROISH_ADDRESS_REGEX.test(address) ||
+    FUEL_ZEROISH_ADDRESS_REGEX.test(address)
   );
 }
 
@@ -263,6 +305,10 @@ export function addressToBytesCosmos(address: Address): Uint8Array {
   return fromBech32(address).data;
 }
 
+export function addressToBytesFuel(address: Address): Uint8Array {
+  return FuelAddress.fromString(address).toBytes();
+}
+
 export function addressToBytes(
   address: Address,
   protocol?: ProtocolType,
@@ -272,6 +318,7 @@ export function addressToBytes(
       [ProtocolType.Ethereum]: addressToBytesEvm,
       [ProtocolType.Sealevel]: addressToBytesSol,
       [ProtocolType.Cosmos]: addressToBytesCosmos,
+      [ProtocolType.Fuel]: addressToBytesFuel,
     },
     address,
     new Uint8Array(),
@@ -332,6 +379,12 @@ export function bytesToAddressSol(bytes: Uint8Array): Address {
   return new PublicKey(bytes).toBase58();
 }
 
+export function bytesToAddressFuel(bytes: Uint8Array): Address {
+  const b256String = '0x' + Buffer.from(bytes).toString('hex');
+  const fuelAddress = FuelAddress.fromB256(b256String);
+  return fuelAddress.toString();
+}
+
 export function bytesToAddressCosmos(
   bytes: Uint8Array,
   prefix: string,
@@ -355,6 +408,8 @@ export function bytesToProtocolAddress(
     return bytesToAddressSol(bytes);
   } else if (toProtocol === ProtocolType.Cosmos) {
     return bytesToAddressCosmos(bytes, prefix!);
+  } else if (toProtocol === ProtocolType.Fuel) {
+    return bytesToAddressFuel(bytes);
   } else {
     throw new Error(`Unsupported protocol for address ${toProtocol}`);
   }

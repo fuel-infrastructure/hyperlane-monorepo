@@ -48,6 +48,10 @@ import {
   EvmNativeTokenAdapter,
   EvmTokenAdapter,
 } from './adapters/EvmTokenAdapter.js';
+import {
+  FuelHypNativeAdapter,
+  FuelNativeTokenAdapter,
+} from './adapters/FuelTokenAdapter.js';
 import type {
   IHypTokenAdapter,
   ITokenAdapter,
@@ -146,6 +150,10 @@ export class Token implements IToken {
         {},
         addressOrDenom,
       );
+    } else if (standard === TokenStandard.FuelNative) {
+      return new FuelNativeTokenAdapter(chainName, multiProvider, {
+        token: this.collateralAddressOrDenom ?? '',
+      });
     } else if (this.isHypToken()) {
       return this.getHypAdapter(multiProvider);
     } else if (this.isIbcToken()) {
@@ -282,6 +290,11 @@ export class Token implements IToken {
       return new CwHypSyntheticAdapter(chainName, multiProvider, {
         warpRouter: addressOrDenom,
         token: collateralAddressOrDenom,
+      });
+    } else if (standard === TokenStandard.FuelHypNative) {
+      return new FuelHypNativeAdapter(chainName as ChainName, multiProvider, {
+        warpRouter: addressOrDenom,
+        token: collateralAddressOrDenom ?? '',
       });
     } else if (standard === TokenStandard.CosmosIbc) {
       assert(destination, 'destination required for IBC token adapters');
