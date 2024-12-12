@@ -4,6 +4,7 @@ import { ProtocolType } from '@hyperlane-xyz/utils';
 
 import { CosmosLogo } from './Cosmos.js';
 import { EthereumLogo } from './Ethereum.js';
+import { FuelLogo } from './Fuel.js';
 import { SolanaLogo } from './Solana.js';
 
 export const PROTOCOL_TO_LOGO: Record<
@@ -13,5 +14,5 @@ export const PROTOCOL_TO_LOGO: Record<
   [ProtocolType.Ethereum]: EthereumLogo,
   [ProtocolType.Sealevel]: SolanaLogo,
   [ProtocolType.Cosmos]: CosmosLogo,
-  [ProtocolType.Fuel]: EthereumLogo, // TODO: Fuel logo
+  [ProtocolType.Fuel]: FuelLogo,
 };
