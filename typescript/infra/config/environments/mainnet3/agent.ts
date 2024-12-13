@@ -276,8 +276,7 @@ export const hyperlaneContextAgentChainConfig: AgentChainConfig<
     degenchain: true,
     dogechain: true,
     duckchain: true,
-    // Cannot scrape Sealevel chains
-    eclipsemainnet: false,
+    eclipsemainnet: true,
     endurance: true,
     ethereum: true,
     everclear: true,
@@ -328,8 +327,7 @@ export const hyperlaneContextAgentChainConfig: AgentChainConfig<
     sei: true,
     shibarium: true,
     snaxchain: true,
-    // Cannot scrape Sealevel chains
-    solanamainnet: false,
+    solanamainnet: true,
     stride: true,
     superseed: true,
     superpositionmainnet: true,
@@ -488,7 +486,7 @@ const hyperlane: RootAgentConfig = {
     rpcConsensusType: RpcConsensusType.Fallback,
     docker: {
       repo,
-      tag: 'a7f3967-20241205-163733',
+      tag: '4b280cd-20241206-130519',
     },
     resources: scraperResources,
   },
