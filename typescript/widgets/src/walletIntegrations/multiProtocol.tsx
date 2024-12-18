@@ -22,6 +22,14 @@ import {
   useEthereumWalletDetails,
 } from './ethereum.js';
 import {
+  useFuelAccount,
+  useFuelActiveChain,
+  useFuelConnectFn,
+  useFuelDisconnectFn,
+  useFuelTransactionFns,
+  useFuelWalletDetails,
+} from './fuel.js';
+import {
   useSolanaAccount,
   useSolanaActiveChain,
   useSolanaConnectFn,
@@ -50,14 +58,15 @@ export function useAccounts(
   const evmAccountInfo = useEthereumAccount(multiProvider);
   const solAccountInfo = useSolanaAccount(multiProvider);
   const cosmAccountInfo = useCosmosAccount(multiProvider);
+  const fuelAccountInfo = useFuelAccount(multiProvider);
 
   // Filtered ready accounts
   const readyAccounts = useMemo(
     () =>
-      [evmAccountInfo, solAccountInfo, cosmAccountInfo].filter(
+      [evmAccountInfo, solAccountInfo, cosmAccountInfo, fuelAccountInfo].filter(
         (a) => a.isReady,
       ),
-    [evmAccountInfo, solAccountInfo, cosmAccountInfo],
+    [evmAccountInfo, solAccountInfo, cosmAccountInfo, fuelAccountInfo],
   );
 
   // Check if any of the ready accounts are blacklisted
@@ -75,10 +84,17 @@ export function useAccounts(
         [ProtocolType.Ethereum]: evmAccountInfo,
         [ProtocolType.Sealevel]: solAccountInfo,
         [ProtocolType.Cosmos]: cosmAccountInfo,
+        [ProtocolType.Fuel]: fuelAccountInfo,
       },
       readyAccounts,
     }),
-    [evmAccountInfo, solAccountInfo, cosmAccountInfo, readyAccounts],
+    [
+      evmAccountInfo,
+      solAccountInfo,
+      cosmAccountInfo,
+      fuelAccountInfo,
+      readyAccounts,
+    ],
   );
 }
 
@@ -132,14 +148,16 @@ export function useWalletDetails(): Record<ProtocolType, WalletDetails> {
   const evmWallet = useEthereumWalletDetails();
   const solWallet = useSolanaWalletDetails();
   const cosmosWallet = useCosmosWalletDetails();
-
+  const fuelWallet = useFuelWalletDetails();
+  
   return useMemo(
     () => ({
       [ProtocolType.Ethereum]: evmWallet,
       [ProtocolType.Sealevel]: solWallet,
       [ProtocolType.Cosmos]: cosmosWallet,
+      [ProtocolType.Fuel]: fuelWallet,
     }),
-    [evmWallet, solWallet, cosmosWallet],
+    [evmWallet, solWallet, cosmosWallet, fuelWallet],
   );
 }
 
@@ -147,14 +165,16 @@ export function useConnectFns(): Record<ProtocolType, () => void> {
   const onConnectEthereum = useEthereumConnectFn();
   const onConnectSolana = useSolanaConnectFn();
   const onConnectCosmos = useCosmosConnectFn();
+  const onConnectFuel = useFuelConnectFn();
 
   return useMemo(
     () => ({
       [ProtocolType.Ethereum]: onConnectEthereum,
       [ProtocolType.Sealevel]: onConnectSolana,
       [ProtocolType.Cosmos]: onConnectCosmos,
+      [ProtocolType.Fuel]: onConnectFuel,
     }),
-    [onConnectEthereum, onConnectSolana, onConnectCosmos],
+    [onConnectEthereum, onConnectSolana, onConnectCosmos, onConnectFuel],
   );
 }
 
@@ -162,6 +182,7 @@ export function useDisconnectFns(): Record<ProtocolType, () => Promise<void>> {
   const disconnectEvm = useEthereumDisconnectFn();
   const disconnectSol = useSolanaDisconnectFn();
   const disconnectCosmos = useCosmosDisconnectFn();
+  const disconnectFuel = useFuelDisconnectFn();
 
   const onClickDisconnect =
     (env: ProtocolType, disconnectFn?: () => Promise<void> | void) =>
@@ -188,8 +209,9 @@ export function useDisconnectFns(): Record<ProtocolType, () => Promise<void>> {
         ProtocolType.Cosmos,
         disconnectCosmos,
       ),
+      [ProtocolType.Fuel]: onClickDisconnect(ProtocolType.Fuel, disconnectFuel),
     }),
-    [disconnectEvm, disconnectSol, disconnectCosmos],
+    [disconnectEvm, disconnectSol, disconnectCosmos, disconnectFuel],
   );
 }
 
@@ -200,10 +222,14 @@ export function useActiveChains(multiProvider: MultiProtocolProvider): {
   const evmChain = useEthereumActiveChain(multiProvider);
   const solChain = useSolanaActiveChain(multiProvider);
   const cosmChain = useCosmosActiveChain(multiProvider);
+  const fuelChain = useFuelActiveChain(multiProvider);
 
   const readyChains = useMemo(
-    () => [evmChain, solChain, cosmChain].filter((c) => !!c.chainDisplayName),
-    [evmChain, solChain, cosmChain],
+    () =>
+      [evmChain, solChain, cosmChain, fuelChain].filter(
+        (c) => !!c.chainDisplayName,
+      ),
+    [evmChain, solChain, cosmChain, fuelChain],
   );
 
   return useMemo(
@@ -212,10 +238,11 @@ export function useActiveChains(multiProvider: MultiProtocolProvider): {
         [ProtocolType.Ethereum]: evmChain,
         [ProtocolType.Sealevel]: solChain,
         [ProtocolType.Cosmos]: cosmChain,
+        [ProtocolType.Fuel]: fuelChain,
       },
       readyChains,
     }),
-    [evmChain, solChain, cosmChain, readyChains],
+    [evmChain, solChain, cosmChain, fuelChain, readyChains],
   );
 }
 
@@ -228,6 +255,8 @@ export function useTransactionFns(
     useSolanaTransactionFns(multiProvider);
   const { switchNetwork: onSwitchCosmNetwork, sendTransaction: onSendCosmTx } =
     useCosmosTransactionFns(multiProvider);
+  const { switchNetwork: onSwitchFuelNetwork, sendTransaction: onSendFuelTx } =
+    useFuelTransactionFns(multiProvider);
 
   return useMemo(
     () => ({
@@ -243,6 +272,10 @@ export function useTransactionFns(
         sendTransaction: onSendCosmTx,
         switchNetwork: onSwitchCosmNetwork,
       },
+      [ProtocolType.Fuel]: {
+        sendTransaction: onSendFuelTx,
+        switchNetwork: onSwitchFuelNetwork,
+      },
     }),
     [
       onSendEvmTx,
@@ -251,6 +284,8 @@ export function useTransactionFns(
       onSwitchSolNetwork,
       onSendCosmTx,
       onSwitchCosmNetwork,
+      onSendFuelTx,
+      onSwitchFuelNetwork,
     ],
   );
 }

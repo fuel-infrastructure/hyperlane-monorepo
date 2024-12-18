@@ -48,6 +48,12 @@ import {
   EvmNativeTokenAdapter,
   EvmTokenAdapter,
 } from './adapters/EvmTokenAdapter.js';
+import {
+  FuelHypCollateralAdapter,
+  FuelHypNativeAdapter,
+  FuelHypSyntheticAdapter,
+  FuelNativeTokenAdapter,
+} from './adapters/FuelTokenAdapter.js';
 import type {
   IHypTokenAdapter,
   ITokenAdapter,
@@ -146,6 +152,10 @@ export class Token implements IToken {
         {},
         addressOrDenom,
       );
+    } else if (standard === TokenStandard.FuelNative) {
+      return new FuelNativeTokenAdapter(chainName, multiProvider, {
+        token: addressOrDenom,
+      });
     } else if (this.isHypToken()) {
       return this.getHypAdapter(multiProvider);
     } else if (this.isIbcToken()) {
@@ -283,6 +293,41 @@ export class Token implements IToken {
         warpRouter: addressOrDenom,
         token: collateralAddressOrDenom,
       });
+    } else if (standard === TokenStandard.FuelHypNative) {
+      assert(
+        collateralAddressOrDenom,
+        'collateralAddressOrDenom required for FuelHypNative',
+      );
+      return new FuelHypNativeAdapter(chainName as ChainName, multiProvider, {
+        warpRouter: addressOrDenom,
+        token: collateralAddressOrDenom,
+      });
+    } else if (standard === TokenStandard.FuelHypCollateral) {
+      assert(
+        collateralAddressOrDenom,
+        'collateralAddressOrDenom required for FuelHypCollateral',
+      );
+      return new FuelHypCollateralAdapter(
+        chainName as ChainName,
+        multiProvider,
+        {
+          warpRouter: addressOrDenom,
+          token: collateralAddressOrDenom,
+        },
+      );
+    } else if (standard === TokenStandard.FuelHypSynthetic) {
+      assert(
+        collateralAddressOrDenom,
+        'collateralAddressOrDenom required for FuelHypSynthetic',
+      );
+      return new FuelHypSyntheticAdapter(
+        chainName as ChainName,
+        multiProvider,
+        {
+          warpRouter: addressOrDenom,
+          token: collateralAddressOrDenom,
+        },
+      );
     } else if (standard === TokenStandard.CosmosIbc) {
       assert(destination, 'destination required for IBC token adapters');
       const connection = this.getConnectionForChain(destination);

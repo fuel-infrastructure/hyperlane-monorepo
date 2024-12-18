@@ -27,5 +27,8 @@ export function stubMultiProtocolProvider(
     getBalance: async () => '100',
     getTokenAccountBalance: async () => ({ value: { amount: '100' } }),
   } as any);
+  sandbox.stub(multiProvider, 'getFuelProvider').returns({
+    getBalance: async () => '100',
+  } as any);
   return sandbox;
 }
