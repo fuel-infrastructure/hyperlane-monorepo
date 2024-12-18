@@ -5,3 +5,4 @@
 */
 
 export { Mailbox } from './Mailbox.js';
+export { WarpRoute } from './WarpRoute.js';

@@ -1,9 +1,9 @@
-import { Contract, Provider, TransactionRequest, Wallet } from 'fuels';
+import { BN, Provider, TransactionRequest, Wallet } from 'fuels';
 
 import { Address, Domain, Numberish } from '@hyperlane-xyz/utils';
 
 import { BaseFuelAdapter } from '../../app/MultiProtocolApp.js';
-import warpRouteAbi from '../../fuel-types/abis/Warp-route-abi.json' assert { type: 'json' };
+import { TokenMetadataOutput, WarpRoute } from '../../fuel-types/WarpRoute.js';
 import { MultiProtocolProvider } from '../../providers/MultiProtocolProvider.js';
 import { ChainName } from '../../types.js';
 import { TokenMetadata } from '../types.js';
@@ -77,7 +77,7 @@ export class BaseFuelHypTokenAdapter
   extends BaseFuelAdapter
   implements IHypTokenAdapter<TransactionRequest>
 {
-  protected contract!: Contract;
+  protected contract!: WarpRoute;
   protected provider!: Provider;
 
   constructor(
@@ -90,11 +90,7 @@ export class BaseFuelHypTokenAdapter
 
   async initialize() {
     this.provider = await this.getProvider();
-    this.contract = new Contract(
-      this.addresses.warpRouter,
-      warpRouteAbi,
-      this.provider,
-    );
+    this.contract = new WarpRoute(this.addresses.warpRouter, this.provider);
   }
 
   async isApproveRequired(): Promise<boolean> {
@@ -114,8 +110,12 @@ export class BaseFuelHypTokenAdapter
     }
 
     const tx = this.contract.functions
-      .transfer_remote(destination, recipient, weiAmountOrId, {
-        value: gasPayment.toString(),
+      .transfer_remote(destination, recipient, new BN(weiAmountOrId.toString()))
+      .callParams({
+        forward: {
+          amount: gasPayment.toString(),
+          assetId: this.provider.getBaseAssetId(),
+        },
       })
       .getTransactionRequest();
 
@@ -124,7 +124,7 @@ export class BaseFuelHypTokenAdapter
 
   async getRouterAddress(domain: Domain): Promise<Buffer> {
     await this.initialize();
-    const remoteRouter = await this.contract.functions.routers(domain).get();
+    const remoteRouter = await this.contract.functions.router(domain).get();
     if (!remoteRouter.value) throw new Error(`No router found for ${domain}`);
     return Buffer.from(remoteRouter.value.toString(), 'hex');
   }
@@ -166,8 +166,17 @@ export class BaseFuelHypTokenAdapter
     return domains.value as Domain[];
   }
   async getAllRouters(): Promise<Array<{ domain: Domain; address: Buffer }>> {
-    const routers = await this.contract.functions.all_routers().get();
-    return routers.value as Array<{ domain: Domain; address: Buffer }>;
+    const domains = await this.contract.functions.all_domains().get();
+    const domainsArray = domains.value as Domain[];
+
+    const routers = await Promise.all(
+      domainsArray.map(async (domain) => ({
+        domain,
+        address: await this.getRouterAddress(domain),
+      })),
+    );
+
+    return routers;
   }
   async getMinimumTransferAmount(_recipient: Address): Promise<bigint> {
     return 0n;
@@ -198,8 +207,12 @@ export class FuelHypNativeAdapter extends BaseFuelHypTokenAdapter {
 
     const totalPayment = gasPayment + BigInt(weiAmountOrId.toString());
     const tx = this.contract.functions
-      .transfer_remote(destination, recipient, weiAmountOrId, {
-        value: totalPayment.toString(),
+      .transfer_remote(destination, recipient, new BN(weiAmountOrId.toString()))
+      .callParams({
+        forward: {
+          amount: totalPayment.toString(),
+          assetId: this.provider.getBaseAssetId(),
+        },
       })
       .getTransactionRequest();
 
@@ -227,7 +240,7 @@ export class FuelHypCollateralAdapter extends BaseFuelHypTokenAdapter {
   async getMetadata(): Promise<TokenMetadata> {
     await this.initialize();
     const Metadata = await this.contract.functions.get_token_info().get();
-    return Metadata.value as TokenMetadata;
+    return convertTokenInfoToMetadata(Metadata.value as TokenMetadataOutput);
   }
 
   async populateTransferTx({
@@ -249,7 +262,7 @@ export class FuelHypSyntheticAdapter extends BaseFuelHypTokenAdapter {
   async getMetadata(): Promise<TokenMetadata> {
     await this.initialize();
     const Metadata = await this.contract.functions.get_token_info().get();
-    return Metadata.value as TokenMetadata;
+    return convertTokenInfoToMetadata(Metadata.value as TokenMetadataOutput);
   }
 
   async getBridgedSupply(): Promise<bigint | undefined> {
@@ -257,3 +270,15 @@ export class FuelHypSyntheticAdapter extends BaseFuelHypTokenAdapter {
     return BigInt(metadata.totalSupply.toString());
   }
 }
+
+const convertTokenInfoToMetadata = (
+  info: TokenMetadataOutput,
+): TokenMetadata => {
+  return {
+    symbol: info.symbol,
+    name: info.name,
+    totalSupply: info.total_supply.toString(),
+    decimals: info.decimals,
+    isNft: false,
+  };
+};
