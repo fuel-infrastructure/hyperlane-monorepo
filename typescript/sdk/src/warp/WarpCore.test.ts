@@ -38,6 +38,8 @@ describe('WarpCore', () => {
   let cw20: Token;
   let cosmosIbc: Token;
   let fuelHypNative: Token;
+  let fuelHypSynthetic: Token;
+  let fuelHypCollateral: Token;
 
   // Stub MultiProvider fee estimation to avoid real network calls
   sinon
@@ -62,6 +64,8 @@ describe('WarpCore', () => {
       evmHypSynthetic,
       sealevelHypSynthetic,
       fuelHypNative,
+      fuelHypSynthetic,
+      fuelHypCollateral,
       cwHypCollateral,
       cw20,
       cosmosIbc,
@@ -85,6 +89,12 @@ describe('WarpCore', () => {
       .to.be.null;
     expect(
       warpCore.findToken(testFuelChain.name, fuelHypNative.addressOrDenom),
+    ).to.be.instanceOf(Token);
+    expect(
+      warpCore.findToken(testFuelChain.name, fuelHypSynthetic.addressOrDenom),
+    ).to.be.instanceOf(Token);
+    expect(
+      warpCore.findToken(testFuelChain.name, fuelHypCollateral.addressOrDenom),
     ).to.be.instanceOf(Token);
   });
 
@@ -322,6 +332,8 @@ describe('WarpCore', () => {
     await testGetTxs(cwHypCollateral, test1.name, ProviderType.CosmJsWasm);
     await testGetTxs(cosmosIbc, test1.name, ProviderType.CosmJs);
     await testGetTxs(fuelHypNative, testFuelChain.name, ProviderType.Fuels);
+    await testGetTxs(fuelHypSynthetic, testFuelChain.name, ProviderType.Fuels);
+    await testGetTxs(fuelHypCollateral, testFuelChain.name, ProviderType.Fuels);
 
     coreStub.restore();
     adapterStubs.forEach((s) => s.restore());

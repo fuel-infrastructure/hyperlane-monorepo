@@ -46,11 +46,43 @@
       "metadataTypeId": 5
     },
     {
+      "type": "enum std::option::Option<b256>",
+      "concreteTypeId": "0c2beb9013490c4f753f2757dfe2d8340b22ce3827d596d81d249b7038033cb6",
+      "metadataTypeId": 6,
+      "typeArguments": [
+        "7c5ee1cecf5f8eacd1284feb5f0bf2bdea533a51e2f0c9aabe9236d335989f3b"
+      ]
+    },
+    {
       "type": "enum std::option::Option<struct std::asset_id::AssetId>",
       "concreteTypeId": "191bf2140761b3c5ab6c43992d162bb3dc9d7f2272b2ee5f5eeea411ddedcd32",
       "metadataTypeId": 6,
       "typeArguments": [
         "c0710b6731b1dd59799cf6bef33eee3b3b04a2e40e80a0724090215bbf2ca974"
+      ]
+    },
+    {
+      "type": "enum std::option::Option<struct std::string::String>",
+      "concreteTypeId": "7c06d929390a9aeeb8ffccf8173ac0d101a9976d99dda01cce74541a81e75ac0",
+      "metadataTypeId": 6,
+      "typeArguments": [
+        "9a7f1d3e963c10e0a4ea70a8e20a4813d1dc5682e28f74cb102ae50d32f7f98c"
+      ]
+    },
+    {
+      "type": "enum std::option::Option<u64>",
+      "concreteTypeId": "d852149004cc9ec0bbe7dc4e37bffea1d41469b759512b6136f2e865a4c06e7d",
+      "metadataTypeId": 6,
+      "typeArguments": [
+        "1506e6f44c1d6291cdf46395a8e573276a4fa79e8ace3fc891e092ef32d1b0a0"
+      ]
+    },
+    {
+      "type": "enum std::option::Option<u8>",
+      "concreteTypeId": "2da102c46c7263beeed95818cd7bee801716ba8303dddafdcd0f6c9efda4a0f1",
+      "metadataTypeId": 6,
+      "typeArguments": [
+        "c89951a24c6ca28c13fd1cfdc646b2b656d69e61a92b91023be7eb58eb914b6b"
       ]
     },
     {
@@ -278,11 +310,15 @@
       "metadataTypeId": 2,
       "components": [
         {
-          "name": "BRIDGED",
+          "name": "SYNTHETIC",
           "typeId": "2e38e77b22c314a449e91fafed92a43826ac6aa403ae6a8acb6cf58239fbaf5d"
         },
         {
           "name": "COLLATERAL",
+          "typeId": "2e38e77b22c314a449e91fafed92a43826ac6aa403ae6a8acb6cf58239fbaf5d"
+        },
+        {
+          "name": "NATIVE",
           "typeId": "2e38e77b22c314a449e91fafed92a43826ac6aa403ae6a8acb6cf58239fbaf5d"
         }
       ]
@@ -342,7 +378,9 @@
           "typeId": 13
         }
       ],
-      "typeParameters": [13]
+      "typeParameters": [
+        13
+      ]
     },
     {
       "type": "enum sway_libs::asset::errors::BurnError",
@@ -679,7 +717,9 @@
           "typeId": "1506e6f44c1d6291cdf46395a8e573276a4fa79e8ace3fc891e092ef32d1b0a0"
         }
       ],
-      "typeParameters": [13]
+      "typeParameters": [
+        13
+      ]
     },
     {
       "type": "struct std::vec::Vec",
@@ -700,7 +740,9 @@
           "typeId": "1506e6f44c1d6291cdf46395a8e573276a4fa79e8ace3fc891e092ef32d1b0a0"
         }
       ],
-      "typeParameters": [13]
+      "typeParameters": [
+        13
+      ]
     },
     {
       "type": "struct sway_libs::ownership::events::OwnershipRenounced",
@@ -751,15 +793,21 @@
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" ### Returns"]
+          "arguments": [
+            " ### Returns"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
@@ -769,7 +817,9 @@
         },
         {
           "name": "storage",
-          "arguments": ["read"]
+          "arguments": [
+            "read"
+          ]
         }
       ]
     },
@@ -786,23 +836,33 @@
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" ### Returns"]
+          "arguments": [
+            " ### Returns"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" * [ContractId] - The post dispatch hook contract ID"]
+          "arguments": [
+            " * [ContractId] - The post dispatch hook contract ID"
+          ]
         },
         {
           "name": "storage",
-          "arguments": ["read"]
+          "arguments": [
+            "read"
+          ]
         }
       ]
     },
@@ -819,23 +879,33 @@
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" ### Returns"]
+          "arguments": [
+            " ### Returns"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" * [ContractId] - The mailbox contract ID"]
+          "arguments": [
+            " * [ContractId] - The mailbox contract ID"
+          ]
         },
         {
           "name": "storage",
-          "arguments": ["read"]
+          "arguments": [
+            "read"
+          ]
         }
       ]
     },
@@ -846,27 +916,39 @@
       "attributes": [
         {
           "name": "doc-comment",
-          "arguments": [" Gets the token metadata of the WarpRoute contract"]
+          "arguments": [
+            " Gets the token metadata of the WarpRoute contract"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" ### Returns"]
+          "arguments": [
+            " ### Returns"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" * [TokenMetadata] - The token metadata"]
+          "arguments": [
+            " * [TokenMetadata] - The token metadata"
+          ]
         },
         {
           "name": "storage",
-          "arguments": ["read"]
+          "arguments": [
+            "read"
+          ]
         }
       ]
     },
@@ -877,27 +959,39 @@
       "attributes": [
         {
           "name": "doc-comment",
-          "arguments": [" Gets the token mode of the WarpRoute contract"]
+          "arguments": [
+            " Gets the token mode of the WarpRoute contract"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" ### Returns"]
+          "arguments": [
+            " ### Returns"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" * [WarpRouteTokenMode] - The token mode"]
+          "arguments": [
+            " * [WarpRouteTokenMode] - The token mode"
+          ]
         },
         {
           "name": "storage",
-          "arguments": ["read"]
+          "arguments": [
+            "read"
+          ]
         }
       ]
     },
@@ -921,23 +1015,27 @@
         },
         {
           "name": "token_name",
-          "concreteTypeId": "9a7f1d3e963c10e0a4ea70a8e20a4813d1dc5682e28f74cb102ae50d32f7f98c"
+          "concreteTypeId": "7c06d929390a9aeeb8ffccf8173ac0d101a9976d99dda01cce74541a81e75ac0"
         },
         {
           "name": "token_symbol",
-          "concreteTypeId": "9a7f1d3e963c10e0a4ea70a8e20a4813d1dc5682e28f74cb102ae50d32f7f98c"
+          "concreteTypeId": "7c06d929390a9aeeb8ffccf8173ac0d101a9976d99dda01cce74541a81e75ac0"
         },
         {
           "name": "decimals",
-          "concreteTypeId": "c89951a24c6ca28c13fd1cfdc646b2b656d69e61a92b91023be7eb58eb914b6b"
+          "concreteTypeId": "2da102c46c7263beeed95818cd7bee801716ba8303dddafdcd0f6c9efda4a0f1"
         },
         {
           "name": "total_supply",
-          "concreteTypeId": "1506e6f44c1d6291cdf46395a8e573276a4fa79e8ace3fc891e092ef32d1b0a0"
+          "concreteTypeId": "d852149004cc9ec0bbe7dc4e37bffea1d41469b759512b6136f2e865a4c06e7d"
         },
         {
           "name": "asset_id",
           "concreteTypeId": "191bf2140761b3c5ab6c43992d162bb3dc9d7f2272b2ee5f5eeea411ddedcd32"
+        },
+        {
+          "name": "asset_contract_id",
+          "concreteTypeId": "0c2beb9013490c4f753f2757dfe2d8340b22ce3827d596d81d249b7038033cb6"
         }
       ],
       "name": "initialize",
@@ -945,19 +1043,27 @@
       "attributes": [
         {
           "name": "doc-comment",
-          "arguments": [" Initializes the WarpRoute contract"]
+          "arguments": [
+            " Initializes the WarpRoute contract"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" ### Arguments"]
+          "arguments": [
+            " ### Arguments"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
@@ -985,11 +1091,15 @@
         },
         {
           "name": "doc-comment",
-          "arguments": [" * `token_name`: [string] - The name of the token"]
+          "arguments": [
+            " * `token_name`: [string] - The name of the token"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" * `token_symbol`: [string] - The symbol of the token"]
+          "arguments": [
+            " * `token_symbol`: [string] - The symbol of the token"
+          ]
         },
         {
           "name": "doc-comment",
@@ -1011,27 +1121,40 @@
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" ### Reverts"]
+          "arguments": [
+            " ### Reverts"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" * If the contract is already initialized"]
+          "arguments": [
+            " * If the contract is already initialized"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" * If the asset ID is not provided in collateral mode"]
+          "arguments": [
+            " * If the asset ID is not provided in collateral mode"
+          ]
         },
         {
           "name": "storage",
-          "arguments": ["read", "write"]
+          "arguments": [
+            "read",
+            "write"
+          ]
         }
       ]
     },
@@ -1047,19 +1170,27 @@
       "attributes": [
         {
           "name": "doc-comment",
-          "arguments": [" Gets the quote for gas payment"]
+          "arguments": [
+            " Gets the quote for gas payment"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" ### Arguments"]
+          "arguments": [
+            " ### Arguments"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
@@ -1069,7 +1200,9 @@
         },
         {
           "name": "storage",
-          "arguments": ["read"]
+          "arguments": [
+            "read"
+          ]
         }
       ]
     },
@@ -1091,15 +1224,21 @@
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" ### Arguments"]
+          "arguments": [
+            " ### Arguments"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
@@ -1109,27 +1248,39 @@
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" ### Reverts"]
+          "arguments": [
+            " ### Reverts"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" * If the caller is not the owner"]
+          "arguments": [
+            " * If the caller is not the owner"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" * If the hook address is zero"]
+          "arguments": [
+            " * If the hook address is zero"
+          ]
         },
         {
           "name": "storage",
-          "arguments": ["write"]
+          "arguments": [
+            "write"
+          ]
         }
       ]
     },
@@ -1145,27 +1296,40 @@
       "attributes": [
         {
           "name": "doc-comment",
-          "arguments": [" Sets the default ISM"]
+          "arguments": [
+            " Sets the default ISM"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" ### Arguments"]
+          "arguments": [
+            " ### Arguments"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" * `module`: [ContractId] - The ISM contract ID"]
+          "arguments": [
+            " * `module`: [ContractId] - The ISM contract ID"
+          ]
         },
         {
           "name": "storage",
-          "arguments": ["read", "write"]
+          "arguments": [
+            "read",
+            "write"
+          ]
         }
       ]
     },
@@ -1187,15 +1351,21 @@
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" ### Arguments"]
+          "arguments": [
+            " ### Arguments"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
@@ -1205,27 +1375,39 @@
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" ### Reverts"]
+          "arguments": [
+            " ### Reverts"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" * If the caller is not the owner"]
+          "arguments": [
+            " * If the caller is not the owner"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" * If the mailbox address is zero"]
+          "arguments": [
+            " * If the mailbox address is zero"
+          ]
         },
         {
           "name": "storage",
-          "arguments": ["write"]
+          "arguments": [
+            "write"
+          ]
         }
       ]
     },
@@ -1249,19 +1431,27 @@
       "attributes": [
         {
           "name": "doc-comment",
-          "arguments": [" Transfers tokens to a remote domain"]
+          "arguments": [
+            " Transfers tokens to a remote domain"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" ### Arguments"]
+          "arguments": [
+            " ### Arguments"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
@@ -1271,35 +1461,51 @@
         },
         {
           "name": "doc-comment",
-          "arguments": [" * `recipient`: [b256] - The address of the recipient"]
+          "arguments": [
+            " * `recipient`: [b256] - The address of the recipient"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" * `amount`: [u64] - The amount of tokens to transfer"]
+          "arguments": [
+            " * `amount`: [u64] - The amount of tokens to transfer"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" ### Reverts"]
+          "arguments": [
+            " ### Reverts"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" * If the contract is paused"]
+          "arguments": [
+            " * If the contract is paused"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" * If reentrancy is detected"]
+          "arguments": [
+            " * If reentrancy is detected"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" * If the amount provided is greater than amount sent"]
+          "arguments": [
+            " * If the amount provided is greater than amount sent"
+          ]
         },
         {
           "name": "doc-comment",
@@ -1309,7 +1515,9 @@
         },
         {
           "name": "doc-comment",
-          "arguments": [" * If any external call fails"]
+          "arguments": [
+            " * If any external call fails"
+          ]
         },
         {
           "name": "payable",
@@ -1317,7 +1525,96 @@
         },
         {
           "name": "storage",
-          "arguments": ["read", "write"]
+          "arguments": [
+            "read",
+            "write"
+          ]
+        }
+      ]
+    },
+    {
+      "inputs": [],
+      "name": "all_domains",
+      "output": "13c38f4111bad6468fad4f8ea82fd744546b63be49db9439fb3d94e14ae2bb3a",
+      "attributes": [
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " Gets all domains enrolled in the contract"
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            ""
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " ### Returns"
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            ""
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " * [Vec<u32>] - The domains enrolled in the contract"
+          ]
+        },
+        {
+          "name": "storage",
+          "arguments": [
+            "read"
+          ]
+        }
+      ]
+    },
+    {
+      "inputs": [],
+      "name": "all_routers",
+      "output": "32559685d0c9845f059bf9d472a0a38cf77d36c23dfcffe5489e86a65cdd9198",
+      "attributes": [
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " Gets all routers enrolled in the contract"
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            ""
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " ### Returns"
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            ""
+          ]
+        },
+        {
+          "name": "doc-comment",
+          "arguments": [
+            " * [Vec<b256>] - The routers enrolled in the contract"
+          ]
+        },
+        {
+          "name": "storage",
+          "arguments": [
+            "read"
+          ]
         }
       ]
     },
@@ -1337,31 +1634,46 @@
       "attributes": [
         {
           "name": "doc-comment",
-          "arguments": [" Enrolls a new router for a specific domain"]
+          "arguments": [
+            " Enrolls a new router for a specific domain"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" ### Arguments"]
+          "arguments": [
+            " ### Arguments"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" * `domain`: [u32] - The domain to enroll"]
+          "arguments": [
+            " * `domain`: [u32] - The domain to enroll"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" * `router`: [b256] - The router address to enroll"]
+          "arguments": [
+            " * `router`: [b256] - The router address to enroll"
+          ]
         },
         {
           "name": "storage",
-          "arguments": ["read", "write"]
+          "arguments": [
+            "read",
+            "write"
+          ]
         }
       ]
     },
@@ -1381,23 +1693,33 @@
       "attributes": [
         {
           "name": "doc-comment",
-          "arguments": [" Batch enrolls multiple routers for multiple domains"]
+          "arguments": [
+            " Batch enrolls multiple routers for multiple domains"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" ### Arguments"]
+          "arguments": [
+            " ### Arguments"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" * `domains`: [Vec<u32>] - The domains to enroll"]
+          "arguments": [
+            " * `domains`: [Vec<u32>] - The domains to enroll"
+          ]
         },
         {
           "name": "doc-comment",
@@ -1407,15 +1729,21 @@
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" ### Reverts"]
+          "arguments": [
+            " ### Reverts"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
@@ -1425,7 +1753,10 @@
         },
         {
           "name": "storage",
-          "arguments": ["read", "write"]
+          "arguments": [
+            "read",
+            "write"
+          ]
         }
       ]
     },
@@ -1441,27 +1772,39 @@
       "attributes": [
         {
           "name": "doc-comment",
-          "arguments": [" Gets the decimals for a specific remote router"]
+          "arguments": [
+            " Gets the decimals for a specific remote router"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" ### Arguments"]
+          "arguments": [
+            " ### Arguments"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" * `router`: [b256] - The router to query"]
+          "arguments": [
+            " * `router`: [b256] - The router to query"
+          ]
         },
         {
           "name": "storage",
-          "arguments": ["read"]
+          "arguments": [
+            "read"
+          ]
         }
       ]
     },
@@ -1477,35 +1820,51 @@
       "attributes": [
         {
           "name": "doc-comment",
-          "arguments": [" Gets the router address for a specific domain"]
+          "arguments": [
+            " Gets the router address for a specific domain"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" ### Arguments"]
+          "arguments": [
+            " ### Arguments"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" * `domain`: [u32] - The domain to query"]
+          "arguments": [
+            " * `domain`: [u32] - The domain to query"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" ### Returns"]
+          "arguments": [
+            " ### Returns"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
@@ -1515,7 +1874,9 @@
         },
         {
           "name": "storage",
-          "arguments": ["read"]
+          "arguments": [
+            "read"
+          ]
         }
       ]
     },
@@ -1535,31 +1896,45 @@
       "attributes": [
         {
           "name": "doc-comment",
-          "arguments": [" Sets the decimals for a specific remote router"]
+          "arguments": [
+            " Sets the decimals for a specific remote router"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" ### Arguments"]
+          "arguments": [
+            " ### Arguments"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" * `router`: [b256] - The router to set"]
+          "arguments": [
+            " * `router`: [b256] - The router to set"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" * `decimals`: [u8] - The decimals to set"]
+          "arguments": [
+            " * `decimals`: [u8] - The decimals to set"
+          ]
         },
         {
           "name": "storage",
-          "arguments": ["write"]
+          "arguments": [
+            "write"
+          ]
         }
       ]
     },
@@ -1575,19 +1950,27 @@
       "attributes": [
         {
           "name": "doc-comment",
-          "arguments": [" Removes a router for a specific domain"]
+          "arguments": [
+            " Removes a router for a specific domain"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" ### Arguments"]
+          "arguments": [
+            " ### Arguments"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
@@ -1597,7 +1980,9 @@
         },
         {
           "name": "storage",
-          "arguments": ["write"]
+          "arguments": [
+            "write"
+          ]
         }
       ]
     },
@@ -1621,51 +2006,75 @@
       "attributes": [
         {
           "name": "doc-comment",
-          "arguments": [" Handles a transfer from a remote domain"]
+          "arguments": [
+            " Handles a transfer from a remote domain"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" ### Arguments"]
+          "arguments": [
+            " ### Arguments"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" * `origin`: [u32] - The domain of the origin"]
+          "arguments": [
+            " * `origin`: [u32] - The domain of the origin"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" * `sender`: [b256] - The address of the sender"]
+          "arguments": [
+            " * `sender`: [b256] - The address of the sender"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" * `message_body`: [bytes] - The message body"]
+          "arguments": [
+            " * `message_body`: [bytes] - The message body"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" ### Reverts"]
+          "arguments": [
+            " ### Reverts"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [""]
+          "arguments": [
+            ""
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" * If the contract is paused"]
+          "arguments": [
+            " * If the contract is paused"
+          ]
         },
         {
           "name": "doc-comment",
-          "arguments": [" * If the message has already been delivered"]
+          "arguments": [
+            " * If the message has already been delivered"
+          ]
         },
         {
           "name": "doc-comment",
@@ -1675,7 +2084,10 @@
         },
         {
           "name": "storage",
-          "arguments": ["read", "write"]
+          "arguments": [
+            "read",
+            "write"
+          ]
         }
       ]
     },
@@ -1686,7 +2098,9 @@
       "attributes": [
         {
           "name": "storage",
-          "arguments": ["read"]
+          "arguments": [
+            "read"
+          ]
         }
       ]
     },
@@ -1697,7 +2111,9 @@
       "attributes": [
         {
           "name": "storage",
-          "arguments": ["read"]
+          "arguments": [
+            "read"
+          ]
         }
       ]
     },
@@ -1713,7 +2129,9 @@
       "attributes": [
         {
           "name": "storage",
-          "arguments": ["read"]
+          "arguments": [
+            "read"
+          ]
         }
       ]
     },
@@ -1729,7 +2147,10 @@
       "attributes": [
         {
           "name": "storage",
-          "arguments": ["read", "write"]
+          "arguments": [
+            "read",
+            "write"
+          ]
         }
       ]
     },
@@ -1740,7 +2161,9 @@
       "attributes": [
         {
           "name": "storage",
-          "arguments": ["read"]
+          "arguments": [
+            "read"
+          ]
         }
       ]
     },
@@ -1751,7 +2174,9 @@
       "attributes": [
         {
           "name": "storage",
-          "arguments": ["write"]
+          "arguments": [
+            "write"
+          ]
         }
       ]
     },
@@ -1762,7 +2187,9 @@
       "attributes": [
         {
           "name": "storage",
-          "arguments": ["write"]
+          "arguments": [
+            "write"
+          ]
         }
       ]
     },
@@ -1778,7 +2205,10 @@
       "attributes": [
         {
           "name": "storage",
-          "arguments": ["read", "write"]
+          "arguments": [
+            "read",
+            "write"
+          ]
         }
       ]
     },
@@ -1789,7 +2219,9 @@
       "attributes": [
         {
           "name": "storage",
-          "arguments": ["read"]
+          "arguments": [
+            "read"
+          ]
         }
       ]
     },
@@ -1800,7 +2232,9 @@
       "attributes": [
         {
           "name": "storage",
-          "arguments": ["read"]
+          "arguments": [
+            "read"
+          ]
         }
       ]
     },
@@ -1811,7 +2245,10 @@
       "attributes": [
         {
           "name": "storage",
-          "arguments": ["read", "write"]
+          "arguments": [
+            "read",
+            "write"
+          ]
         }
       ]
     },
@@ -1827,7 +2264,9 @@
       "attributes": [
         {
           "name": "storage",
-          "arguments": ["write"]
+          "arguments": [
+            "write"
+          ]
         }
       ]
     }
@@ -1923,7 +2362,7 @@
     {
       "name": "MAX_SUPPLY",
       "concreteTypeId": "1506e6f44c1d6291cdf46395a8e573276a4fa79e8ace3fc891e092ef32d1b0a0",
-      "offset": 82032
+      "offset": 97520
     }
   ]
 }

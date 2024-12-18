@@ -179,28 +179,7 @@ const STANDARD_TO_TOKEN: Record<TokenStandard, TokenArgs | null> = {
     symbol: 'ASTRO',
     name: 'ASTRO',
   },
-  [TokenStandard.FuelNative]: {
-    chainName: testFuelChain.name,
-    standard: TokenStandard.FuelNative,
-    addressOrDenom:
-      '0xe4582f4e0bf3ff1dece741b7771868e4bb1b519a16f6bf49c884c88b896ddb93',
-    collateralAddressOrDenom:
-      '0xf8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad07',
-    decimals: 9,
-    symbol: 'ETH',
-    name: 'Ethereum',
-  },
-  [TokenStandard.FuelHypNative]: {
-    chainName: testFuelChain.name,
-    standard: TokenStandard.FuelHypNative,
-    addressOrDenom:
-      '0xe4582f4e0bf3ff1dece741b7771868e4bb1b519a16f6bf49c884c88b896ddb93',
-    collateralAddressOrDenom:
-      '0xf8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad07',
-    decimals: 9,
-    symbol: 'ETH',
-    name: 'Ethereum',
-  },
+
   [TokenStandard.CW721]: null,
   [TokenStandard.CwHypNative]: {
     chainName: testCosmosChain.name,
@@ -223,6 +202,52 @@ const STANDARD_TO_TOKEN: Record<TokenStandard, TokenArgs | null> = {
     name: 'TIA.n',
   },
   [TokenStandard.CwHypSynthetic]: null,
+
+  // Fuel
+  [TokenStandard.FuelNative]: {
+    chainName: testFuelChain.name,
+    standard: TokenStandard.FuelNative,
+    addressOrDenom:
+      '0xe4582f4e0bf3ff1dece741b7771868e4bb1b519a16f6bf49c884c88b896ddb93',
+    collateralAddressOrDenom:
+      '0xf8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad07',
+    decimals: 9,
+    symbol: 'ETH',
+    name: 'Ethereum',
+  },
+  [TokenStandard.FuelHypNative]: {
+    chainName: testFuelChain.name,
+    standard: TokenStandard.FuelHypNative,
+    addressOrDenom:
+      '0xe4582f4e0bf3ff1dece741b7771868e4bb1b519a16f6bf49c884c88b896ddb93',
+    collateralAddressOrDenom:
+      '0xf8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad07',
+    decimals: 9,
+    symbol: 'ETH',
+    name: 'Ethereum',
+  },
+  [TokenStandard.FuelHypSynthetic]: {
+    chainName: testFuelChain.name,
+    standard: TokenStandard.FuelHypSynthetic,
+    addressOrDenom:
+      '0xe4582f4e0bf3ff1dece741b7771868e4bb1b519a16f6bf49c884c88b896ddb93',
+    collateralAddressOrDenom:
+      '0xf8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad07',
+    decimals: 9,
+    symbol: 'ETH',
+    name: 'Ethereum',
+  },
+  [TokenStandard.FuelHypCollateral]: {
+    chainName: testFuelChain.name,
+    standard: TokenStandard.FuelHypCollateral,
+    addressOrDenom:
+      '0x7c139f5d8627a1497fcb3cf1ba8b8be57a7ae075339e729fa94435080e37b35c',
+    collateralAddressOrDenom:
+      '0xf8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad07',
+    decimals: 9,
+    symbol: 'ETH',
+    name: 'Ethereum',
+  },
 };
 
 const PROTOCOL_TO_ADDRESS_FOR_BALANCE_CHECK: Partial<

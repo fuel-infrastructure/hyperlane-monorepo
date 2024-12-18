@@ -33,6 +33,8 @@ export enum TokenStandard {
   // Fuel
   FuelNative = 'FuelNative',
   FuelHypNative = 'FuelHypNative',
+  FuelHypCollateral = 'FuelHypCollateral',
+  FuelHypSynthetic = 'FuelHypSynthetic',
 
   // Cosmos
   CosmosIcs20 = 'CosmosIcs20',
@@ -76,6 +78,8 @@ export const TOKEN_STANDARD_TO_PROTOCOL: Record<TokenStandard, ProtocolType> = {
   // Fuel
   FuelNative: ProtocolType.Fuel,
   FuelHypNative: ProtocolType.Fuel,
+  FuelHypCollateral: ProtocolType.Fuel,
+  FuelHypSynthetic: ProtocolType.Fuel,
 
   // Cosmos
   CosmosIcs20: ProtocolType.Cosmos,
@@ -114,6 +118,8 @@ export const TOKEN_COLLATERALIZED_STANDARDS = [
   TokenStandard.SealevelHypNative,
   TokenStandard.CwHypCollateral,
   TokenStandard.CwHypNative,
+  TokenStandard.FuelHypCollateral,
+  TokenStandard.FuelHypNative,
 ];
 
 export const XERC20_STANDARDS = [
@@ -140,6 +146,8 @@ export const TOKEN_HYP_STANDARDS = [
   TokenStandard.CwHypCollateral,
   TokenStandard.CwHypSynthetic,
   TokenStandard.FuelHypNative,
+  TokenStandard.FuelHypCollateral,
+  TokenStandard.FuelHypSynthetic,
 ];
 
 export const TOKEN_MULTI_CHAIN_STANDARDS = [

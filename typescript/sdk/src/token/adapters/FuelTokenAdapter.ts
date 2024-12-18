@@ -23,7 +23,7 @@ export class FuelNativeTokenAdapter
 {
   constructor(
     public readonly chainName: ChainName,
-    public readonly multiProvider: MultiProtocolProvider<any>,
+    public readonly multiProvider: MultiProtocolProvider,
     public readonly addresses: { token: Address },
   ) {
     super(chainName, multiProvider, addresses);
@@ -73,16 +73,16 @@ export class FuelNativeTokenAdapter
   }
 }
 
-export class FuelHypNativeAdapter
+export class BaseFuelHypTokenAdapter
   extends BaseFuelAdapter
   implements IHypTokenAdapter<TransactionRequest>
 {
-  private contract!: Contract;
-  private provider!: Provider;
+  protected contract!: Contract;
+  protected provider!: Provider;
 
   constructor(
     public readonly chainName: ChainName,
-    public readonly multiProvider: MultiProtocolProvider<any>,
+    public readonly multiProvider: MultiProtocolProvider,
     public readonly addresses: { token: Address; warpRouter: Address },
   ) {
     super(chainName, multiProvider, addresses);
@@ -141,6 +141,7 @@ export class FuelHypNativeAdapter
       addressOrDenom: this.addresses.token,
     };
   }
+
   async getBalance(address: Address): Promise<bigint> {
     await this.initialize();
     const wallet = Wallet.fromAddress(address, this.provider);
@@ -149,8 +150,78 @@ export class FuelHypNativeAdapter
   }
 
   async getTotalSupply(): Promise<bigint | undefined> {
+    throw new Error('Method not implemented.');
+  }
+
+  async getMetadata(): Promise<TokenMetadata> {
+    throw new Error('Method not implemented.');
+  }
+
+  async getBridgedSupply(): Promise<bigint | undefined> {
+    throw new Error('Method not implemented.');
+  }
+
+  async getDomains(): Promise<Domain[]> {
+    const domains = await this.contract.functions.all_domains().get();
+    return domains.value as Domain[];
+  }
+  async getAllRouters(): Promise<Array<{ domain: Domain; address: Buffer }>> {
+    const routers = await this.contract.functions.all_routers().get();
+    return routers.value as Array<{ domain: Domain; address: Buffer }>;
+  }
+  async getMinimumTransferAmount(_recipient: Address): Promise<bigint> {
+    return 0n;
+  }
+  async populateTransferTx(
+    _params: TransferParams,
+  ): Promise<TransactionRequest> {
+    throw new Error('Method not implemented.');
+  }
+  populateApproveTx(_params: TransferParams): Promise<TransactionRequest> {
+    throw new Error('Method not implemented.');
+  }
+}
+
+// Interacts with Hyp Native Fuel token
+export class FuelHypNativeAdapter extends BaseFuelHypTokenAdapter {
+  async populateTransferRemoteTx({
+    weiAmountOrId,
+    destination,
+    recipient,
+    interchainGas,
+  }: TransferRemoteParams): Promise<TransactionRequest> {
+    await this.initialize();
+    let gasPayment: bigint = 0n;
+    if (!interchainGas) {
+      gasPayment = (await this.quoteTransferRemoteGas(destination)).amount;
+    }
+
+    const totalPayment = gasPayment + BigInt(weiAmountOrId.toString());
+    const tx = this.contract.functions
+      .transfer_remote(destination, recipient, weiAmountOrId, {
+        value: totalPayment.toString(),
+      })
+      .getTransactionRequest();
+
+    return tx;
+  }
+
+  async populateTransferTx({
+    weiAmountOrId,
+    recipient,
+  }: TransferParams): Promise<TransactionRequest> {
+    const provider = await this.getProvider();
+    const wallet = Wallet.fromAddress(this.addresses.token, provider);
+    const tx = wallet.createTransfer(recipient, weiAmountOrId.toString());
+    return tx;
+  }
+}
+
+// Interacts with Hyp Collateral Fuel token
+export class FuelHypCollateralAdapter extends BaseFuelHypTokenAdapter {
+  async getTotalSupply(): Promise<bigint | undefined> {
     const metadata = await this.getMetadata();
-    return BigInt(metadata.totalSupply.toString() || 0);
+    return BigInt(metadata.totalSupply.toString());
   }
 
   async getMetadata(): Promise<TokenMetadata> {
@@ -159,26 +230,30 @@ export class FuelHypNativeAdapter
     return Metadata.value as TokenMetadata;
   }
 
-  async getBridgedSupply(): Promise<bigint | undefined> {
-    const metadata = await this.getMetadata();
-    return BigInt(metadata.totalSupply.toString() || 0);
-  }
-
-  async getMinimumTransferAmount(_recipient: Address): Promise<bigint> {
-    return 0n;
+  async populateTransferTx({
+    weiAmountOrId,
+    recipient,
+  }: TransferParams): Promise<TransactionRequest> {
+    const provider = await this.getProvider();
+    const wallet = Wallet.fromAddress(this.addresses.token, provider);
+    const tx = wallet.createTransfer(recipient, weiAmountOrId.toString());
+    return tx;
   }
   populateApproveTx(_params: TransferParams): Promise<TransactionRequest> {
     throw new Error('Method not implemented.');
   }
+}
 
-  populateTransferTx(_params: TransferParams): Promise<TransactionRequest> {
-    throw new Error('Method not implemented.');
+// Interacts with Hyp Synthetic Fuel token
+export class FuelHypSyntheticAdapter extends BaseFuelHypTokenAdapter {
+  async getMetadata(): Promise<TokenMetadata> {
+    await this.initialize();
+    const Metadata = await this.contract.functions.get_token_info().get();
+    return Metadata.value as TokenMetadata;
   }
 
-  getDomains(): Promise<Domain[]> {
-    throw new Error('Method not implemented.');
-  }
-  getAllRouters(): Promise<Array<{ domain: Domain; address: Buffer }>> {
-    throw new Error('Method not implemented.');
+  async getBridgedSupply(): Promise<bigint | undefined> {
+    const metadata = await this.getMetadata();
+    return BigInt(metadata.totalSupply.toString());
   }
 }

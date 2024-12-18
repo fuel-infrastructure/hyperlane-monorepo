@@ -33,7 +33,7 @@ tokens:
           token: cosmos|testcosmos|testcosmos1abcdefghijklmnopqrstuvwxyz1234567890ab,
         }
       - {
-          token: fuel|testfuel|0xf8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad07,
+          token: fuel|testfuel|0xf8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad06,
         }
   # testsealevel HypSynthetic
   - chainName: testsealevel
@@ -44,13 +44,34 @@ tokens:
     addressOrDenom: s0LaBcEeFgHiJkLmNoPqRsTuVwXyZ456789012345678
     connections:
       - { token: ethereum|test1|0x1234567890123456789012345678901234567890 }
-  #Fuel testfuel Collateralized token
+  #Fuel testfuel native token
   - chainName: testfuel
     standard: FuelHypNative
     decimals: 9
     symbol: ETH.fuel
     name: Ether on testfuel
     addressOrDenom: '0xf8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad07'
+    connections:
+      - { token: ethereum|test1|0x1234567890123456789012345678901234567890 }
+      - { token: ethereum|test2|0x9876543210987654321098765432109876543210 }
+  #Fuel testfuel Collateralized token
+  - chainName: testfuel
+    standard: FuelHypCollateral
+    decimals: 9
+    symbol: ETH.fuel
+    name: Ether on testfuel
+    addressOrDenom: '0xf8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad03'
+    collateralAddressOrDenom: '0xf8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad02'
+    connections:
+      - { token: ethereum|test1|0x1234567890123456789012345678901234567890 }
+      - { token: ethereum|test2|0x9876543210987654321098765432109876543210 }
+  #Fuel testfuel Synthetic token
+  - chainName: testfuel
+    standard: FuelHypSynthetic
+    decimals: 9
+    symbol: ETH.fuel
+    name: Ether on testfuel
+    addressOrDenom: '0xf8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad05'
     connections:
       - { token: ethereum|test1|0x1234567890123456789012345678901234567890 }
       - { token: ethereum|test2|0x9876543210987654321098765432109876543210 }
@@ -93,7 +114,7 @@ tokens:
     symbol: atom
     name: atom
     addressOrDenom: atom
-    
+
 options:
   interchainFeeConstants:
     - origin: testcosmos
