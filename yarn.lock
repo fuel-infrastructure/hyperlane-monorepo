@@ -7290,29 +7290,29 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fuel-ts/abi-coder@npm:0.97.0":
-  version: 0.97.0
-  resolution: "@fuel-ts/abi-coder@npm:0.97.0"
+"@fuel-ts/abi-coder@npm:0.97.2":
+  version: 0.97.2
+  resolution: "@fuel-ts/abi-coder@npm:0.97.2"
   dependencies:
-    "@fuel-ts/crypto": "npm:0.97.0"
-    "@fuel-ts/errors": "npm:0.97.0"
-    "@fuel-ts/hasher": "npm:^0.97.0"
-    "@fuel-ts/interfaces": "npm:0.97.0"
-    "@fuel-ts/math": "npm:0.97.0"
-    "@fuel-ts/utils": "npm:0.97.0"
+    "@fuel-ts/crypto": "npm:0.97.2"
+    "@fuel-ts/errors": "npm:0.97.2"
+    "@fuel-ts/hasher": "npm:^0.97.2"
+    "@fuel-ts/interfaces": "npm:0.97.2"
+    "@fuel-ts/math": "npm:0.97.2"
+    "@fuel-ts/utils": "npm:0.97.2"
     type-fest: "npm:^4.26.1"
-  checksum: 10/33a20d7c339e0eb7d21be198e4730e385d8ae35829b4d26d5982e61ec9ebeeb74afebf2f1acae81f2f5ddb5060301550d6141102af6823686d8fdc5185264153
+  checksum: 10/7e3bcf74e76eeb4b7ea2dece5a0c301d15787c254c978e2efcb81b2312a294d979aa2bdfe62a669376697b4c4ce89b6e29ddb50bafd017861d62f0920ff44a34
   languageName: node
   linkType: hard
 
-"@fuel-ts/abi-typegen@npm:0.97.0":
-  version: 0.97.0
-  resolution: "@fuel-ts/abi-typegen@npm:0.97.0"
+"@fuel-ts/abi-typegen@npm:0.97.2":
+  version: 0.97.2
+  resolution: "@fuel-ts/abi-typegen@npm:0.97.2"
   dependencies:
-    "@fuel-ts/errors": "npm:0.97.0"
-    "@fuel-ts/interfaces": "npm:^0.97.0"
-    "@fuel-ts/utils": "npm:0.97.0"
-    "@fuel-ts/versions": "npm:0.97.0"
+    "@fuel-ts/errors": "npm:0.97.2"
+    "@fuel-ts/interfaces": "npm:^0.97.2"
+    "@fuel-ts/utils": "npm:0.97.2"
+    "@fuel-ts/versions": "npm:0.97.2"
     commander: "npm:12.1.0"
     glob: "npm:^10.4.5"
     handlebars: "npm:^4.7.8"
@@ -7321,206 +7321,224 @@ __metadata:
     rimraf: "npm:^5.0.10"
   bin:
     fuels-typegen: typegen.js
-  checksum: 10/32f7426ca8d0af1f535b0a0e50c6a884292d059ab27fd3dffd3e2b4e29410c1d695ba7d23a3ebf483aed060160d37b01ae7cb1ab66638eddb726aca8cbcc2db7
+  checksum: 10/1b93c1e18d356e98d5bcd25e99992ce69447b5e8b012d61a520111670fd420c4b0030beb899abee0c2c6ab1bc21deb24762462e12683a8d5cc3204833f7124d9
   languageName: node
   linkType: hard
 
-"@fuel-ts/account@npm:0.97.0":
-  version: 0.97.0
-  resolution: "@fuel-ts/account@npm:0.97.0"
+"@fuel-ts/account@npm:0.97.2":
+  version: 0.97.2
+  resolution: "@fuel-ts/account@npm:0.97.2"
   dependencies:
-    "@fuel-ts/abi-coder": "npm:0.97.0"
-    "@fuel-ts/address": "npm:0.97.0"
-    "@fuel-ts/crypto": "npm:0.97.0"
-    "@fuel-ts/errors": "npm:0.97.0"
-    "@fuel-ts/hasher": "npm:0.97.0"
-    "@fuel-ts/interfaces": "npm:0.97.0"
-    "@fuel-ts/math": "npm:0.97.0"
-    "@fuel-ts/merkle": "npm:0.97.0"
-    "@fuel-ts/transactions": "npm:0.97.0"
-    "@fuel-ts/utils": "npm:0.97.0"
-    "@fuel-ts/versions": "npm:0.97.0"
+    "@fuel-ts/abi-coder": "npm:0.97.2"
+    "@fuel-ts/address": "npm:0.97.2"
+    "@fuel-ts/crypto": "npm:0.97.2"
+    "@fuel-ts/errors": "npm:0.97.2"
+    "@fuel-ts/hasher": "npm:0.97.2"
+    "@fuel-ts/interfaces": "npm:0.97.2"
+    "@fuel-ts/math": "npm:0.97.2"
+    "@fuel-ts/merkle": "npm:0.97.2"
+    "@fuel-ts/transactions": "npm:0.97.2"
+    "@fuel-ts/utils": "npm:0.97.2"
+    "@fuel-ts/versions": "npm:0.97.2"
     "@fuels/vm-asm": "npm:0.58.2"
     "@noble/curves": "npm:^1.6.0"
     events: "npm:^3.3.0"
     graphql: "npm:^16.9.0"
-    graphql-request: "npm:5.0.0"
+    graphql-request: "npm:^6.1.0"
     graphql-tag: "npm:^2.12.6"
     ramda: "npm:^0.30.1"
-  checksum: 10/9347fcb3f2e27eaab3c9da6487c0f2469e219b8ff2360010c50ff3d8120b75a57641df76a575a005d4d4d1e7fecaae2593583dce07539075fcbf8aae9307b308
+  checksum: 10/23b92050c2de523657994f0c9486848dcd55d4b06b80bd0ddfe9add277a3cc70e3486af973849fe065f76f1a86e107a8cf1c9033e80b6ed48e75bccef6bd59c1
   languageName: node
   linkType: hard
 
-"@fuel-ts/address@npm:0.97.0":
-  version: 0.97.0
-  resolution: "@fuel-ts/address@npm:0.97.0"
+"@fuel-ts/address@npm:0.97.2":
+  version: 0.97.2
+  resolution: "@fuel-ts/address@npm:0.97.2"
   dependencies:
-    "@fuel-ts/crypto": "npm:0.97.0"
-    "@fuel-ts/errors": "npm:0.97.0"
-    "@fuel-ts/interfaces": "npm:0.97.0"
-    "@fuel-ts/utils": "npm:^0.97.0"
+    "@fuel-ts/crypto": "npm:0.97.2"
+    "@fuel-ts/errors": "npm:0.97.2"
+    "@fuel-ts/interfaces": "npm:0.97.2"
+    "@fuel-ts/utils": "npm:^0.97.2"
     "@noble/hashes": "npm:^1.5.0"
     bech32: "npm:^2.0.0"
-  checksum: 10/4d03fafb850f2f63fcb1f3b92dd12747bb2be545cf8caa33f07293cfda43b23c7f346e537df02619375dad1071db2fcff7f7dc5d02d935471eaf4ecede28f969
+  checksum: 10/91d61b0f8387b1dc52f2765467cf8979e6749f11f02234decc11977fd4ce3769c55c037315115423cbb6cbfc26c285a1469ed3810f50a10a7ca9dddf62176f0c
   languageName: node
   linkType: hard
 
-"@fuel-ts/contract@npm:0.97.0":
-  version: 0.97.0
-  resolution: "@fuel-ts/contract@npm:0.97.0"
+"@fuel-ts/contract@npm:0.97.2":
+  version: 0.97.2
+  resolution: "@fuel-ts/contract@npm:0.97.2"
   dependencies:
-    "@fuel-ts/abi-coder": "npm:0.97.0"
-    "@fuel-ts/account": "npm:0.97.0"
-    "@fuel-ts/crypto": "npm:0.97.0"
-    "@fuel-ts/errors": "npm:0.97.0"
-    "@fuel-ts/hasher": "npm:0.97.0"
-    "@fuel-ts/interfaces": "npm:^0.97.0"
-    "@fuel-ts/math": "npm:^0.97.0"
-    "@fuel-ts/merkle": "npm:0.97.0"
-    "@fuel-ts/program": "npm:0.97.0"
-    "@fuel-ts/transactions": "npm:0.97.0"
-    "@fuel-ts/utils": "npm:0.97.0"
-    "@fuel-ts/versions": "npm:0.97.0"
+    "@fuel-ts/abi-coder": "npm:0.97.2"
+    "@fuel-ts/account": "npm:0.97.2"
+    "@fuel-ts/crypto": "npm:0.97.2"
+    "@fuel-ts/errors": "npm:0.97.2"
+    "@fuel-ts/hasher": "npm:0.97.2"
+    "@fuel-ts/interfaces": "npm:^0.97.2"
+    "@fuel-ts/math": "npm:^0.97.2"
+    "@fuel-ts/merkle": "npm:0.97.2"
+    "@fuel-ts/program": "npm:0.97.2"
+    "@fuel-ts/transactions": "npm:0.97.2"
+    "@fuel-ts/utils": "npm:0.97.2"
+    "@fuel-ts/versions": "npm:0.97.2"
     "@fuels/vm-asm": "npm:0.58.2"
     ramda: "npm:^0.30.1"
-  checksum: 10/11057cce995f09d93c4e0e433a4e77c527ad2cd2b6f87bf52e551f40e3e4644731229c2a1ce91175344cade475d76c52eb3781f240a9d1fba2015467d507d5b1
+  checksum: 10/1efa28e43c5d33a155d2a91d3353c843e749e9e7df53077017aab011a0d390b2bb964985f7048f5ef9110976ff5e734a8f73a19689d32093561d2435d4fee4c8
   languageName: node
   linkType: hard
 
-"@fuel-ts/crypto@npm:0.97.0":
-  version: 0.97.0
-  resolution: "@fuel-ts/crypto@npm:0.97.0"
+"@fuel-ts/crypto@npm:0.97.2":
+  version: 0.97.2
+  resolution: "@fuel-ts/crypto@npm:0.97.2"
   dependencies:
-    "@fuel-ts/errors": "npm:0.97.0"
-    "@fuel-ts/interfaces": "npm:0.97.0"
-    "@fuel-ts/math": "npm:0.97.0"
-    "@fuel-ts/utils": "npm:^0.97.0"
+    "@fuel-ts/errors": "npm:0.97.2"
+    "@fuel-ts/interfaces": "npm:0.97.2"
+    "@fuel-ts/math": "npm:0.97.2"
+    "@fuel-ts/utils": "npm:^0.97.2"
     "@noble/hashes": "npm:^1.5.0"
-  checksum: 10/cc6735f6430d30b5cd94b01b3f160735d4a51a4b9f380d59b9449b4ef996db091137200e93b567bf589bbd243754ca7c1fec51a65b9ff18f4b04ed4086c3d588
+  checksum: 10/49ef5851ec1ff951b93f74f80da5fa1ddbb3137276a3e21034ce889afabd4c3ef9ed25792adabf276fecb850fcb47d831e84b14d532376933f987ae836fbb750
   languageName: node
   linkType: hard
 
-"@fuel-ts/errors@npm:0.97.0":
-  version: 0.97.0
-  resolution: "@fuel-ts/errors@npm:0.97.0"
+"@fuel-ts/errors@npm:0.97.2":
+  version: 0.97.2
+  resolution: "@fuel-ts/errors@npm:0.97.2"
   dependencies:
-    "@fuel-ts/versions": "npm:0.97.0"
-  checksum: 10/5e14cd60595733651c91ae0835eb876731bba6a6b0d3b4abb1e58ca5d44ad882ad0608cf9e622b2b3fd8f770e82369214ae1c26e077dce0a21b755db24b553ae
+    "@fuel-ts/versions": "npm:0.97.2"
+  checksum: 10/dd58386c108d8c89cd5a3634a35e0e35b303e2fe32bd789726676e0b8e1feb2c844e757c80aea450d74b63e361aeee75fd45c17da3cd01f2724f6bbe90e8a838
   languageName: node
   linkType: hard
 
-"@fuel-ts/hasher@npm:0.97.0, @fuel-ts/hasher@npm:^0.97.0":
-  version: 0.97.0
-  resolution: "@fuel-ts/hasher@npm:0.97.0"
+"@fuel-ts/hasher@npm:0.97.2, @fuel-ts/hasher@npm:^0.97.2":
+  version: 0.97.2
+  resolution: "@fuel-ts/hasher@npm:0.97.2"
   dependencies:
-    "@fuel-ts/crypto": "npm:0.97.0"
-    "@fuel-ts/interfaces": "npm:^0.97.0"
-    "@fuel-ts/utils": "npm:0.97.0"
+    "@fuel-ts/crypto": "npm:0.97.2"
+    "@fuel-ts/interfaces": "npm:^0.97.2"
+    "@fuel-ts/utils": "npm:0.97.2"
     "@noble/hashes": "npm:^1.5.0"
-  checksum: 10/a35383f08ad80ccfd99eac64b98e3711735d99ad3272c67d34560275b8dea6a5f45e0c796e7328229eaa8ed6538d79786d170ab0193878a5b65958c9f9efbdc6
+  checksum: 10/70691f41bd3280fdf1ea7d853adaa10da4da05e40aab5b482769cab0432abc36da6f20741b40e75b597b9a6d7659a2c19b014b13933397ce8eedc0e7ce84e85b
   languageName: node
   linkType: hard
 
-"@fuel-ts/interfaces@npm:0.97.0, @fuel-ts/interfaces@npm:^0.97.0":
-  version: 0.97.0
-  resolution: "@fuel-ts/interfaces@npm:0.97.0"
-  checksum: 10/2632dccfdbd06a16a7e629da1fb7c196bc7387f6f754a17754cb864dfef03aca75c9779bccca39f7d4d25317eea54ffddab1bd1dc773774eb4d7c5508727fb1a
+"@fuel-ts/interfaces@npm:0.97.2, @fuel-ts/interfaces@npm:^0.97.2":
+  version: 0.97.2
+  resolution: "@fuel-ts/interfaces@npm:0.97.2"
+  checksum: 10/8eff65e47311c0f2bb1d4bb0865bcd6f7d48ced16a17e179962924ee26b2c62cf1e020ee19d038079bc7fc225ff1f4faa749b8d8421d51407f4c4de5280da266
   languageName: node
   linkType: hard
 
-"@fuel-ts/math@npm:0.97.0, @fuel-ts/math@npm:^0.97.0":
-  version: 0.97.0
-  resolution: "@fuel-ts/math@npm:0.97.0"
+"@fuel-ts/math@npm:0.97.2, @fuel-ts/math@npm:^0.97.2":
+  version: 0.97.2
+  resolution: "@fuel-ts/math@npm:0.97.2"
   dependencies:
-    "@fuel-ts/errors": "npm:0.97.0"
+    "@fuel-ts/errors": "npm:0.97.2"
     "@types/bn.js": "npm:^5.1.6"
     bn.js: "npm:^5.2.1"
-  checksum: 10/5715f2572d0c354272818741467812b279ce3f02feaa79f33d380b042cea8fec1be23656ba8b159a5167523052315e2fe72e45ba7fbc513623a9f0010dee6caa
+  checksum: 10/4712b2b6eff4490b4940c9fd967efab54d2ab3ce0b416175d8c93a8f48775a087da664e114e96239d95ff379e46d4e5764055c1df82d70d8d610b1f9513561a6
   languageName: node
   linkType: hard
 
-"@fuel-ts/merkle@npm:0.97.0":
-  version: 0.97.0
-  resolution: "@fuel-ts/merkle@npm:0.97.0"
+"@fuel-ts/merkle@npm:0.97.2":
+  version: 0.97.2
+  resolution: "@fuel-ts/merkle@npm:0.97.2"
   dependencies:
-    "@fuel-ts/hasher": "npm:^0.97.0"
-    "@fuel-ts/math": "npm:0.97.0"
-  checksum: 10/4f3217486b5c07393d3a6da18978d2058d171a96cdb3109eab81866580d0652dbd9a26d56a74002ef122b1bb5860c8ad403f4a71f2d8f07b7c520d44de06acca
+    "@fuel-ts/hasher": "npm:^0.97.2"
+    "@fuel-ts/math": "npm:0.97.2"
+  checksum: 10/60d97320af46e9eb8d8b84aa4d5cc516d5da481406d50b3edb4dd229b97cd76ecf2e73a7e2f9544460f7fc86a12d436f596cc152876db9a772fa547da9c2baae
   languageName: node
   linkType: hard
 
-"@fuel-ts/program@npm:0.97.0":
-  version: 0.97.0
-  resolution: "@fuel-ts/program@npm:0.97.0"
+"@fuel-ts/program@npm:0.97.2":
+  version: 0.97.2
+  resolution: "@fuel-ts/program@npm:0.97.2"
   dependencies:
-    "@fuel-ts/abi-coder": "npm:0.97.0"
-    "@fuel-ts/account": "npm:0.97.0"
-    "@fuel-ts/address": "npm:0.97.0"
-    "@fuel-ts/errors": "npm:0.97.0"
-    "@fuel-ts/interfaces": "npm:0.97.0"
-    "@fuel-ts/math": "npm:0.97.0"
-    "@fuel-ts/transactions": "npm:0.97.0"
-    "@fuel-ts/utils": "npm:0.97.0"
+    "@fuel-ts/abi-coder": "npm:0.97.2"
+    "@fuel-ts/account": "npm:0.97.2"
+    "@fuel-ts/address": "npm:0.97.2"
+    "@fuel-ts/errors": "npm:0.97.2"
+    "@fuel-ts/interfaces": "npm:0.97.2"
+    "@fuel-ts/math": "npm:0.97.2"
+    "@fuel-ts/transactions": "npm:0.97.2"
+    "@fuel-ts/utils": "npm:0.97.2"
     "@fuels/vm-asm": "npm:0.58.2"
     ramda: "npm:^0.30.1"
-  checksum: 10/421b01a52a9da5579bd5592592f231233ceb054b919ceb2e304d201396404f7a5243785b4e770f67408740b697025fb89a4c32661a84509bf4e0cf10e6f0a055
+  checksum: 10/614565a81f3df7ea54799b5eabf19b86fe2d75c3006f1ea4b72d25e82676ae9ab36809095815df489084b891be2541187aef3a7ebae6731621a369a7f76d44ae
   languageName: node
   linkType: hard
 
-"@fuel-ts/script@npm:0.97.0":
-  version: 0.97.0
-  resolution: "@fuel-ts/script@npm:0.97.0"
+"@fuel-ts/recipes@npm:0.97.2":
+  version: 0.97.2
+  resolution: "@fuel-ts/recipes@npm:0.97.2"
   dependencies:
-    "@fuel-ts/abi-coder": "npm:0.97.0"
-    "@fuel-ts/account": "npm:0.97.0"
-    "@fuel-ts/address": "npm:0.97.0"
-    "@fuel-ts/errors": "npm:0.97.0"
-    "@fuel-ts/interfaces": "npm:0.97.0"
-    "@fuel-ts/math": "npm:0.97.0"
-    "@fuel-ts/program": "npm:0.97.0"
-    "@fuel-ts/transactions": "npm:0.97.0"
-    "@fuel-ts/utils": "npm:0.97.0"
-  checksum: 10/50ce250453de847ca212acb89c2c6622cfeded8414363062fee24f2c3f704370c4d7ef8db5db93360d019c12ae3744a1338d70e6009d1b7ce331c575245d0c8d
+    "@fuel-ts/abi-coder": "npm:0.97.2"
+    "@fuel-ts/abi-typegen": "npm:0.97.2"
+    "@fuel-ts/account": "npm:0.97.2"
+    "@fuel-ts/contract": "npm:0.97.2"
+    "@fuel-ts/interfaces": "npm:0.97.2"
+    "@fuel-ts/program": "npm:0.97.2"
+    "@fuel-ts/transactions": "npm:0.97.2"
+    "@fuel-ts/utils": "npm:0.97.2"
+  checksum: 10/637298b4bb155e66004beafe57a3b1420acae0ad9dceb976dbbb3806f606f071821c08612d909f18158cdd5d93044728d1deb08c423a51cf10cca73cd0d80551
   languageName: node
   linkType: hard
 
-"@fuel-ts/transactions@npm:0.97.0":
-  version: 0.97.0
-  resolution: "@fuel-ts/transactions@npm:0.97.0"
+"@fuel-ts/script@npm:0.97.2":
+  version: 0.97.2
+  resolution: "@fuel-ts/script@npm:0.97.2"
   dependencies:
-    "@fuel-ts/abi-coder": "npm:0.97.0"
-    "@fuel-ts/address": "npm:0.97.0"
-    "@fuel-ts/errors": "npm:0.97.0"
-    "@fuel-ts/hasher": "npm:^0.97.0"
-    "@fuel-ts/interfaces": "npm:^0.97.0"
-    "@fuel-ts/math": "npm:0.97.0"
-    "@fuel-ts/utils": "npm:0.97.0"
-  checksum: 10/a396c290b5dee0f3d1313dad2ea177383a43c71a5b6e80fc7e02d88622867f7ff725a5e30c73df96072d80fb1d5a76275b32ef315b9f231688ec5aa055132b03
+    "@fuel-ts/abi-coder": "npm:0.97.2"
+    "@fuel-ts/account": "npm:0.97.2"
+    "@fuel-ts/address": "npm:0.97.2"
+    "@fuel-ts/errors": "npm:0.97.2"
+    "@fuel-ts/interfaces": "npm:0.97.2"
+    "@fuel-ts/math": "npm:0.97.2"
+    "@fuel-ts/program": "npm:0.97.2"
+    "@fuel-ts/transactions": "npm:0.97.2"
+    "@fuel-ts/utils": "npm:0.97.2"
+  checksum: 10/3a53183130903d54c1599878cfd390f7e9534c7c16719168f9cceb2ce117dfa5e85058f6f84f4ae65053c692524b05aa760ffa57fe339805c6dbe08186a7e65e
   languageName: node
   linkType: hard
 
-"@fuel-ts/utils@npm:0.97.0, @fuel-ts/utils@npm:^0.97.0":
-  version: 0.97.0
-  resolution: "@fuel-ts/utils@npm:0.97.0"
+"@fuel-ts/transactions@npm:0.97.2":
+  version: 0.97.2
+  resolution: "@fuel-ts/transactions@npm:0.97.2"
   dependencies:
-    "@fuel-ts/errors": "npm:0.97.0"
-    "@fuel-ts/interfaces": "npm:0.97.0"
-    "@fuel-ts/math": "npm:0.97.0"
-    "@fuel-ts/versions": "npm:0.97.0"
+    "@fuel-ts/abi-coder": "npm:0.97.2"
+    "@fuel-ts/address": "npm:0.97.2"
+    "@fuel-ts/errors": "npm:0.97.2"
+    "@fuel-ts/hasher": "npm:^0.97.2"
+    "@fuel-ts/interfaces": "npm:^0.97.2"
+    "@fuel-ts/math": "npm:0.97.2"
+    "@fuel-ts/utils": "npm:0.97.2"
+  checksum: 10/d9e8b43a6703c648e0247eb16811e75cc3660c120f167fb582c5861a9ce72bbef0dfc2c23e88881cca2f203acf52a14f4f9b66ad3420e2a96c7416615e9b45c0
+  languageName: node
+  linkType: hard
+
+"@fuel-ts/utils@npm:0.97.2, @fuel-ts/utils@npm:^0.97.2":
+  version: 0.97.2
+  resolution: "@fuel-ts/utils@npm:0.97.2"
+  dependencies:
+    "@fuel-ts/errors": "npm:0.97.2"
+    "@fuel-ts/interfaces": "npm:0.97.2"
+    "@fuel-ts/math": "npm:0.97.2"
+    "@fuel-ts/versions": "npm:0.97.2"
     fflate: "npm:^0.8.2"
-  checksum: 10/2e4fd5223bdf65beb3a192b881355879604b4ded7135fed690cbf4edb90e247538af5bd1af7f4fa6a58f904159406428c27e8f5273deb02f9945bb813c2c2468
+  peerDependencies:
+    vitest: ~2.0.5
+  checksum: 10/0010360e1e2283da15cc3699b1b0d93109c5275ec9d9167f4e85cde3cccb19903007262b8d2825c4f6d1c073e0491b7dbf77369546a30cb8f5f14ec638d76a6a
   languageName: node
   linkType: hard
 
-"@fuel-ts/versions@npm:0.97.0":
-  version: 0.97.0
-  resolution: "@fuel-ts/versions@npm:0.97.0"
+"@fuel-ts/versions@npm:0.97.2":
+  version: 0.97.2
+  resolution: "@fuel-ts/versions@npm:0.97.2"
   dependencies:
     chalk: "npm:4"
     cli-table: "npm:^0.3.11"
   bin:
     fuels-versions: versions.js
-  checksum: 10/458af5f0e3ddd73cad78cd37f649ae0f49579c20aeb809d0b788448f7394a0a423a0558905eebab26c2671e8d4a06b45cfc068cf07ce66a9ae7736e63c9e75a8
+  checksum: 10/3b717cdadaf70663b47a723f6834d4843b31375248be45de0cf7a23af38768457fd0b4fb3f6a5b0a87b3da968b57bd13b063323d72a4d451b46c4e5a242a5db2
   languageName: node
   linkType: hard
 
@@ -7628,30 +7646,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@google-cloud/paginator@npm:^5.0.0":
-  version: 5.0.2
-  resolution: "@google-cloud/paginator@npm:5.0.2"
-  dependencies:
-    arrify: "npm:^2.0.0"
-    extend: "npm:^3.0.2"
-  checksum: 10/b64ba2029b77fdcf3c827aea0b6d128122fd1d2f4aa8c1ba70747cba0659d4216a283769fb3bbeb8f726176f5282624637f02c30f118a010e05838411da0cb76
-  languageName: node
-  linkType: hard
-
-"@google-cloud/projectify@npm:^4.0.0":
-  version: 4.0.0
-  resolution: "@google-cloud/projectify@npm:4.0.0"
-  checksum: 10/fdccdda0b50855c35541d71c46a6603f3302ff1a00108d946272cb2167435da00e2a2da5963fe489f4f5a4a9eb6320abeb97d3269974a972ae89f5df8451922d
-  languageName: node
-  linkType: hard
-
-"@google-cloud/promisify@npm:^4.0.0":
-  version: 4.0.0
-  resolution: "@google-cloud/promisify@npm:4.0.0"
-  checksum: 10/c5de81321b3a5c567edcbe0b941fb32644611147f3ba22f20575918c225a979988a99bc2ebda05ac914fa8714b0a54c69be72c3f46c7a64c3b19db7d7fba8d04
-  languageName: node
-  linkType: hard
-
 "@google-cloud/secret-manager@npm:^5.5.0":
   version: 5.5.0
   resolution: "@google-cloud/secret-manager@npm:5.5.0"
@@ -7661,30 +7655,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@google-cloud/storage@npm:7.14.0":
-  version: 7.14.0
-  resolution: "@google-cloud/storage@npm:7.14.0"
-  dependencies:
-    "@google-cloud/paginator": "npm:^5.0.0"
-    "@google-cloud/projectify": "npm:^4.0.0"
-    "@google-cloud/promisify": "npm:^4.0.0"
-    abort-controller: "npm:^3.0.0"
-    async-retry: "npm:^1.3.3"
-    duplexify: "npm:^4.1.3"
-    fast-xml-parser: "npm:^4.4.1"
-    gaxios: "npm:^6.0.2"
-    google-auth-library: "npm:^9.6.3"
-    html-entities: "npm:^2.5.2"
-    mime: "npm:^3.0.0"
-    p-limit: "npm:^3.0.1"
-    retry-request: "npm:^7.0.0"
-    teeny-request: "npm:^9.0.0"
-    uuid: "npm:^8.0.0"
-  checksum: 10/0726fde2697da696637fab91ebd756354a58c1331f6a0b9ecc5011de4aae72cd9e1fe3e9564aee15c6a2118e45ed0ae8c3ac9685c6581db6107080f906a949e9
-  languageName: node
-  linkType: hard
-
-"@graphql-typed-document-node/core@npm:^3.1.1":
+"@graphql-typed-document-node/core@npm:^3.2.0":
   version: 3.2.0
   resolution: "@graphql-typed-document-node/core@npm:3.2.0"
   peerDependencies:
@@ -7800,11 +7771,12 @@ __metadata:
     "@ethersproject/abi": "npm:*"
     "@ethersproject/providers": "npm:*"
     "@hyperlane-xyz/registry": "npm:6.6.0"
-    "@hyperlane-xyz/sdk": "npm:7.3.0"
-    "@hyperlane-xyz/utils": "npm:7.3.0"
+    "@hyperlane-xyz/sdk": "npm:8.2.0"
+    "@hyperlane-xyz/utils": "npm:8.2.0"
     "@inquirer/core": "npm:9.0.10"
     "@inquirer/figures": "npm:1.0.5"
     "@inquirer/prompts": "npm:3.3.2"
+    "@inquirer/search": "npm:^3.0.1"
     "@types/chai-as-promised": "npm:^8"
     "@types/mocha": "npm:^10.0.1"
     "@types/node": "npm:^18.14.5"
@@ -7822,6 +7794,7 @@ __metadata:
     eslint-import-resolver-typescript: "npm:^3.6.3"
     eslint-plugin-import: "npm:^2.31.0"
     ethers: "npm:^5.7.2"
+    fuels: "npm:^0.97.2"
     latest-version: "npm:^8.0.0"
     mocha: "npm:^10.2.0"
     prettier: "npm:^2.8.8"
@@ -7830,6 +7803,7 @@ __metadata:
     typescript: "npm:5.3.3"
     yaml: "npm:2.4.5"
     yargs: "npm:^17.7.2"
+    zksync-ethers: "npm:^5.10.0"
     zod: "npm:^3.21.2"
     zod-validation-error: "npm:^3.3.0"
     zx: "npm:^8.1.4"
@@ -7838,13 +7812,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@hyperlane-xyz/core@npm:5.8.3, @hyperlane-xyz/core@workspace:solidity":
+"@hyperlane-xyz/core@npm:5.9.2, @hyperlane-xyz/core@workspace:solidity":
   version: 0.0.0-use.local
   resolution: "@hyperlane-xyz/core@workspace:solidity"
   dependencies:
     "@arbitrum/nitro-contracts": "npm:^1.2.1"
     "@eth-optimism/contracts": "npm:^0.6.0"
-    "@hyperlane-xyz/utils": "npm:7.3.0"
+    "@hyperlane-xyz/utils": "npm:8.2.0"
     "@layerzerolabs/lz-evm-oapp-v2": "npm:2.0.2"
     "@layerzerolabs/solidity-examples": "npm:^1.1.0"
     "@nomiclabs/hardhat-ethers": "npm:^2.2.3"
@@ -7895,14 +7869,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@hyperlane-xyz/helloworld@npm:7.3.0, @hyperlane-xyz/helloworld@workspace:typescript/helloworld":
+"@hyperlane-xyz/helloworld@npm:8.2.0, @hyperlane-xyz/helloworld@workspace:typescript/helloworld":
   version: 0.0.0-use.local
   resolution: "@hyperlane-xyz/helloworld@workspace:typescript/helloworld"
   dependencies:
     "@eslint/js": "npm:^9.15.0"
-    "@hyperlane-xyz/core": "npm:5.8.3"
+    "@hyperlane-xyz/core": "npm:5.9.2"
     "@hyperlane-xyz/registry": "npm:6.6.0"
-    "@hyperlane-xyz/sdk": "npm:7.3.0"
+    "@hyperlane-xyz/sdk": "npm:8.2.0"
     "@nomiclabs/hardhat-ethers": "npm:^2.2.3"
     "@nomiclabs/hardhat-waffle": "npm:^2.0.6"
     "@openzeppelin/contracts-upgradeable": "npm:^4.9.3"
@@ -7951,10 +7925,10 @@ __metadata:
     "@ethersproject/hardware-wallets": "npm:^5.7.0"
     "@ethersproject/providers": "npm:*"
     "@google-cloud/secret-manager": "npm:^5.5.0"
-    "@hyperlane-xyz/helloworld": "npm:7.3.0"
+    "@hyperlane-xyz/helloworld": "npm:8.2.0"
     "@hyperlane-xyz/registry": "npm:6.6.0"
-    "@hyperlane-xyz/sdk": "npm:7.3.0"
-    "@hyperlane-xyz/utils": "npm:7.3.0"
+    "@hyperlane-xyz/sdk": "npm:8.2.0"
+    "@hyperlane-xyz/utils": "npm:8.2.0"
     "@inquirer/prompts": "npm:3.3.2"
     "@nomiclabs/hardhat-ethers": "npm:^2.2.3"
     "@nomiclabs/hardhat-etherscan": "npm:^3.0.3"
@@ -8024,7 +7998,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/sdk@npm:7.3.0, @hyperlane-xyz/sdk@workspace:typescript/sdk":
+"@hyperlane-xyz/sdk@npm:8.2.0, @hyperlane-xyz/sdk@workspace:typescript/sdk":
   version: 0.0.0-use.local
   resolution: "@hyperlane-xyz/sdk@workspace:typescript/sdk"
   dependencies:
@@ -8034,9 +8008,8 @@ __metadata:
     "@cosmjs/cosmwasm-stargate": "npm:^0.32.4"
     "@cosmjs/stargate": "npm:^0.32.4"
     "@eslint/js": "npm:^9.15.0"
-    "@google-cloud/storage": "npm:7.14.0"
-    "@hyperlane-xyz/core": "npm:5.8.3"
-    "@hyperlane-xyz/utils": "npm:7.3.0"
+    "@hyperlane-xyz/core": "npm:5.9.2"
+    "@hyperlane-xyz/utils": "npm:8.2.0"
     "@nomiclabs/hardhat-ethers": "npm:^2.2.3"
     "@nomiclabs/hardhat-waffle": "npm:^2.0.6"
     "@safe-global/api-kit": "npm:1.3.0"
@@ -8062,7 +8035,7 @@ __metadata:
     eslint-plugin-import: "npm:^2.31.0"
     ethereum-waffle: "npm:^4.0.10"
     ethers: "npm:^5.7.2"
-    fuels: "npm:^0.97.0"
+    fuels: "npm:^0.97.2"
     hardhat: "npm:^2.22.2"
     mocha: "npm:^10.2.0"
     pino: "npm:^8.19.0"
@@ -8080,7 +8053,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@hyperlane-xyz/utils@npm:7.3.0, @hyperlane-xyz/utils@workspace:typescript/utils":
+"@hyperlane-xyz/utils@npm:8.2.0, @hyperlane-xyz/utils@workspace:typescript/utils":
   version: 0.0.0-use.local
   resolution: "@hyperlane-xyz/utils@workspace:typescript/utils"
   dependencies:
@@ -8100,7 +8073,7 @@ __metadata:
     eslint-import-resolver-typescript: "npm:^3.6.3"
     eslint-plugin-import: "npm:^2.31.0"
     ethers: "npm:^5.7.2"
-    fuels: "npm:^0.97.0"
+    fuels: "npm:^0.97.2"
     lodash-es: "npm:^4.17.21"
     mocha: "npm:^10.2.0"
     pino: "npm:^8.19.0"
@@ -8124,8 +8097,8 @@ __metadata:
     "@fuel-wallet/react": "npm:^0.16.1"
     "@headlessui/react": "npm:^2.1.8"
     "@hyperlane-xyz/registry": "npm:6.6.0"
-    "@hyperlane-xyz/sdk": "npm:7.3.0"
-    "@hyperlane-xyz/utils": "npm:7.3.0"
+    "@hyperlane-xyz/sdk": "npm:8.2.0"
+    "@hyperlane-xyz/utils": "npm:8.2.0"
     "@interchain-ui/react": "npm:^1.23.28"
     "@rainbow-me/rainbowkit": "npm:^2.2.0"
     "@solana/wallet-adapter-react": "npm:^0.15.32"
@@ -8219,6 +8192,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@inquirer/core@npm:^10.1.2":
+  version: 10.1.2
+  resolution: "@inquirer/core@npm:10.1.2"
+  dependencies:
+    "@inquirer/figures": "npm:^1.0.9"
+    "@inquirer/type": "npm:^3.0.2"
+    ansi-escapes: "npm:^4.3.2"
+    cli-width: "npm:^4.1.0"
+    mute-stream: "npm:^2.0.0"
+    signal-exit: "npm:^4.1.0"
+    strip-ansi: "npm:^6.0.1"
+    wrap-ansi: "npm:^6.2.0"
+    yoctocolors-cjs: "npm:^2.1.2"
+  checksum: 10/e92ade5ba7dbcfd83629db2df7fb91877ac777a7f1e03a16b0d5c08621dafe09d321c5f14b37c2dca80a3db2d68e5a478f8eaeafcb62ed42c46e7349b7276094
+  languageName: node
+  linkType: hard
+
 "@inquirer/core@npm:^6.0.0":
   version: 6.0.0
   resolution: "@inquirer/core@npm:6.0.0"
@@ -8269,6 +8259,13 @@ __metadata:
   version: 1.0.5
   resolution: "@inquirer/figures@npm:1.0.5"
   checksum: 10/60a51b2cdef03c89be25071c23d8c4ae427c56d8ac1b00bf054ca7be446674adc4edd66c15465fe6a81ff0726b024bf37f8a2903a8387ef968d33058da3e7a15
+  languageName: node
+  linkType: hard
+
+"@inquirer/figures@npm:^1.0.9":
+  version: 1.0.9
+  resolution: "@inquirer/figures@npm:1.0.9"
+  checksum: 10/7ced1275a5826cdeb61797d6c068417e7d52aa87894de18cedd259f783f42d731226c3f8b92cab27b8e7b0e31ab1dd3cd77f16935b67ebe1cbb271e5972d7758
   languageName: node
   linkType: hard
 
@@ -8323,6 +8320,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@inquirer/search@npm:^3.0.1":
+  version: 3.0.4
+  resolution: "@inquirer/search@npm:3.0.4"
+  dependencies:
+    "@inquirer/core": "npm:^10.1.2"
+    "@inquirer/figures": "npm:^1.0.9"
+    "@inquirer/type": "npm:^3.0.2"
+    yoctocolors-cjs: "npm:^2.1.2"
+  peerDependencies:
+    "@types/node": ">=18"
+  checksum: 10/e2363f808e32983d659049cabc21f57e8b7dd7b591677b4bd1be0c45653e3d86f98f1772f3866bc97f14f63983399b259e8956eda181fafbe7eea07f8169bd95
+  languageName: node
+  linkType: hard
+
 "@inquirer/select@npm:^1.3.3":
   version: 1.3.3
   resolution: "@inquirer/select@npm:1.3.3"
@@ -8351,6 +8362,15 @@ __metadata:
   dependencies:
     mute-stream: "npm:^1.0.0"
   checksum: 10/90d9203b5d7da8530e210c5421630b577f24554c8b683a4b45ea0f5c6a89c451771170aa34f2b62ca57e4be4de41d6761c941475e25c54c82b527c05644f181f
+  languageName: node
+  linkType: hard
+
+"@inquirer/type@npm:^3.0.2":
+  version: 3.0.2
+  resolution: "@inquirer/type@npm:3.0.2"
+  peerDependencies:
+    "@types/node": ">=18"
+  checksum: 10/d1a2879b1baa357421cef441fc7b43181e110243933763ae922c55c2fc9af2d459ceaca8b71ed57e3dabd5077542fa0dd1d0ff0cf362ce054e61202386b545ed
   languageName: node
   linkType: hard
 
@@ -18501,13 +18521,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"arrify@npm:^2.0.0":
-  version: 2.0.1
-  resolution: "arrify@npm:2.0.1"
-  checksum: 10/067c4c1afd182806a82e4c1cb8acee16ab8b5284fbca1ce29408e6e91281c36bb5b612f6ddfbd40a0f7a7e0c75bf2696eb94c027f6e328d6e9c52465c98e4209
-  languageName: node
-  linkType: hard
-
 "as-table@npm:^1.0.36":
   version: 1.0.55
   resolution: "as-table@npm:1.0.55"
@@ -21735,7 +21748,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"duplexify@npm:^4.0.0, duplexify@npm:^4.1.2, duplexify@npm:^4.1.3":
+"duplexify@npm:^4.0.0, duplexify@npm:^4.1.2":
   version: 4.1.3
   resolution: "duplexify@npm:4.1.3"
   dependencies:
@@ -23444,7 +23457,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ethers@npm:^5.1.0, ethers@npm:^5.3.1, ethers@npm:^5.7.0, ethers@npm:^5.7.1, ethers@npm:^5.7.2":
+"ethers@npm:^5.1.0, ethers@npm:^5.3.1, ethers@npm:^5.7.0, ethers@npm:^5.7.1, ethers@npm:^5.7.2, ethers@npm:~5.7.0":
   version: 5.7.2
   resolution: "ethers@npm:5.7.2"
   dependencies:
@@ -23784,13 +23797,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"extract-files@npm:^9.0.0":
-  version: 9.0.0
-  resolution: "extract-files@npm:9.0.0"
-  checksum: 10/0ad2f94ef5d7b7da1e5c20428ca08d02d70654af8d3a2c9fd4c1af4c2498b4ab11b9d93f11755348d89d477ce18aa408f22b8875de22fa82d8f166a59a52b06c
-  languageName: node
-  linkType: hard
-
 "extract-zip@npm:^1.6.6":
   version: 1.7.0
   resolution: "extract-zip@npm:1.7.0"
@@ -23950,17 +23956,6 @@ __metadata:
   bin:
     fxparser: src/cli/cli.js
   checksum: 10/4be7ebe24d6a9a60c278e1423cd86a7da9a77ec64c95563e2c552363caf7a777e0c87c9de1255c2f4e8dea9bce8905dc2bdc58a34e9f2b73c4693654456ad284
-  languageName: node
-  linkType: hard
-
-"fast-xml-parser@npm:^4.4.1":
-  version: 4.5.0
-  resolution: "fast-xml-parser@npm:4.5.0"
-  dependencies:
-    strnum: "npm:^1.0.5"
-  bin:
-    fxparser: src/cli/cli.js
-  checksum: 10/dc9571c10e7b57b5be54bcd2d92f50c446eb42ea5df347d253e94dd14eb99b5300a6d172e840f151e0721933ca2406165a8d9b316a6d777bf0596dc4fe1df756
   languageName: node
   linkType: hard
 
@@ -24314,17 +24309,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"form-data@npm:^3.0.0":
-  version: 3.0.2
-  resolution: "form-data@npm:3.0.2"
-  dependencies:
-    asynckit: "npm:^0.4.0"
-    combined-stream: "npm:^1.0.8"
-    mime-types: "npm:^2.1.12"
-  checksum: 10/b8d71d7149de5881c6c8ac75c03ac2e809b1b729399320cc41f59a63043fa34b95dfef5259212d6d902abb4916af48a7ca60ad5c035806ba8e3c7843dbaf3057
-  languageName: node
-  linkType: hard
-
 "form-data@npm:^4.0.0":
   version: 4.0.0
   resolution: "form-data@npm:4.0.0"
@@ -24592,26 +24576,27 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fuels@npm:^0.97.0":
-  version: 0.97.0
-  resolution: "fuels@npm:0.97.0"
+"fuels@npm:^0.97.2":
+  version: 0.97.2
+  resolution: "fuels@npm:0.97.2"
   dependencies:
-    "@fuel-ts/abi-coder": "npm:0.97.0"
-    "@fuel-ts/abi-typegen": "npm:0.97.0"
-    "@fuel-ts/account": "npm:0.97.0"
-    "@fuel-ts/address": "npm:0.97.0"
-    "@fuel-ts/contract": "npm:0.97.0"
-    "@fuel-ts/crypto": "npm:0.97.0"
-    "@fuel-ts/errors": "npm:0.97.0"
-    "@fuel-ts/hasher": "npm:0.97.0"
-    "@fuel-ts/interfaces": "npm:0.97.0"
-    "@fuel-ts/math": "npm:0.97.0"
-    "@fuel-ts/merkle": "npm:0.97.0"
-    "@fuel-ts/program": "npm:0.97.0"
-    "@fuel-ts/script": "npm:0.97.0"
-    "@fuel-ts/transactions": "npm:0.97.0"
-    "@fuel-ts/utils": "npm:0.97.0"
-    "@fuel-ts/versions": "npm:0.97.0"
+    "@fuel-ts/abi-coder": "npm:0.97.2"
+    "@fuel-ts/abi-typegen": "npm:0.97.2"
+    "@fuel-ts/account": "npm:0.97.2"
+    "@fuel-ts/address": "npm:0.97.2"
+    "@fuel-ts/contract": "npm:0.97.2"
+    "@fuel-ts/crypto": "npm:0.97.2"
+    "@fuel-ts/errors": "npm:0.97.2"
+    "@fuel-ts/hasher": "npm:0.97.2"
+    "@fuel-ts/interfaces": "npm:0.97.2"
+    "@fuel-ts/math": "npm:0.97.2"
+    "@fuel-ts/merkle": "npm:0.97.2"
+    "@fuel-ts/program": "npm:0.97.2"
+    "@fuel-ts/recipes": "npm:0.97.2"
+    "@fuel-ts/script": "npm:0.97.2"
+    "@fuel-ts/transactions": "npm:0.97.2"
+    "@fuel-ts/utils": "npm:0.97.2"
+    "@fuel-ts/versions": "npm:0.97.2"
     bundle-require: "npm:^5.0.0"
     chalk: "npm:4"
     chokidar: "npm:^3.6.0"
@@ -24627,7 +24612,7 @@ __metadata:
     yup: "npm:^1.4.0"
   bin:
     fuels: fuels.js
-  checksum: 10/c06f33fe50f6632e1980bb78f9b206a9c6aff295f629666bd031b057e449a313ca0110ef4bfcd029131f18f243417f5e24ebb8ff78f59d2524e8652e6dc4e112
+  checksum: 10/f91949e04cbf2d63ba2f98e9ee0ff8206579eb40e6eb3ee032843337f82f024f6c9b40b9054bcb879de6eb970b3c594572b1db14904bdc201c58c331eb1b948d
   languageName: node
   linkType: hard
 
@@ -24760,19 +24745,6 @@ __metadata:
     node-fetch: "npm:^2.6.9"
     uuid: "npm:^9.0.1"
   checksum: 10/9f035590374fd168e7bb3ddda369fc8bd487f16a2308fde18284ccc0f685d0af4ac5e3e38d680a8c6342a9000fbf9d77ce691ee110dbed2feebb659e729c640a
-  languageName: node
-  linkType: hard
-
-"gaxios@npm:^6.0.2":
-  version: 6.7.1
-  resolution: "gaxios@npm:6.7.1"
-  dependencies:
-    extend: "npm:^3.0.2"
-    https-proxy-agent: "npm:^7.0.1"
-    is-stream: "npm:^2.0.0"
-    node-fetch: "npm:^2.6.9"
-    uuid: "npm:^9.0.1"
-  checksum: 10/c85599162208884eadee91215ebbfa1faa412551df4044626cb561300e15193726e8f23d63b486533e066dadad130f58ed872a23acab455238d8d48b531a0695
   languageName: node
   linkType: hard
 
@@ -25283,20 +25255,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"google-auth-library@npm:^9.6.3":
-  version: 9.15.0
-  resolution: "google-auth-library@npm:9.15.0"
-  dependencies:
-    base64-js: "npm:^1.3.0"
-    ecdsa-sig-formatter: "npm:^1.0.11"
-    gaxios: "npm:^6.1.1"
-    gcp-metadata: "npm:^6.1.0"
-    gtoken: "npm:^7.0.0"
-    jws: "npm:^4.0.0"
-  checksum: 10/fba2db9732bbf1b3a3a2e2b45131ba8e8aba297377f1c104d0b2ab3386bbc1e02047f20b8a7afca1c6308492da1540104618f1c7b5cd539703552e10399c560e
-  languageName: node
-  linkType: hard
-
 "google-gax@npm:^4.0.3":
   version: 4.3.3
   resolution: "google-gax@npm:4.3.3"
@@ -25435,17 +25393,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"graphql-request@npm:5.0.0":
-  version: 5.0.0
-  resolution: "graphql-request@npm:5.0.0"
+"graphql-request@npm:^6.1.0":
+  version: 6.1.0
+  resolution: "graphql-request@npm:6.1.0"
   dependencies:
-    "@graphql-typed-document-node/core": "npm:^3.1.1"
+    "@graphql-typed-document-node/core": "npm:^3.2.0"
     cross-fetch: "npm:^3.1.5"
-    extract-files: "npm:^9.0.0"
-    form-data: "npm:^3.0.0"
   peerDependencies:
     graphql: 14 - 16
-  checksum: 10/bf9e52d1d6af434bae77ef1a6ebdc419c5f6756bc3ad36f7ef45f48394b021045d31a48f6e9526df1484b1dfa110bc7a6706dbc2b7599873aac9b039b1a013fb
+  checksum: 10/a9c6f2eeaad972cdecb91437c15c785a282263fd0ef36f6fc5648e0945da488cdc10ab4736891ee1fbb928c7bf6e0bc8e0284df514254adefe02cc406ba5fce5
   languageName: node
   linkType: hard
 
@@ -26007,13 +25963,6 @@ __metadata:
   dependencies:
     lru-cache: "npm:^10.0.1"
   checksum: 10/8f085df8a4a637d995f357f48b1e3f6fc1f9f92e82b33fb406415b5741834ed431a510a09141071001e8deea2eee43ce72786463e2aa5e5a70db8648c0eedeab
-  languageName: node
-  linkType: hard
-
-"html-entities@npm:^2.5.2":
-  version: 2.5.2
-  resolution: "html-entities@npm:2.5.2"
-  checksum: 10/4ec12ebdf2d5ba8192c68e1aef3c1e4a4f36b29246a0a88464fe278a54517d0196d3489af46a3145c7ecacb4fc5fd50497be19eb713b810acab3f0efcf36fdc2
   languageName: node
   linkType: hard
 
@@ -30008,6 +29957,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"mute-stream@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "mute-stream@npm:2.0.0"
+  checksum: 10/d2e4fd2f5aa342b89b98134a8d899d8ef9b0a6d69274c4af9df46faa2d97aeb1f2ce83d867880d6de63643c52386579b99139801e24e7526c3b9b0a6d1e18d6c
+  languageName: node
+  linkType: hard
+
 "mz@npm:^2.7.0":
   version: 2.7.0
   resolution: "mz@npm:2.7.0"
@@ -30976,7 +30932,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"p-limit@npm:^3.0.1, p-limit@npm:^3.0.2, p-limit@npm:^3.1.0":
+"p-limit@npm:^3.0.2, p-limit@npm:^3.1.0":
   version: 3.1.0
   resolution: "p-limit@npm:3.1.0"
   dependencies:
@@ -37356,7 +37312,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:^8.0.0, uuid@npm:^8.3.2":
+"uuid@npm:^8.3.2":
   version: 8.3.2
   resolution: "uuid@npm:8.3.2"
   bin:
@@ -38947,6 +38903,17 @@ __metadata:
     toposort: "npm:^2.0.2"
     type-fest: "npm:^2.19.0"
   checksum: 10/e716f76b41d5531951e280a0a2fb617cf4dabb26e07ad3406f13afae7785df5c5eb38286798eec7e39b4b772defc9820086420c4c6fd94f479c790b455825058
+  languageName: node
+  linkType: hard
+
+"zksync-ethers@npm:^5.10.0":
+  version: 5.10.0
+  resolution: "zksync-ethers@npm:5.10.0"
+  dependencies:
+    ethers: "npm:~5.7.0"
+  peerDependencies:
+    ethers: ~5.7.0
+  checksum: 10/826719e2e40731e1104cf8a0c16c758526de6ca9e907d0483eb5bd80b635f02e3cce012115b75d68976a8dd746d63d4f83d576cc3bddc18a02a49d2bc023347f
   languageName: node
   linkType: hard
 

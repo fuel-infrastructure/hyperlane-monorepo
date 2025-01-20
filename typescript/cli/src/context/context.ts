@@ -24,9 +24,8 @@ import {
   rootLogger,
 } from '@hyperlane-xyz/utils';
 
-import { DEFAULT_STRATEGY_CONFIG_PATH } from '../commands/options.js';
 import { isSignCommand } from '../commands/signCommands.js';
-import { safeReadChainSubmissionStrategyConfig } from '../config/strategy.js';
+import { readChainSubmissionStrategyConfig } from '../config/strategy.js';
 import { PROXY_DEPLOYED_URL } from '../consts.js';
 import { forkNetworkToMultiProvider, verifyAnvil } from '../deploy/dry-run.js';
 import { logBlue } from '../logger.js';
@@ -71,9 +70,9 @@ export async function signerMiddleware(argv: Record<string, any>) {
 
   if (!requiresKey) return argv;
 
-  const strategyConfig = await safeReadChainSubmissionStrategyConfig(
-    strategyPath ?? DEFAULT_STRATEGY_CONFIG_PATH,
-  );
+  const strategyConfig = strategyPath
+    ? await readChainSubmissionStrategyConfig(strategyPath)
+    : {};
 
   /**
    * Intercepts Hyperlane command to determine chains.
@@ -116,6 +115,7 @@ export async function getContext({
   requiresKey,
   skipConfirmation,
   disableProxy = false,
+  strategyPath,
 }: ContextSettings): Promise<CommandContext> {
   const registry = getRegistry(registryUri, registryOverrideUri, !disableProxy);
 
@@ -144,6 +144,7 @@ export async function getContext({
     key,
     skipConfirmation: !!skipConfirmation,
     signerAddress,
+    strategyPath,
   } as CommandContext;
 }
 

@@ -42,7 +42,7 @@ export async function runPreflightChecksForChains({
   chainsToGasCheck?: ChainName[];
 }) {
   log('Running pre-flight checks for chains...');
-  const { multiProvider, multiProtocolProvider } = context;
+  const { multiProvider, skipConfirmation, multiProtocolProvider } = context;
 
   if (!chains?.length) throw new Error('Empty chain selection');
   for (const chain of chains) {
@@ -55,7 +55,7 @@ export async function runPreflightChecksForChains({
           throw new Error('Invalid metadata protocol');
         const signer = multiProvider.getSigner(chain);
         assertSigner(signer);
-        logGreen(`✅ ${chain} signer is valid`);
+        logGreen(`✅ ${metadata.displayName ?? chain} signer is valid`);
 
         break;
       }
@@ -79,13 +79,14 @@ export async function runPreflightChecksForChains({
         throw new Error(`Unsupported protocol: ${chainProtocol}`);
     }
   }
-  logGreen('✅ Chains are valid');
 
   await nativeBalancesAreSufficient(
     multiProvider,
     chainsToGasCheck ?? chains,
     minGas,
+    skipConfirmation,
   );
+  logGreen('✅ Chains are valid');
 }
 
 export async function runDeployPlanStep({
