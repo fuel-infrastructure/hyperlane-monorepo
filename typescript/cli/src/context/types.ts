@@ -5,6 +5,7 @@ import type { IRegistry } from '@hyperlane-xyz/registry';
 import type {
   ChainMap,
   ChainMetadata,
+  MultiProtocolProvider,
   MultiProvider,
   WarpCoreConfig,
 } from '@hyperlane-xyz/sdk';
@@ -13,6 +14,7 @@ export interface ContextSettings {
   registryUri: string;
   registryOverrideUri: string;
   key?: string;
+  keys?: string;
   fromAddress?: string;
   requiresKey?: boolean;
   disableProxy?: boolean;
@@ -24,7 +26,9 @@ export interface CommandContext {
   registry: IRegistry;
   chainMetadata: ChainMap<ChainMetadata>;
   multiProvider: MultiProvider;
+  multiProtocolProvider: MultiProtocolProvider;
   skipConfirmation: boolean;
+  keys?: string;
   key?: string;
   // just for evm chains backward compatibility
   signerAddress?: string;

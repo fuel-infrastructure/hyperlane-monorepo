@@ -45,6 +45,10 @@ export const CollateralTokenConfigSchema = TokenMetadataSchema.partial().extend(
       .describe(
         'Existing token address to extend with Warp Route functionality',
       ),
+    assetId: z
+      .string()
+      .optional()
+      .describe('(Used for FuelVM chains) Asset ID of the token'),
   },
 );
 export type CollateralTokenConfig = z.infer<typeof CollateralTokenConfigSchema>;
@@ -154,3 +158,7 @@ function isCollateralRebasePairedCorrectly(
   );
   return allOthersSynthetic;
 }
+
+export const isFuelTokenType = isCompliant(
+  z.enum([TokenType.native, TokenType.collateral, TokenType.synthetic]),
+);

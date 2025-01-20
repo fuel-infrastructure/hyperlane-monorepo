@@ -6,3 +6,13 @@
 
 export { Mailbox } from './Mailbox.js';
 export { WarpRoute } from './WarpRoute.js';
+export { AggregationIsm } from './AggregationIsm.js';
+export { DefaultFallbackDomainRoutingIsm } from './DefaultFallbackDomainRoutingIsm.js';
+export { DomainRoutingIsm } from './DomainRoutingIsm.js';
+export { MerkleRootMultisigIsm } from './MerkleRootMultisigIsm.js';
+export { MessageIdMultisigIsm } from './MessageIdMultisigIsm.js';
+export { AggregationIsmFactory } from './AggregationIsmFactory.js';
+// export { DefaultFallbackDomainRoutingIsmFactory } from './DefaultFallbackDomainRoutingIsmFactory.js';
+// export { DomainRoutingIsmFactory } from './DomainRoutingIsmFactory.js';
+// export { MerkleRootMultisigIsmFactory } from './MerkleRootMultisigIsmFactory.js';
+// export { MessageIdMultisigIsmFactory } from './MessageIdMultisigIsmFactory.js';

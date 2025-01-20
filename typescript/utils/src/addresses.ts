@@ -72,6 +72,14 @@ export function isAddress(address: Address) {
   return !!getAddressProtocolType(address);
 }
 
+export function validProtocolAddressGuard(
+  address: string,
+  protocol: ProtocolType,
+) {
+  if (!isValidAddress(address, protocol))
+    throw new Error(`Invalid address ${address} for protocol ${protocol}`);
+}
+
 function routeAddressUtil<T>(
   fns: Partial<Record<ProtocolType, (param: string) => T>>,
   param: string,

@@ -401,6 +401,7 @@ export {
   EV5InterchainAccountTxTransformerProps,
   EV5InterchainAccountTxTransformerPropsSchema,
 } from './providers/transactions/transformer/ethersV5/types.js';
+export { AggregationIsmFactory as FuelAggregationIsmFactory } from './fuel-types/AggregationIsmFactory.js';
 
 export { EvmCoreModule } from './core/EvmCoreModule.js';
 export {
@@ -427,6 +428,7 @@ export {
   RemoteIcaRouterConfigSchema,
 } from './ica/types.js';
 export { EvmIsmModule } from './ism/EvmIsmModule.js';
+export { FuelIsmModule } from './ism/FuelIsmModule.js';
 export {
   chainMetadataToCosmosChain,
   chainMetadataToViemChain,
@@ -523,6 +525,7 @@ export {
 } from './token/contracts.js';
 export { HypERC20Deployer, HypERC721Deployer } from './token/deploy.js';
 export { EvmERC20WarpModule } from './token/EvmERC20WarpModule.js';
+export { FuelSRC20WarpModule } from './token/FuelSRC20WarpModule.js';
 export { EvmERC20WarpRouteReader } from './token/EvmERC20WarpRouteReader.js';
 export { IToken, TokenArgs, TokenConfigSchema } from './token/IToken.js';
 export { Token } from './token/Token.js';
@@ -546,6 +549,7 @@ export {
   TOKEN_NFT_STANDARDS,
   TOKEN_STANDARD_TO_PROTOCOL,
   TOKEN_TYPE_TO_STANDARD,
+  TOKEN_TYPE_TO_STANDARD_FUEL,
   TokenStandard,
 } from './token/TokenStandard.js';
 export {
@@ -573,6 +577,7 @@ export {
   isSyntheticRebaseTokenConfig,
   isSyntheticTokenConfig,
   isTokenMetadata,
+  isFuelTokenType,
 } from './token/types.js';
 export {
   ChainMap,
@@ -626,3 +631,4 @@ export {
 } from './warp/types.js';
 export { WarpCore, WarpCoreOptions } from './warp/WarpCore.js';
 export { EvmHookModule } from './hook/EvmHookModule.js';
+export { FuelHookModule } from './hook/FuelHookModule.js';

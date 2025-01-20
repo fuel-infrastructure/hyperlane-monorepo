@@ -183,6 +183,15 @@ export const TOKEN_TYPE_TO_STANDARD: Record<TokenType, TokenStandard> = {
   [TokenType.nativeScaled]: TokenStandard.EvmHypNative,
 };
 
+export const TOKEN_TYPE_TO_STANDARD_FUEL: Record<
+  TokenType.native | TokenType.collateral | TokenType.synthetic,
+  TokenStandard
+> = {
+  [TokenType.native]: TokenStandard.FuelHypNative,
+  [TokenType.collateral]: TokenStandard.FuelHypCollateral,
+  [TokenType.synthetic]: TokenStandard.FuelHypSynthetic,
+};
+
 export const PROTOCOL_TO_NATIVE_STANDARD: Record<ProtocolType, TokenStandard> =
   {
     [ProtocolType.Ethereum]: TokenStandard.EvmNative,

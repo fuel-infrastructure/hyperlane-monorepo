@@ -1,5 +1,6 @@
 import { confirm } from '@inquirer/prompts';
 import { Signer, ethers } from 'ethers';
+import { WalletUnlocked as FuelWallet } from 'fuels';
 
 import {
   DEFAULT_GITHUB_REGISTRY,
@@ -12,9 +13,16 @@ import {
   ChainMap,
   ChainMetadata,
   ChainName,
+  MultiProtocolProvider,
   MultiProvider,
 } from '@hyperlane-xyz/sdk';
-import { isHttpsUrl, isNullish, rootLogger } from '@hyperlane-xyz/utils';
+import {
+  ProtocolMap,
+  ProtocolType,
+  isHttpsUrl,
+  isNullish,
+  rootLogger,
+} from '@hyperlane-xyz/utils';
 
 import { DEFAULT_STRATEGY_CONFIG_PATH } from '../commands/options.js';
 import { isSignCommand } from '../commands/signCommands.js';
@@ -24,7 +32,7 @@ import { forkNetworkToMultiProvider, verifyAnvil } from '../deploy/dry-run.js';
 import { logBlue } from '../logger.js';
 import { runSingleChainSelectionStep } from '../utils/chains.js';
 import { detectAndConfirmOrPrompt } from '../utils/input.js';
-import { getImpersonatedSigner, getSigner } from '../utils/keys.js';
+import { getImpersonatedSigner, getSigner, getSigners } from '../utils/keys.js';
 
 import { ChainResolverFactory } from './strategies/chain/ChainResolverFactory.js';
 import { MultiProtocolSignerManager } from './strategies/signer/MultiProtocolSignerManager.js';
@@ -41,6 +49,7 @@ export async function contextMiddleware(argv: Record<string, any>) {
     registryUri: argv.registry,
     registryOverrideUri: argv.overrides,
     key: argv.key,
+    keys: argv.keys,
     fromAddress: argv.fromAddress,
     requiresKey,
     disableProxy: argv.disableProxy,
@@ -103,6 +112,7 @@ export async function getContext({
   registryUri,
   registryOverrideUri,
   key,
+  keys,
   requiresKey,
   skipConfirmation,
   disableProxy = false,
@@ -116,13 +126,20 @@ export async function getContext({
     ({ key, signer } = await getSigner({ key, skipConfirmation }));
     signerAddress = await signer.getAddress();
   }
-
   const multiProvider = await getMultiProvider(registry);
+
+  let signers: ProtocolMap<ethers.Wallet | FuelWallet> | undefined;
+  if (keys) signers = await getSigners({ keys, skipConfirmation });
+  const chainMetadata = multiProvider.metadata;
+  const multiProtocolProvider = new MultiProtocolProvider(chainMetadata, {
+    signers,
+  });
 
   return {
     registry,
     requiresKey,
-    chainMetadata: multiProvider.metadata,
+    chainMetadata,
+    multiProtocolProvider,
     multiProvider,
     key,
     skipConfirmation: !!skipConfirmation,
@@ -172,6 +189,7 @@ export async function getDryRunContext(
     registry,
     chainMetadata: multiProvider.metadata,
     key: impersonatedKey,
+    multiProtocolProvider: new MultiProtocolProvider(multiProvider.metadata),
     signer: impersonatedSigner,
     multiProvider: multiProvider,
     skipConfirmation: !!skipConfirmation,
@@ -252,6 +270,8 @@ export async function requestAndSaveApiKeys(
   const apiKeys: ChainMap<string> = {};
 
   for (const chain of chains) {
+    if (chainMetadata[chain]?.protocol === ProtocolType.Fuel) continue;
+
     if (chainMetadata[chain]?.blockExplorers?.[0]?.apiKey) {
       apiKeys[chain] = chainMetadata[chain]!.blockExplorers![0]!.apiKey!;
       continue;

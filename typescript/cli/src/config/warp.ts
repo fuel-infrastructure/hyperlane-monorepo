@@ -15,10 +15,12 @@ import {
 } from '@hyperlane-xyz/sdk';
 import {
   Address,
+  ProtocolType,
   assert,
   isAddress,
   objMap,
   promiseObjAll,
+  validProtocolAddressGuard,
 } from '@hyperlane-xyz/utils';
 
 import { CommandContext } from '../context/types.js';
@@ -66,6 +68,12 @@ const TYPE_CHOICES = Object.values(TokenType).map((type) => ({
   value: type,
   description: TYPE_DESCRIPTIONS[type],
 }));
+
+const FUEL_TYPE_CHOICES = restrictChoices([
+  TokenType.collateral,
+  TokenType.synthetic,
+  TokenType.native,
+]);
 
 async function fillDefaults(
   context: CommandContext,
@@ -135,6 +143,7 @@ export async function createWarpRouteDeployConfig({
   let typeChoices = TYPE_CHOICES;
   for (const chain of warpChains) {
     logBlue(`${chain}: Configuring warp route...`);
+
     const owner = await detectAndConfirmOrPrompt(
       async () => context.signerAddress,
       'Enter the desired',
@@ -142,9 +151,11 @@ export async function createWarpRouteDeployConfig({
       'signer',
     );
 
+    const chainProtocol = context.chainMetadata[chain].protocol;
+    validProtocolAddressGuard(owner, chainProtocol);
+
     // default to the mailbox from the registry and if not found ask to the user to submit one
     const chainAddresses = await context.registry.getChainAddresses(chain);
-
     const mailbox =
       chainAddresses?.mailbox ??
       (await input({
@@ -152,25 +163,33 @@ export async function createWarpRouteDeployConfig({
         message: `Could not retrieve mailbox address from the registry for chain "${chain}". Please enter a valid mailbox address:`,
       }));
 
-    const proxyAdmin: DeployedOwnableConfig = await setProxyAdminConfig(
-      context,
-      chain,
-      owner,
-    );
+    const proxyAdmin: DeployedOwnableConfig | undefined =
+      chainProtocol === ProtocolType.Fuel
+        ? undefined
+        : await setProxyAdminConfig(context, chain, owner);
 
     /**
      * The logic from the cli is as follows:
      *  --advanced flag is provided: the user will have to build their own configuration using the available ISM types
-     *  --yes flag is provided: the default ISM config will be used (Trusted ISM + Default fallback ISM)
+     *  --yes flag is provided or the Protocol is Fuel: the default ISM config for the specific protocol will be used
      *  -- no flag is provided: the user must choose if the default ISM config should be used:
      *    - yes: the default ISM config will be used (Trusted ISM + Default fallback ISM)
      *    - no: the default fallback ISM will be used
      */
     let interchainSecurityModule: IsmConfig;
     if (advanced) {
-      interchainSecurityModule = await createAdvancedIsmConfig(context);
-    } else if (context.skipConfirmation) {
-      interchainSecurityModule = createDefaultWarpIsmConfig(owner);
+      interchainSecurityModule = await createAdvancedIsmConfig(
+        context,
+        chainProtocol,
+      );
+    } else if (
+      context.skipConfirmation ||
+      chainProtocol === ProtocolType.Fuel
+    ) {
+      interchainSecurityModule = createDefaultWarpIsmConfig(
+        owner,
+        chainProtocol,
+      );
     } else if (
       await confirm({
         message: 'Do you want to use a trusted ISM for warp route?',
@@ -181,6 +200,7 @@ export async function createWarpRouteDeployConfig({
       interchainSecurityModule = createFallbackRoutingConfig(owner);
     }
 
+    if (chainProtocol === ProtocolType.Fuel) typeChoices = FUEL_TYPE_CHOICES;
     const type = await select({
       message: `Select ${chain}'s token type`,
       choices: typeChoices,
@@ -196,7 +216,19 @@ export async function createWarpRouteDeployConfig({
       case TokenType.XERC20Lockbox:
       case TokenType.collateralFiat:
       case TokenType.collateralUri:
-      case TokenType.fastCollateral:
+      case TokenType.fastCollateral: {
+        const token = await input({
+          message: `Enter the existing token address on chain ${chain}`,
+        });
+        validProtocolAddressGuard(token, chainProtocol);
+        const assetId =
+          chainProtocol === ProtocolType.Fuel
+            ? await input({
+                message: `Enter the asset ID of the token on chain ${chain}`,
+              })
+            : undefined;
+        if (assetId) validProtocolAddressGuard(assetId, chainProtocol);
+
         result[chain] = {
           mailbox,
           type,
@@ -204,11 +236,42 @@ export async function createWarpRouteDeployConfig({
           proxyAdmin,
           isNft,
           interchainSecurityModule,
-          token: await input({
-            message: `Enter the existing token address on chain ${chain}`,
-          }),
+          token,
+          assetId,
         };
         break;
+      }
+      case TokenType.synthetic: {
+        const name = await input({
+          message: `Enter the name of the token on chain ${chain}`,
+        });
+        const symbol = await input({
+          message: `Enter the symbol of the token on chain ${chain}`,
+        });
+        const decimals = Number(
+          await input({
+            message: `Enter the decimals of the token on chain ${chain}`,
+          }),
+        );
+        const totalSupply = Number(
+          await input({
+            message: `Enter the total supply of the token on chain ${chain}`,
+          }),
+        );
+        result[chain] = {
+          mailbox,
+          type,
+          owner,
+          proxyAdmin,
+          isNft,
+          interchainSecurityModule,
+          name,
+          symbol,
+          decimals,
+          totalSupply,
+        };
+        break;
+      }
       case TokenType.syntheticRebase:
         result[chain] = {
           mailbox,
@@ -291,25 +354,33 @@ export function readWarpCoreConfig(filePath: string): WarpCoreConfig {
 }
 
 /**
- * Creates a default configuration for an ISM with a TRUSTED_RELAYER and FALLBACK_ROUTING.
+ * Creates a default configuration based on the provided `protocol`.
+ * If the protocol is not provided, the default configuration will be
+ * an Aggregation ISM with a Trusted Relayer and a Fallback Routing ISM.
  *
  * Properties relayer and owner are both set as input owner.
  *
  * @param owner - The address of the owner of the ISM.
+ * @param protocol - The protocol type of the chain.
  * @returns The default Aggregation ISM configuration.
  */
-function createDefaultWarpIsmConfig(owner: Address): IsmConfig {
-  return {
-    type: IsmType.AGGREGATION,
-    modules: [
-      {
-        type: IsmType.TRUSTED_RELAYER,
-        relayer: owner,
-      },
-      createFallbackRoutingConfig(owner),
-    ],
-    threshold: 1,
-  };
+function createDefaultWarpIsmConfig(
+  owner: Address,
+  protocol?: ProtocolType,
+): IsmConfig {
+  switch (protocol) {
+    case ProtocolType.Fuel:
+      return createFallbackRoutingConfig(owner);
+    default:
+      return {
+        type: IsmType.AGGREGATION,
+        modules: [
+          { type: IsmType.TRUSTED_RELAYER, relayer: owner },
+          createFallbackRoutingConfig(owner),
+        ],
+        threshold: 1,
+      };
+  }
 }
 
 /**
@@ -319,9 +390,5 @@ function createDefaultWarpIsmConfig(owner: Address): IsmConfig {
  * @returns The Fallback Routing ISM configuration.
  */
 function createFallbackRoutingConfig(owner: Address): IsmConfig {
-  return {
-    type: IsmType.FALLBACK_ROUTING,
-    domains: {},
-    owner,
-  };
+  return { type: IsmType.FALLBACK_ROUTING, domains: {}, owner };
 }

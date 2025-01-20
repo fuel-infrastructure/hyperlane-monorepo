@@ -1,5 +1,6 @@
 import { password } from '@inquirer/prompts';
 import { Signer, Wallet } from 'ethers';
+import { Wallet as FuelWallet } from 'fuels';
 
 import {
   ChainName,
@@ -29,6 +30,8 @@ export class MultiProtocolSignerFactory {
         if (technicalStack === ChainTechnicalStack.ZkSync)
           return new ZKSyncSignerStrategy(strategyConfig);
         return new EthereumSignerStrategy(strategyConfig);
+      case ProtocolType.Fuel:
+        return new FuelSignerStrategy(strategyConfig);
       default:
         throw new Error(`Unsupported protocol: ${protocol}`);
     }
@@ -74,6 +77,26 @@ class ZKSyncSignerStrategy extends BaseMultiProtocolSigner {
   }
 
   getSigner(config: SignerConfig): Signer {
+    return new Wallet(config.privateKey);
+  }
+}
+
+class FuelSignerStrategy extends BaseMultiProtocolSigner {
+  async getSignerConfig(chain: ChainName): Promise<SignerConfig> {
+    const submitter = this.config[chain]?.submitter as {
+      privateKey?: string;
+    };
+
+    const privateKey =
+      submitter?.privateKey ??
+      (await password({
+        message: `Please enter the private key for chain ${chain}`,
+      }));
+
+    return { privateKey };
+  }
+
+  getSigner(config: SignerConfig): FuelWallet {
     return new Wallet(config.privateKey);
   }
 }

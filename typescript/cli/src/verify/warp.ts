@@ -16,7 +16,7 @@ import {
   proxyImplementation,
   verificationUtils,
 } from '@hyperlane-xyz/sdk';
-import { Address, assert, objFilter } from '@hyperlane-xyz/utils';
+import { Address, ProtocolType, assert, objFilter } from '@hyperlane-xyz/utils';
 
 import { requestAndSaveApiKeys } from '../context/context.js';
 import { CommandContext } from '../context/types.js';
@@ -24,6 +24,8 @@ import { logBlue, logGray, logGreen } from '../logger.js';
 
 // Zircuit does not have an external API: https://docs.zircuit.com/dev-tools/block-explorer
 const UNSUPPORTED_CHAINS = ['zircuit'];
+// Fuel does not have explorer verification
+const UNSUPPORTED_PROTOCOLS = [ProtocolType.Fuel];
 
 export async function runVerifyWarpRoute({
   context,
@@ -47,6 +49,12 @@ export async function runVerifyWarpRoute({
   for (const token of warpCoreConfig.tokens) {
     const { chainName } = token;
     verificationInputs[chainName] = [];
+
+    const protocol = context.chainMetadata[chainName].protocol;
+    if (UNSUPPORTED_PROTOCOLS.includes(protocol)) {
+      logBlue(`Unsupported protocol ${protocol}. Skipping.`);
+      continue;
+    }
 
     if (UNSUPPORTED_CHAINS.includes(chainName)) {
       logBlue(`Unsupported chain ${chainName}. Skipping.`);

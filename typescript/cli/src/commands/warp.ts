@@ -39,6 +39,7 @@ import {
   symbolCommandOption,
   warpCoreConfigCommandOption,
   warpDeploymentConfigCommandOption,
+  warpDeploymentKeysCommandOption,
 } from './options.js';
 import { MessageOptionsArgTypes, messageOptions } from './send.js';
 
@@ -74,6 +75,7 @@ export const apply: CommandModuleWithWriteContext<{
   describe: 'Update Warp Route contracts',
   builder: {
     config: warpDeploymentConfigCommandOption,
+    keys: warpDeploymentKeysCommandOption,
     symbol: {
       ...symbolCommandOption,
       demandOption: false,
@@ -132,6 +134,7 @@ export const deploy: CommandModuleWithWriteContext<{
     config: warpDeploymentConfigCommandOption,
     'dry-run': dryRunCommandOption,
     'from-address': fromAddressCommandOption,
+    keys: warpDeploymentKeysCommandOption,
   },
   handler: async ({ context, config, dryRun }) => {
     logCommandHeader(
@@ -190,6 +193,7 @@ export const read: CommandModuleWithContext<{
       ...symbolCommandOption,
       demandOption: false,
     },
+    keys: warpDeploymentKeysCommandOption,
     chain: {
       ...chainCommandOption,
       demandOption: false,
@@ -310,6 +314,7 @@ export const check: CommandModuleWithContext<{
       ...symbolCommandOption,
       demandOption: false,
     },
+    keys: warpDeploymentKeysCommandOption,
     warp: {
       ...warpCoreConfigCommandOption,
       demandOption: false,

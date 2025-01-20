@@ -9,9 +9,16 @@ import {
   ChainMap,
   ChainName,
   EvmERC20WarpRouteReader,
+  FuelSRC20WarpModule,
   TokenStandard,
 } from '@hyperlane-xyz/sdk';
-import { isAddressEvm, objMap, promiseObjAll } from '@hyperlane-xyz/utils';
+import {
+  ProtocolType,
+  isAddressEvm,
+  isAddressFuel,
+  objMap,
+  promiseObjAll,
+} from '@hyperlane-xyz/utils';
 
 import { CommandContext } from '../context/types.js';
 import { logGray, logRed, logTable } from '../logger.js';
@@ -30,7 +37,7 @@ export async function runWarpRouteRead({
   address?: string;
   symbol?: string;
 }): Promise<Record<ChainName, any>> {
-  const { multiProvider } = context;
+  const { multiProvider, multiProtocolProvider } = context;
 
   let addresses: ChainMap<string>;
   if (symbol || warp) {
@@ -93,26 +100,37 @@ export async function runWarpRouteRead({
     process.exit(1);
   }
 
-  // Check if there any non-EVM chains in the config and exit
-  const nonEvmChains = Object.entries(addresses)
-    .filter(([_, address]) => !isAddressEvm(address))
+  // Check if there any non EVM or Fuel chains in the config and exit
+  const notSupportedChains = Object.entries(addresses)
+    .filter(([_, address]) => !isAddressEvm(address) && !isAddressFuel(address))
     .map(([chain]) => chain);
-  if (nonEvmChains.length > 0) {
-    const chainList = nonEvmChains.join(', ');
+  if (notSupportedChains.length > 0) {
+    const chainList = notSupportedChains.join(', ');
     logRed(
       `${chainList} ${
-        nonEvmChains.length > 1 ? 'are' : 'is'
-      } non-EVM and not compatible with the cli`,
+        notSupportedChains.length > 1 ? 'are' : 'is'
+      } not EVM or FuelVM and ${
+        notSupportedChains.length > 1 ? 'are' : 'is'
+      } not compatible with the cli`,
     );
     process.exit(1);
   }
 
   const config = await promiseObjAll(
-    objMap(addresses, async (chain, address) =>
-      new EvmERC20WarpRouteReader(multiProvider, chain).deriveWarpRouteConfig(
-        address,
-      ),
-    ),
+    objMap(addresses, async (chain, address) => {
+      const protocol = context.chainMetadata[chain].protocol;
+
+      return protocol === ProtocolType.Ethereum
+        ? new EvmERC20WarpRouteReader(
+            multiProvider,
+            chain,
+          ).deriveWarpRouteConfig(address)
+        : FuelSRC20WarpModule.deriveWarpRouteConfig(
+            multiProtocolProvider,
+            chain,
+            address,
+          );
+    }),
   );
 
   return config;

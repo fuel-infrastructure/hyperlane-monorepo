@@ -1,8 +1,14 @@
 import { input } from '@inquirer/prompts';
 import { ethers, providers } from 'ethers';
+import { Wallet as FuelWallet, WalletUnlocked } from 'fuels';
 
 import { impersonateAccount } from '@hyperlane-xyz/sdk';
-import { Address, ensure0x } from '@hyperlane-xyz/utils';
+import {
+  Address,
+  ProtocolMap,
+  ProtocolType,
+  ensure0x,
+} from '@hyperlane-xyz/utils';
 
 const ETHEREUM_ADDRESS_LENGTH = 42;
 
@@ -18,8 +24,42 @@ export async function getSigner({
   skipConfirmation?: boolean;
 }) {
   key ||= await retrieveKey(skipConfirmation);
-  const signer = privateKeyToSigner(key);
+  const signer = privateKeyToEvmSigner(key);
   return { key, signer };
+}
+
+export async function getSigners({
+  keys,
+  skipConfirmation,
+}: {
+  keys?: string;
+  skipConfirmation?: boolean;
+}) {
+  keys ||= await retrieveKeys(skipConfirmation);
+
+  const protocolKeys = keys.split(',').map((protocolWithKey) => {
+    const [protocol, key] = protocolWithKey.split(':');
+    return { protocol, key };
+  });
+  if (protocolKeys.length === 0) throw new Error('No keys provided');
+
+  const signers: ProtocolMap<ethers.Wallet | WalletUnlocked> = {};
+  for (const { protocol, key } of protocolKeys) {
+    switch (protocol) {
+      case 'fuel':
+        signers[ProtocolType.Fuel] = privateKeyToFuelSigner(key);
+        break;
+      case 'ethereum':
+        signers[ProtocolType.Ethereum] = privateKeyToEvmSigner(key);
+        break;
+      default:
+        throw new Error(
+          `Unsupported protocol: ${protocol}, supported protocols are 'fuel' and 'ethereum'`,
+        );
+    }
+  }
+
+  return signers;
 }
 
 /**
@@ -49,8 +89,11 @@ export async function getImpersonatedSigner({
  * Verifies the specified signer is valid.
  * @param signer the signer to verify
  */
-export function assertSigner(signer: ethers.Signer) {
-  if (!signer || !ethers.Signer.isSigner(signer))
+export function assertSigner(signer: ethers.Signer | WalletUnlocked) {
+  if (
+    !signer ||
+    !(ethers.Signer.isSigner(signer) || signer instanceof WalletUnlocked)
+  )
     throw new Error('Signer is invalid');
 }
 
@@ -73,11 +116,11 @@ async function addressToImpersonatedSigner(
 }
 
 /**
- * Generates a signer from a private key.
- * @param key a private key
- * @returns a signer for the private key
+ * Generates an EVM signer from a private key.
+ * @param key an EVM private key
+ * @returns an EVM signer for the private key
  */
-function privateKeyToSigner(key: string): ethers.Wallet {
+function privateKeyToEvmSigner(key: string): ethers.Wallet {
   if (!key) throw new Error('No private key provided');
 
   const formattedKey = key.trim().toLowerCase();
@@ -85,7 +128,20 @@ function privateKeyToSigner(key: string): ethers.Wallet {
     return new ethers.Wallet(ensure0x(formattedKey));
   else if (formattedKey.split(' ').length >= 6)
     return ethers.Wallet.fromMnemonic(formattedKey);
-  else throw new Error('Invalid private key format');
+  else throw new Error('Invalid EVM private key format');
+}
+
+/**
+ * Generates a Fuel signer from a private key.
+ * @param key a Fuel private key
+ * @returns a Fuel signer for the private key
+ */
+function privateKeyToFuelSigner(key: string): WalletUnlocked {
+  if (!key) throw new Error('No private key provided');
+
+  const formattedKey = key.trim().toLowerCase();
+  const wallet = FuelWallet.fromPrivateKey(ensure0x(formattedKey));
+  return wallet;
 }
 
 async function retrieveKey(
@@ -95,5 +151,18 @@ async function retrieveKey(
   else
     return input({
       message: `Please enter private key or use the HYP_KEY environment variable.`,
+    });
+}
+
+async function retrieveKeys(
+  skipConfirmation: boolean | undefined,
+): Promise<string> {
+  if (skipConfirmation) throw new Error(`No private keys provided`);
+  else
+    return input({
+      message: `
+      Please enter private keys (comma separated) with a protocol prefix \n
+      (e.g. 'fuel:0x1234...,ethereum:0x5678...')
+      `,
     });
 }

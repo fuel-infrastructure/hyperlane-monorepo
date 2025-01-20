@@ -10,6 +10,8 @@ export enum ProtocolType {
 // A type that also allows for literal values of the enum
 export type ProtocolTypeValue = `${ProtocolType}`;
 
+export type ProtocolMap<T> = { [key in ProtocolType]?: T };
+
 export const ProtocolSmallestUnit = {
   [ProtocolType.Ethereum]: 'wei',
   [ProtocolType.Sealevel]: 'lamports',

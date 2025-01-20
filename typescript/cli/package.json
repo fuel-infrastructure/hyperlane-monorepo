@@ -16,6 +16,7 @@
     "bignumber.js": "^9.1.1",
     "chalk": "^5.3.0",
     "ethers": "^5.7.2",
+    "fuels": "^0.97.2",
     "latest-version": "^8.0.0",
     "terminal-link": "^3.0.0",
     "tsx": "^4.19.1",

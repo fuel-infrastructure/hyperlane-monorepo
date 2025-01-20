@@ -20,7 +20,12 @@ import chalk from 'chalk';
 
 import { ProxyAdmin__factory } from '@hyperlane-xyz/core';
 import { ChainName, DeployedOwnableConfig } from '@hyperlane-xyz/sdk';
-import { Address, isAddress, rootLogger } from '@hyperlane-xyz/utils';
+import {
+  Address,
+  ProtocolType,
+  isAddress,
+  rootLogger,
+} from '@hyperlane-xyz/utils';
 
 import { CommandContext } from '../context/types.js';
 import { logGray } from '../logger.js';
@@ -92,7 +97,11 @@ export async function setProxyAdminConfig(
 
   // default to deploying a new ProxyAdmin with `warpRouteOwner` as the owner
   // if the user supplied the --yes flag
-  if (context.skipConfirmation) {
+  if (
+    context.skipConfirmation ||
+    // Fuel protocol does not use ProxyAdmin
+    context.chainMetadata[chain].protocol === ProtocolType.Fuel
+  ) {
     return defaultAdminConfig;
   }
 
