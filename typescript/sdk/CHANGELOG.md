@@ -1,5 +1,19 @@
 # @hyperlane-xyz/sdk
 
+## 8.3.0
+
+### Minor Changes
+
+- 7546c018: Deploy to trumpchain.
+- 49856fbb: Deploy to flametestnet, sonicblaze. Remove support for sonictestnet.
+
+### Patch Changes
+
+- Updated dependencies [db8c0901]
+- Updated dependencies [11cf66c5]
+  - @hyperlane-xyz/core@5.10.0
+  - @hyperlane-xyz/utils@8.3.0
+
 ## 8.2.0
 
 ### Minor Changes

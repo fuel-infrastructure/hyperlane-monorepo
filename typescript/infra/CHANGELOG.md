@@ -1,5 +1,20 @@
 # @hyperlane-xyz/infra
 
+## 8.3.0
+
+### Minor Changes
+
+- fed42c32: updated zero ETH warp route config getter
+- 31c89a3c: Add support for Artela config
+
+### Patch Changes
+
+- Updated dependencies [7546c018]
+- Updated dependencies [49856fbb]
+  - @hyperlane-xyz/sdk@8.3.0
+  - @hyperlane-xyz/helloworld@8.3.0
+  - @hyperlane-xyz/utils@8.3.0
+
 ## 8.2.0
 
 ### Minor Changes
