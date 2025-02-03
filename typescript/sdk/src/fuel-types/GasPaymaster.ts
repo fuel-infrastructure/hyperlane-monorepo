@@ -35,14 +35,12 @@ export type IdentityOutput = Enum<{
 export enum IgpErrorInput {
   InsufficientGasPayment = 'InsufficientGasPayment',
   InterchainGasPaymentInBaseAsset = 'InterchainGasPaymentInBaseAsset',
-  ContractAlreadyInitialized = 'ContractAlreadyInitialized',
   UnsupportedMetadataFormat = 'UnsupportedMetadataFormat',
   InvalidDomainConfigLength = 'InvalidDomainConfigLength',
 }
 export enum IgpErrorOutput {
   InsufficientGasPayment = 'InsufficientGasPayment',
   InterchainGasPaymentInBaseAsset = 'InterchainGasPaymentInBaseAsset',
-  ContractAlreadyInitialized = 'ContractAlreadyInitialized',
   UnsupportedMetadataFormat = 'UnsupportedMetadataFormat',
   InvalidDomainConfigLength = 'InvalidDomainConfigLength',
 }
@@ -93,10 +91,13 @@ export type AddressInput = { bits: string };
 export type AddressOutput = AddressInput;
 export type AssetIdInput = { bits: string };
 export type AssetIdOutput = AssetIdInput;
-export type BeneficiarySetEventInput = { beneficiary: string };
-export type BeneficiarySetEventOutput = BeneficiarySetEventInput;
-export type ClaimEventInput = { beneficiary: string; amount: BigNumberish };
-export type ClaimEventOutput = { beneficiary: string; amount: BN };
+export type BeneficiarySetEventInput = { beneficiary: IdentityInput };
+export type BeneficiarySetEventOutput = { beneficiary: IdentityOutput };
+export type ClaimEventInput = {
+  beneficiary: IdentityInput;
+  amount: BigNumberish;
+};
+export type ClaimEventOutput = { beneficiary: IdentityOutput; amount: BN };
 export type ContractIdInput = { bits: string };
 export type ContractIdOutput = ContractIdInput;
 export type DestinationGasConfigSetEventInput = {
@@ -185,15 +186,15 @@ const abi = {
         'b760f44fa5965c2474a3b471467a22c43185152129295af588b022ae50b50903',
     },
     {
-      type: 'enum IgpError',
+      type: 'enum interfaces::hooks::igp::IgpError',
       concreteTypeId:
-        '5e9b943fe66bb2f9186016140592021f71cf98395bd3c80eef479a17a9b39e2b',
+        'e8ec08fc35b6312eaeca1be8ba0645b2eb1bf5656f53fed618eda7c184a7c6bc',
       metadataTypeId: 0,
     },
     {
-      type: 'enum interfaces::post_dispatch_hook::PostDispatchHookType',
+      type: 'enum interfaces::hooks::post_dispatch_hook::PostDispatchHookType',
       concreteTypeId:
-        '92d375dbe21d8ba43fcbaa7f70e70c94baee06743f2d11d49bbe4fb8785becff',
+        '88d5bf06eca6ec129b0c98e6d67271d9012ccd96caf9fe498d5dd2d191db9428',
       metadataTypeId: 1,
     },
     {
@@ -253,45 +254,45 @@ const abi = {
         '8c25cb3686462e9a86d2883c5688a22fe738b0bbc85f458d2d2b5f3f667c6d5a',
     },
     {
-      type: 'struct interfaces::claimable::BeneficiarySetEvent',
+      type: 'struct interfaces::hooks::gas_oracle::RemoteGasData',
       concreteTypeId:
-        '28da8704d9711bb3e5ae8de91a1339201b6e3a044065e47395c1f4064d8e07d8',
+        '7b4c89ae67dd062b19fc7f4acf9b99d824182c6051d7c26c06be18c1de085595',
       metadataTypeId: 9,
     },
     {
-      type: 'struct interfaces::claimable::ClaimEvent',
+      type: 'struct interfaces::hooks::igp::BeneficiarySetEvent',
       concreteTypeId:
-        '6bcec70a463a07509f86d07955802bee953038650739d9b15f8ba95a0e2052aa',
+        '229f9e763c8424886a0b828eb92ecd7ee7ee60fb9b34ec5595a43cc02b21a6e7',
       metadataTypeId: 10,
     },
     {
-      type: 'struct interfaces::igp::DestinationGasConfigSetEvent',
+      type: 'struct interfaces::hooks::igp::ClaimEvent',
       concreteTypeId:
-        'c3faf1a999ccadf86bf4c3bd6668b0aaa5ada92a20c843717bb16347bf650710',
+        'f6197f499ee863b7f79af9d4149ec4c76ac1f12af5d55ac5a3e9aa2adf195bc9',
       metadataTypeId: 11,
     },
     {
-      type: 'struct interfaces::igp::DomainGasConfig',
+      type: 'struct interfaces::hooks::igp::DestinationGasConfigSetEvent',
       concreteTypeId:
-        'c5b034f4ba78b02014905d2bf9434c5c9975fdd72b1f7d6eaad4d3fc46b21434',
+        'b8b47e85d8cb1e8bd7a47922d6ac2c9aef8c272feb8d5a404e972bb189aeedb3',
       metadataTypeId: 12,
     },
     {
-      type: 'struct interfaces::igp::GasOracleSetEvent',
+      type: 'struct interfaces::hooks::igp::DomainGasConfig',
       concreteTypeId:
-        'e2a62dd30c887a49893c650f8f85200415866051cadc94f195537b3798498065',
+        'daf5a9441e8f4aed11368121fb8cd7fcaec71d243bf701ceefd0cd2aba270d8b',
       metadataTypeId: 13,
     },
     {
-      type: 'struct interfaces::igp::GasPaymentEvent',
+      type: 'struct interfaces::hooks::igp::GasOracleSetEvent',
       concreteTypeId:
-        '57f16a22cb9e861b379fae117dc32f53512234a762ed50564496dff7600646b9',
+        '9a9d03fe63ecba2bda69c30f8c743b0d5719d4dc01ad2cbbedce34332ae57970',
       metadataTypeId: 14,
     },
     {
-      type: 'struct interfaces::igp::RemoteGasData',
+      type: 'struct interfaces::hooks::igp::GasPaymentEvent',
       concreteTypeId:
-        'e50775c5f24ae4747aaa1574d1e48ab24b07b3d9fa328970bd7e98436617fe89',
+        '8dfafd11d278da7cc3347b4432a7bd4dbb4dbc21d2475f98b8ae17b0a1a5c122',
       metadataTypeId: 15,
     },
     {
@@ -307,12 +308,12 @@ const abi = {
       metadataTypeId: 18,
     },
     {
-      type: 'struct std::vec::Vec<struct interfaces::igp::DomainGasConfig>',
+      type: 'struct std::vec::Vec<struct interfaces::hooks::igp::DomainGasConfig>',
       concreteTypeId:
-        'e57b42b8770af0bf9490c7b658743efa359147737b82384f5fc2647cbc9cfd23',
+        '72e5e46f1e7d3f8964a9236d110d456cb86fea809e436c91f60e6503b65f9f1d',
       metadataTypeId: 23,
       typeArguments: [
-        'c5b034f4ba78b02014905d2bf9434c5c9975fdd72b1f7d6eaad4d3fc46b21434',
+        'daf5a9441e8f4aed11368121fb8cd7fcaec71d243bf701ceefd0cd2aba270d8b',
       ],
     },
     {
@@ -360,7 +361,7 @@ const abi = {
   ],
   metadataTypes: [
     {
-      type: 'enum IgpError',
+      type: 'enum interfaces::hooks::igp::IgpError',
       metadataTypeId: 0,
       components: [
         {
@@ -370,11 +371,6 @@ const abi = {
         },
         {
           name: 'InterchainGasPaymentInBaseAsset',
-          typeId:
-            '2e38e77b22c314a449e91fafed92a43826ac6aa403ae6a8acb6cf58239fbaf5d',
-        },
-        {
-          name: 'ContractAlreadyInitialized',
           typeId:
             '2e38e77b22c314a449e91fafed92a43826ac6aa403ae6a8acb6cf58239fbaf5d',
         },
@@ -391,7 +387,7 @@ const abi = {
       ],
     },
     {
-      type: 'enum interfaces::post_dispatch_hook::PostDispatchHookType',
+      type: 'enum interfaces::hooks::post_dispatch_hook::PostDispatchHookType',
       metadataTypeId: 1,
       components: [
         {
@@ -532,24 +528,46 @@ const abi = {
       metadataTypeId: 8,
     },
     {
-      type: 'struct interfaces::claimable::BeneficiarySetEvent',
+      type: 'struct interfaces::hooks::gas_oracle::RemoteGasData',
       metadataTypeId: 9,
       components: [
         {
-          name: 'beneficiary',
+          name: 'domain',
           typeId:
-            '7c5ee1cecf5f8eacd1284feb5f0bf2bdea533a51e2f0c9aabe9236d335989f3b',
+            'd7649d428b9ff33d188ecbf38a7e4d8fd167fa01b2e10fe9a8f9308e52f1d7cc',
+        },
+        {
+          name: 'token_exchange_rate',
+          typeId: 21,
+        },
+        {
+          name: 'gas_price',
+          typeId: 21,
+        },
+        {
+          name: 'token_decimals',
+          typeId:
+            'c89951a24c6ca28c13fd1cfdc646b2b656d69e61a92b91023be7eb58eb914b6b',
         },
       ],
     },
     {
-      type: 'struct interfaces::claimable::ClaimEvent',
+      type: 'struct interfaces::hooks::igp::BeneficiarySetEvent',
       metadataTypeId: 10,
       components: [
         {
           name: 'beneficiary',
-          typeId:
-            '7c5ee1cecf5f8eacd1284feb5f0bf2bdea533a51e2f0c9aabe9236d335989f3b',
+          typeId: 4,
+        },
+      ],
+    },
+    {
+      type: 'struct interfaces::hooks::igp::ClaimEvent',
+      metadataTypeId: 11,
+      components: [
+        {
+          name: 'beneficiary',
+          typeId: 4,
         },
         {
           name: 'amount',
@@ -559,8 +577,8 @@ const abi = {
       ],
     },
     {
-      type: 'struct interfaces::igp::DestinationGasConfigSetEvent',
-      metadataTypeId: 11,
+      type: 'struct interfaces::hooks::igp::DestinationGasConfigSetEvent',
+      metadataTypeId: 12,
       components: [
         {
           name: 'domain',
@@ -580,8 +598,8 @@ const abi = {
       ],
     },
     {
-      type: 'struct interfaces::igp::DomainGasConfig',
-      metadataTypeId: 12,
+      type: 'struct interfaces::hooks::igp::DomainGasConfig',
+      metadataTypeId: 13,
       components: [
         {
           name: 'gas_oracle',
@@ -596,8 +614,8 @@ const abi = {
       ],
     },
     {
-      type: 'struct interfaces::igp::GasOracleSetEvent',
-      metadataTypeId: 13,
+      type: 'struct interfaces::hooks::igp::GasOracleSetEvent',
+      metadataTypeId: 14,
       components: [
         {
           name: 'domain',
@@ -612,8 +630,8 @@ const abi = {
       ],
     },
     {
-      type: 'struct interfaces::igp::GasPaymentEvent',
-      metadataTypeId: 14,
+      type: 'struct interfaces::hooks::igp::GasPaymentEvent',
+      metadataTypeId: 15,
       components: [
         {
           name: 'message_id',
@@ -634,30 +652,6 @@ const abi = {
           name: 'payment',
           typeId:
             '1506e6f44c1d6291cdf46395a8e573276a4fa79e8ace3fc891e092ef32d1b0a0',
-        },
-      ],
-    },
-    {
-      type: 'struct interfaces::igp::RemoteGasData',
-      metadataTypeId: 15,
-      components: [
-        {
-          name: 'domain',
-          typeId:
-            'd7649d428b9ff33d188ecbf38a7e4d8fd167fa01b2e10fe9a8f9308e52f1d7cc',
-        },
-        {
-          name: 'token_exchange_rate',
-          typeId: 21,
-        },
-        {
-          name: 'gas_price',
-          typeId: 21,
-        },
-        {
-          name: 'token_decimals',
-          typeId:
-            'c89951a24c6ca28c13fd1cfdc646b2b656d69e61a92b91023be7eb58eb914b6b',
         },
       ],
     },
@@ -815,6 +809,62 @@ const abi = {
   ],
   functions: [
     {
+      inputs: [],
+      name: 'beneficiary',
+      output:
+        'ab7cd04e05be58e3fc15d424c2c4a57f824a2a2d97d67252440a3925ebdc1335',
+      attributes: [
+        {
+          name: 'doc-comment',
+          arguments: [' Gets the current beneficiary.'],
+        },
+        {
+          name: 'doc-comment',
+          arguments: [''],
+        },
+        {
+          name: 'doc-comment',
+          arguments: [' ### Returns'],
+        },
+        {
+          name: 'doc-comment',
+          arguments: [''],
+        },
+        {
+          name: 'doc-comment',
+          arguments: [' * [Identity] - The beneficiary.'],
+        },
+        {
+          name: 'storage',
+          arguments: ['read'],
+        },
+      ],
+    },
+    {
+      inputs: [
+        {
+          name: 'asset',
+          concreteTypeId:
+            '191bf2140761b3c5ab6c43992d162bb3dc9d7f2272b2ee5f5eeea411ddedcd32',
+        },
+      ],
+      name: 'claim',
+      output:
+        '2e38e77b22c314a449e91fafed92a43826ac6aa403ae6a8acb6cf58239fbaf5d',
+      attributes: [
+        {
+          name: 'doc-comment',
+          arguments: [
+            ' Sends all base asset funds to the beneficiary. Callable by anyone.',
+          ],
+        },
+        {
+          name: 'storage',
+          arguments: ['read'],
+        },
+      ],
+    },
+    {
       inputs: [
         {
           name: 'domain',
@@ -892,7 +942,7 @@ const abi = {
       ],
       name: 'get_domain_gas_config',
       output:
-        'c5b034f4ba78b02014905d2bf9434c5c9975fdd72b1f7d6eaad4d3fc46b21434',
+        'daf5a9441e8f4aed11368121fb8cd7fcaec71d243bf701ceefd0cd2aba270d8b',
       attributes: [
         {
           name: 'doc-comment',
@@ -950,7 +1000,7 @@ const abi = {
       ],
       name: 'get_remote_gas_data',
       output:
-        'e50775c5f24ae4747aaa1574d1e48ab24b07b3d9fa328970bd7e98436617fe89',
+        '7b4c89ae67dd062b19fc7f4acf9b99d824182c6051d7c26c06be18c1de085595',
       attributes: [
         {
           name: 'doc-comment',
@@ -1025,12 +1075,12 @@ const abi = {
         {
           name: 'owner',
           concreteTypeId:
-            '7c5ee1cecf5f8eacd1284feb5f0bf2bdea533a51e2f0c9aabe9236d335989f3b',
+            'ab7cd04e05be58e3fc15d424c2c4a57f824a2a2d97d67252440a3925ebdc1335',
         },
         {
           name: 'beneficiary',
           concreteTypeId:
-            '7c5ee1cecf5f8eacd1284feb5f0bf2bdea533a51e2f0c9aabe9236d335989f3b',
+            'ab7cd04e05be58e3fc15d424c2c4a57f824a2a2d97d67252440a3925ebdc1335',
         },
       ],
       name: 'initialize',
@@ -1055,12 +1105,12 @@ const abi = {
         },
         {
           name: 'doc-comment',
-          arguments: [' * `owner`: [b256] - The owner of the contract.'],
+          arguments: [' * `owner`: [Identity] - The owner of the contract.'],
         },
         {
           name: 'doc-comment',
           arguments: [
-            ' * `beneficiary`: [b256] - The beneficiary of the contract.',
+            ' * `beneficiary`: [Identity] - The beneficiary of the contract.',
           ],
         },
         {
@@ -1254,6 +1304,62 @@ const abi = {
     {
       inputs: [
         {
+          name: 'beneficiary',
+          concreteTypeId:
+            'ab7cd04e05be58e3fc15d424c2c4a57f824a2a2d97d67252440a3925ebdc1335',
+        },
+      ],
+      name: 'set_beneficiary',
+      output:
+        '2e38e77b22c314a449e91fafed92a43826ac6aa403ae6a8acb6cf58239fbaf5d',
+      attributes: [
+        {
+          name: 'doc-comment',
+          arguments: [
+            ' Sets the beneficiary to `beneficiary`. Only callable by the owner.',
+          ],
+        },
+        {
+          name: 'doc-comment',
+          arguments: [''],
+        },
+        {
+          name: 'doc-comment',
+          arguments: [' ### Arguments'],
+        },
+        {
+          name: 'doc-comment',
+          arguments: [''],
+        },
+        {
+          name: 'doc-comment',
+          arguments: [' * `beneficiary`: [Identity] - The new beneficiary.'],
+        },
+        {
+          name: 'doc-comment',
+          arguments: [''],
+        },
+        {
+          name: 'doc-comment',
+          arguments: [' ### Reverts'],
+        },
+        {
+          name: 'doc-comment',
+          arguments: [''],
+        },
+        {
+          name: 'doc-comment',
+          arguments: [' * If the caller is not the owner.'],
+        },
+        {
+          name: 'storage',
+          arguments: ['read', 'write'],
+        },
+      ],
+    },
+    {
+      inputs: [
+        {
           name: 'domain',
           concreteTypeId:
             '13c38f4111bad6468fad4f8ea82fd744546b63be49db9439fb3d94e14ae2bb3a',
@@ -1261,7 +1367,7 @@ const abi = {
         {
           name: 'config',
           concreteTypeId:
-            'e57b42b8770af0bf9490c7b658743efa359147737b82384f5fc2647cbc9cfd23',
+            '72e5e46f1e7d3f8964a9236d110d456cb86fea809e436c91f60e6503b65f9f1d',
         },
       ],
       name: 'set_destination_gas_config',
@@ -1344,118 +1450,6 @@ const abi = {
         {
           name: 'doc-comment',
           arguments: [' * `gas_oracle`: [b256] - The gas oracle.'],
-        },
-        {
-          name: 'doc-comment',
-          arguments: [''],
-        },
-        {
-          name: 'doc-comment',
-          arguments: [' ### Reverts'],
-        },
-        {
-          name: 'doc-comment',
-          arguments: [''],
-        },
-        {
-          name: 'doc-comment',
-          arguments: [' * If the caller is not the owner.'],
-        },
-        {
-          name: 'storage',
-          arguments: ['read', 'write'],
-        },
-      ],
-    },
-    {
-      inputs: [],
-      name: 'beneficiary',
-      output:
-        'ab7cd04e05be58e3fc15d424c2c4a57f824a2a2d97d67252440a3925ebdc1335',
-      attributes: [
-        {
-          name: 'doc-comment',
-          arguments: [' Gets the current beneficiary.'],
-        },
-        {
-          name: 'doc-comment',
-          arguments: [''],
-        },
-        {
-          name: 'doc-comment',
-          arguments: [' ### Returns'],
-        },
-        {
-          name: 'doc-comment',
-          arguments: [''],
-        },
-        {
-          name: 'doc-comment',
-          arguments: [' * [Identity] - The beneficiary.'],
-        },
-        {
-          name: 'storage',
-          arguments: ['read'],
-        },
-      ],
-    },
-    {
-      inputs: [
-        {
-          name: 'asset',
-          concreteTypeId:
-            '191bf2140761b3c5ab6c43992d162bb3dc9d7f2272b2ee5f5eeea411ddedcd32',
-        },
-      ],
-      name: 'claim',
-      output:
-        '2e38e77b22c314a449e91fafed92a43826ac6aa403ae6a8acb6cf58239fbaf5d',
-      attributes: [
-        {
-          name: 'doc-comment',
-          arguments: [
-            ' Sends all base asset funds to the beneficiary. Callable by anyone.',
-          ],
-        },
-        {
-          name: 'storage',
-          arguments: ['read'],
-        },
-      ],
-    },
-    {
-      inputs: [
-        {
-          name: 'beneficiary',
-          concreteTypeId:
-            'ab7cd04e05be58e3fc15d424c2c4a57f824a2a2d97d67252440a3925ebdc1335',
-        },
-      ],
-      name: 'set_beneficiary',
-      output:
-        '2e38e77b22c314a449e91fafed92a43826ac6aa403ae6a8acb6cf58239fbaf5d',
-      attributes: [
-        {
-          name: 'doc-comment',
-          arguments: [
-            ' Sets the beneficiary to `beneficiary`. Only callable by the owner.',
-          ],
-        },
-        {
-          name: 'doc-comment',
-          arguments: [''],
-        },
-        {
-          name: 'doc-comment',
-          arguments: [' ### Arguments'],
-        },
-        {
-          name: 'doc-comment',
-          arguments: [''],
-        },
-        {
-          name: 'doc-comment',
-          arguments: [' * `beneficiary`: [Identity] - The new beneficiary.'],
         },
         {
           name: 'doc-comment',
@@ -1676,7 +1670,7 @@ const abi = {
       inputs: [],
       name: 'hook_type',
       output:
-        '92d375dbe21d8ba43fcbaa7f70e70c94baee06743f2d11d49bbe4fb8785becff',
+        '88d5bf06eca6ec129b0c98e6d67271d9012ccd96caf9fe498d5dd2d191db9428',
       attributes: [
         {
           name: 'doc-comment',
@@ -1954,18 +1948,14 @@ const abi = {
           name: 'doc-comment',
           arguments: [' * [bool] - Whether the hook supports the metadata.'],
         },
-        {
-          name: 'storage',
-          arguments: ['read'],
-        },
       ],
     },
   ],
   loggedTypes: [
     {
-      logId: '6817205463125046009',
+      logId: '17733344961923408823',
       concreteTypeId:
-        '5e9b943fe66bb2f9186016140592021f71cf98395bd3c80eef479a17a9b39e2b',
+        'f6197f499ee863b7f79af9d4149ec4c76ac1f12af5d55ac5a3e9aa2adf195bc9',
     },
     {
       logId: '2161305517876418151',
@@ -1978,14 +1968,19 @@ const abi = {
         'e1ef35033ea9d2956f17c3292dea4a46ce7d61fdf37bbebe03b7b965073f43b5',
     },
     {
+      logId: '16783799790628909358',
+      concreteTypeId:
+        'e8ec08fc35b6312eaeca1be8ba0645b2eb1bf5656f53fed618eda7c184a7c6bc',
+    },
+    {
       logId: '10098701174489624218',
       concreteTypeId:
         '8c25cb3686462e9a86d2883c5688a22fe738b0bbc85f458d2d2b5f3f667c6d5a',
     },
     {
-      logId: '6336962848364594715',
+      logId: '10230767756512909948',
       concreteTypeId:
-        '57f16a22cb9e861b379fae117dc32f53512234a762ed50564496dff7600646b9',
+        '8dfafd11d278da7cc3347b4432a7bd4dbb4dbc21d2475f98b8ae17b0a1a5c122',
     },
     {
       logId: '4571204900286667806',
@@ -1993,24 +1988,19 @@ const abi = {
         '3f702ea3351c9c1ece2b84048006c8034a24cbc2bad2e740d0412b4172951d3d',
     },
     {
-      logId: '14121865292305706488',
+      logId: '2494886949245166728',
       concreteTypeId:
-        'c3faf1a999ccadf86bf4c3bd6668b0aaa5ada92a20c843717bb16347bf650710',
+        '229f9e763c8424886a0b828eb92ecd7ee7ee60fb9b34ec5595a43cc02b21a6e7',
     },
     {
-      logId: '16331791483177302601',
+      logId: '13309401912119598731',
       concreteTypeId:
-        'e2a62dd30c887a49893c650f8f85200415866051cadc94f195537b3798498065',
+        'b8b47e85d8cb1e8bd7a47922d6ac2c9aef8c272feb8d5a404e972bb189aeedb3',
     },
     {
-      logId: '7768365254202492752',
+      logId: '11141065444317510187',
       concreteTypeId:
-        '6bcec70a463a07509f86d07955802bee953038650739d9b15f8ba95a0e2052aa',
-    },
-    {
-      logId: '2943813761337727923',
-      concreteTypeId:
-        '28da8704d9711bb3e5ae8de91a1339201b6e3a044065e47395c1f4064d8e07d8',
+        '9a9d03fe63ecba2bda69c30f8c743b0d5719d4dc01ad2cbbedce34332ae57970',
     },
     {
       logId: '4883303303013154842',
@@ -2029,19 +2019,19 @@ const abi = {
       name: 'BASE_ASSET_DECIMALS',
       concreteTypeId:
         'c89951a24c6ca28c13fd1cfdc646b2b656d69e61a92b91023be7eb58eb914b6b',
-      offset: 60040,
+      offset: 59888,
     },
     {
       name: 'TOKEN_EXCHANGE_RATE_SCALE',
       concreteTypeId:
         '1506e6f44c1d6291cdf46395a8e573276a4fa79e8ace3fc891e092ef32d1b0a0',
-      offset: 60056,
+      offset: 59904,
     },
     {
       name: 'DEFAULT_GAS_AMOUNT',
       concreteTypeId:
         '1506e6f44c1d6291cdf46395a8e573276a4fa79e8ace3fc891e092ef32d1b0a0',
-      offset: 60048,
+      offset: 59896,
     },
   ],
 };
@@ -2063,6 +2053,8 @@ export class GasPaymasterInterface extends Interface {
   }
 
   declare functions: {
+    beneficiary: FunctionFragment;
+    claim: FunctionFragment;
     gas_oracle: FunctionFragment;
     get_current_domain_gas: FunctionFragment;
     get_domain_gas_config: FunctionFragment;
@@ -2070,11 +2062,9 @@ export class GasPaymasterInterface extends Interface {
     initialize: FunctionFragment;
     pay_for_gas: FunctionFragment;
     quote_gas_payment: FunctionFragment;
+    set_beneficiary: FunctionFragment;
     set_destination_gas_config: FunctionFragment;
     set_gas_oracle: FunctionFragment;
-    beneficiary: FunctionFragment;
-    claim: FunctionFragment;
-    set_beneficiary: FunctionFragment;
     initialize_ownership: FunctionFragment;
     only_owner: FunctionFragment;
     owner: FunctionFragment;
@@ -2089,12 +2079,14 @@ export class GasPaymasterInterface extends Interface {
   };
 }
 
-export class IgpHook extends Contract {
+export class GasPaymaster extends Contract {
   static readonly abi = abi;
   static readonly storageSlots = storageSlots;
 
   declare interface: GasPaymasterInterface;
   declare functions: {
+    beneficiary: InvokeFunction<[], IdentityOutput>;
+    claim: InvokeFunction<[asset?: Option<AssetIdInput>], void>;
     gas_oracle: InvokeFunction<[domain: BigNumberish], Option<string>>;
     get_current_domain_gas: InvokeFunction<[], BN>;
     get_domain_gas_config: InvokeFunction<
@@ -2105,7 +2097,10 @@ export class IgpHook extends Contract {
       [destination_domain: BigNumberish],
       RemoteGasDataOutput
     >;
-    initialize: InvokeFunction<[owner: string, beneficiary: string], void>;
+    initialize: InvokeFunction<
+      [owner: IdentityInput, beneficiary: IdentityInput],
+      void
+    >;
     pay_for_gas: InvokeFunction<
       [
         message_id: string,
@@ -2119,6 +2114,7 @@ export class IgpHook extends Contract {
       [destination_domain: BigNumberish, gas_amount: BigNumberish],
       BN
     >;
+    set_beneficiary: InvokeFunction<[beneficiary: IdentityInput], void>;
     set_destination_gas_config: InvokeFunction<
       [domain: Vec<BigNumberish>, config: Vec<DomainGasConfigInput>],
       void
@@ -2127,9 +2123,6 @@ export class IgpHook extends Contract {
       [domain: BigNumberish, gas_oracle: string],
       void
     >;
-    beneficiary: InvokeFunction<[], IdentityOutput>;
-    claim: InvokeFunction<[asset?: Option<AssetIdInput>], void>;
-    set_beneficiary: InvokeFunction<[beneficiary: IdentityInput], void>;
     initialize_ownership: InvokeFunction<[new_owner: IdentityInput], void>;
     only_owner: InvokeFunction<[], void>;
     owner: InvokeFunction<[], StateOutput>;

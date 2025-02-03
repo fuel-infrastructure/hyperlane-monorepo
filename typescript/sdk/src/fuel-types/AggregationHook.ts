@@ -8,7 +8,6 @@ import type {
   Account,
   Address,
   BN,
-  BigNumberish,
   Bytes,
   FunctionFragment,
   InvokeFunction,
@@ -18,24 +17,20 @@ import type {
 
 import type { Enum, Vec } from './common.js';
 
-export enum MerkleErrorInput {
-  MerkleTreeFull = 'MerkleTreeFull',
-}
-export enum MerkleErrorOutput {
-  MerkleTreeFull = 'MerkleTreeFull',
-}
-export type MerkleTreeHookErrorInput = Enum<{
-  MessageNotDispatching: string;
-  NoValueExpected: undefined;
-  ContractNotInitialized: undefined;
-  ContractAlreadyInitialized: undefined;
+export type IdentityInput = Enum<{
+  Address: AddressInput;
+  ContractId: ContractIdInput;
 }>;
-export type MerkleTreeHookErrorOutput = Enum<{
-  MessageNotDispatching: string;
-  NoValueExpected: void;
-  ContractNotInitialized: void;
-  ContractAlreadyInitialized: void;
+export type IdentityOutput = Enum<{
+  Address: AddressOutput;
+  ContractId: ContractIdOutput;
 }>;
+export enum InitializationErrorInput {
+  CannotReinitialized = 'CannotReinitialized',
+}
+export enum InitializationErrorOutput {
+  CannotReinitialized = 'CannotReinitialized',
+}
 export enum PostDispatchHookTypeInput {
   UNUSED = 'UNUSED',
   ROUTING = 'ROUTING',
@@ -63,15 +58,12 @@ export enum PostDispatchHookTypeOutput {
   RATE_LIMITED_HOOK = 'RATE_LIMITED_HOOK',
 }
 
+export type AddressInput = { bits: string };
+export type AddressOutput = AddressInput;
 export type ContractIdInput = { bits: string };
 export type ContractIdOutput = ContractIdInput;
-export type InsertedIntoTreeEventInput = {
-  message_id: string;
-  index: BigNumberish;
-};
-export type InsertedIntoTreeEventOutput = { message_id: string; index: number };
-export type MerkleTreeInput = { branch: Vec<string>; count: BigNumberish };
-export type MerkleTreeOutput = { branch: Vec<string>; count: number };
+export type OwnershipSetInput = { new_owner: IdentityInput };
+export type OwnershipSetOutput = { new_owner: IdentityOutput };
 
 const abi = {
   programType: 'contract',
@@ -84,73 +76,54 @@ const abi = {
         '2e38e77b22c314a449e91fafed92a43826ac6aa403ae6a8acb6cf58239fbaf5d',
     },
     {
-      type: '(b256, u32)',
-      concreteTypeId:
-        'ca65b5ac32a1d2b9c2c913a704974f17a67f9ed81cdd78007c6584eb8feb5e95',
-      metadataTypeId: 1,
-    },
-    {
-      type: '(u32, u32)',
-      concreteTypeId:
-        'c01e801cd76e1f67f52a84fd90af41cca92724d7aa0326270953a5fb5e9f5af1',
-      metadataTypeId: 0,
-    },
-    {
-      type: 'b256',
-      concreteTypeId:
-        '7c5ee1cecf5f8eacd1284feb5f0bf2bdea533a51e2f0c9aabe9236d335989f3b',
-    },
-    {
       type: 'bool',
       concreteTypeId:
         'b760f44fa5965c2474a3b471467a22c43185152129295af588b022ae50b50903',
     },
     {
-      type: 'enum interfaces::hooks::merkle_tree_hook::MerkleTreeHookError',
-      concreteTypeId:
-        '426dfda92f184fcf45cda17321259db8a156eaf4feb660630f639da630463334',
-      metadataTypeId: 2,
-    },
-    {
       type: 'enum interfaces::hooks::post_dispatch_hook::PostDispatchHookType',
       concreteTypeId:
         '88d5bf06eca6ec129b0c98e6d67271d9012ccd96caf9fe498d5dd2d191db9428',
+      metadataTypeId: 1,
+    },
+    {
+      type: 'enum std::identity::Identity',
+      concreteTypeId:
+        'ab7cd04e05be58e3fc15d424c2c4a57f824a2a2d97d67252440a3925ebdc1335',
+      metadataTypeId: 2,
+    },
+    {
+      type: 'enum sway_libs::ownership::errors::InitializationError',
+      concreteTypeId:
+        '1dfe7feadc1d9667a4351761230f948744068a090fe91b1bc6763a90ed5d3893',
       metadataTypeId: 3,
-    },
-    {
-      type: 'enum merkle::MerkleError',
-      concreteTypeId:
-        'ddd5d04db81b028838a7ccd28dd2d24122ce431e475b353a1d076c740b9168cb',
-      metadataTypeId: 4,
-    },
-    {
-      type: 'struct interfaces::hooks::merkle_tree_hook::InsertedIntoTreeEvent',
-      concreteTypeId:
-        'd2f65b9b35997bd4c25ba60c8fdfc379fb7277a88e621b81804e37ee727dee7b',
-      metadataTypeId: 7,
-    },
-    {
-      type: 'struct merkle::MerkleTree',
-      concreteTypeId:
-        '4f367a560e7594cc203b566f49d1b5f9a43fb5e5c4172cef5eb32b9dc5a0d0df',
-      metadataTypeId: 8,
     },
     {
       type: 'struct std::bytes::Bytes',
       concreteTypeId:
         'cdd87b7d12fe505416570c294c884bca819364863efe3bf539245fa18515fbbb',
-      metadataTypeId: 9,
+      metadataTypeId: 7,
     },
     {
       type: 'struct std::contract_id::ContractId',
       concreteTypeId:
         '29c10735d33b5159f0c71ee1dbd17b36a3e69e41f00fab0d42e1bd9f428d8a54',
-      metadataTypeId: 11,
+      metadataTypeId: 9,
     },
     {
-      type: 'u32',
+      type: 'struct std::vec::Vec<struct std::contract_id::ContractId>',
       concreteTypeId:
-        'd7649d428b9ff33d188ecbf38a7e4d8fd167fa01b2e10fe9a8f9308e52f1d7cc',
+        'b8ca7626a08e8fb93379b5d9d58d8a12eede8de9f087bfa21feccca44f92e211',
+      metadataTypeId: 11,
+      typeArguments: [
+        '29c10735d33b5159f0c71ee1dbd17b36a3e69e41f00fab0d42e1bd9f428d8a54',
+      ],
+    },
+    {
+      type: 'struct sway_libs::ownership::events::OwnershipSet',
+      concreteTypeId:
+        'e1ef35033ea9d2956f17c3292dea4a46ce7d61fdf37bbebe03b7b965073f43b5',
+      metadataTypeId: 12,
     },
     {
       type: 'u64',
@@ -160,66 +133,12 @@ const abi = {
   ],
   metadataTypes: [
     {
-      type: '(_, _)',
+      type: 'b256',
       metadataTypeId: 0,
-      components: [
-        {
-          name: '__tuple_element',
-          typeId:
-            'd7649d428b9ff33d188ecbf38a7e4d8fd167fa01b2e10fe9a8f9308e52f1d7cc',
-        },
-        {
-          name: '__tuple_element',
-          typeId:
-            'd7649d428b9ff33d188ecbf38a7e4d8fd167fa01b2e10fe9a8f9308e52f1d7cc',
-        },
-      ],
-    },
-    {
-      type: '(_, _)',
-      metadataTypeId: 1,
-      components: [
-        {
-          name: '__tuple_element',
-          typeId:
-            '7c5ee1cecf5f8eacd1284feb5f0bf2bdea533a51e2f0c9aabe9236d335989f3b',
-        },
-        {
-          name: '__tuple_element',
-          typeId:
-            'd7649d428b9ff33d188ecbf38a7e4d8fd167fa01b2e10fe9a8f9308e52f1d7cc',
-        },
-      ],
-    },
-    {
-      type: 'enum interfaces::hooks::merkle_tree_hook::MerkleTreeHookError',
-      metadataTypeId: 2,
-      components: [
-        {
-          name: 'MessageNotDispatching',
-          typeId:
-            '7c5ee1cecf5f8eacd1284feb5f0bf2bdea533a51e2f0c9aabe9236d335989f3b',
-        },
-        {
-          name: 'NoValueExpected',
-          typeId:
-            '2e38e77b22c314a449e91fafed92a43826ac6aa403ae6a8acb6cf58239fbaf5d',
-        },
-        {
-          name: 'ContractNotInitialized',
-          typeId:
-            '2e38e77b22c314a449e91fafed92a43826ac6aa403ae6a8acb6cf58239fbaf5d',
-        },
-        {
-          name: 'ContractAlreadyInitialized',
-          typeId:
-            '2e38e77b22c314a449e91fafed92a43826ac6aa403ae6a8acb6cf58239fbaf5d',
-        },
-      ],
     },
     {
       type: 'enum interfaces::hooks::post_dispatch_hook::PostDispatchHookType',
-      metadataTypeId: 3,
+      metadataTypeId: 1,
       components: [
         {
           name: 'UNUSED',
@@ -279,11 +198,25 @@ const abi = {
       ],
     },
     {
-      type: 'enum merkle::MerkleError',
-      metadataTypeId: 4,
+      type: 'enum std::identity::Identity',
+      metadataTypeId: 2,
       components: [
         {
-          name: 'MerkleTreeFull',
+          name: 'Address',
+          typeId: 6,
+        },
+        {
+          name: 'ContractId',
+          typeId: 9,
+        },
+      ],
+    },
+    {
+      type: 'enum sway_libs::ownership::errors::InitializationError',
+      metadataTypeId: 3,
+      components: [
+        {
+          name: 'CannotReinitialized',
           typeId:
             '2e38e77b22c314a449e91fafed92a43826ac6aa403ae6a8acb6cf58239fbaf5d',
         },
@@ -291,57 +224,29 @@ const abi = {
     },
     {
       type: 'generic T',
-      metadataTypeId: 5,
+      metadataTypeId: 4,
     },
     {
       type: 'raw untyped ptr',
+      metadataTypeId: 5,
+    },
+    {
+      type: 'struct std::address::Address',
       metadataTypeId: 6,
-    },
-    {
-      type: 'struct interfaces::hooks::merkle_tree_hook::InsertedIntoTreeEvent',
-      metadataTypeId: 7,
       components: [
         {
-          name: 'message_id',
-          typeId:
-            '7c5ee1cecf5f8eacd1284feb5f0bf2bdea533a51e2f0c9aabe9236d335989f3b',
-        },
-        {
-          name: 'index',
-          typeId:
-            'd7649d428b9ff33d188ecbf38a7e4d8fd167fa01b2e10fe9a8f9308e52f1d7cc',
-        },
-      ],
-    },
-    {
-      type: 'struct merkle::MerkleTree',
-      metadataTypeId: 8,
-      components: [
-        {
-          name: 'branch',
-          typeId: 13,
-          typeArguments: [
-            {
-              name: '',
-              typeId:
-                '7c5ee1cecf5f8eacd1284feb5f0bf2bdea533a51e2f0c9aabe9236d335989f3b',
-            },
-          ],
-        },
-        {
-          name: 'count',
-          typeId:
-            'd7649d428b9ff33d188ecbf38a7e4d8fd167fa01b2e10fe9a8f9308e52f1d7cc',
+          name: 'bits',
+          typeId: 0,
         },
       ],
     },
     {
       type: 'struct std::bytes::Bytes',
-      metadataTypeId: 9,
+      metadataTypeId: 7,
       components: [
         {
           name: 'buf',
-          typeId: 10,
+          typeId: 8,
         },
         {
           name: 'len',
@@ -352,11 +257,11 @@ const abi = {
     },
     {
       type: 'struct std::bytes::RawBytes',
-      metadataTypeId: 10,
+      metadataTypeId: 8,
       components: [
         {
           name: 'ptr',
-          typeId: 6,
+          typeId: 5,
         },
         {
           name: 'cap',
@@ -367,22 +272,21 @@ const abi = {
     },
     {
       type: 'struct std::contract_id::ContractId',
-      metadataTypeId: 11,
+      metadataTypeId: 9,
       components: [
         {
           name: 'bits',
-          typeId:
-            '7c5ee1cecf5f8eacd1284feb5f0bf2bdea533a51e2f0c9aabe9236d335989f3b',
+          typeId: 0,
         },
       ],
     },
     {
       type: 'struct std::vec::RawVec',
-      metadataTypeId: 12,
+      metadataTypeId: 10,
       components: [
         {
           name: 'ptr',
-          typeId: 6,
+          typeId: 5,
         },
         {
           name: 'cap',
@@ -390,19 +294,19 @@ const abi = {
             '1506e6f44c1d6291cdf46395a8e573276a4fa79e8ace3fc891e092ef32d1b0a0',
         },
       ],
-      typeParameters: [5],
+      typeParameters: [4],
     },
     {
       type: 'struct std::vec::Vec',
-      metadataTypeId: 13,
+      metadataTypeId: 11,
       components: [
         {
           name: 'buf',
-          typeId: 12,
+          typeId: 10,
           typeArguments: [
             {
               name: '',
-              typeId: 5,
+              typeId: 4,
             },
           ],
         },
@@ -412,19 +316,29 @@ const abi = {
             '1506e6f44c1d6291cdf46395a8e573276a4fa79e8ace3fc891e092ef32d1b0a0',
         },
       ],
-      typeParameters: [5],
+      typeParameters: [4],
+    },
+    {
+      type: 'struct sway_libs::ownership::events::OwnershipSet',
+      metadataTypeId: 12,
+      components: [
+        {
+          name: 'new_owner',
+          typeId: 2,
+        },
+      ],
     },
   ],
   functions: [
     {
       inputs: [],
-      name: 'count',
+      name: 'get_hooks',
       output:
-        'd7649d428b9ff33d188ecbf38a7e4d8fd167fa01b2e10fe9a8f9308e52f1d7cc',
+        'b8ca7626a08e8fb93379b5d9d58d8a12eede8de9f087bfa21feccca44f92e211',
       attributes: [
         {
           name: 'doc-comment',
-          arguments: [' Returns the count from the MerkleTree.'],
+          arguments: [' Returns the hooks.'],
         },
         {
           name: 'doc-comment',
@@ -440,49 +354,7 @@ const abi = {
         },
         {
           name: 'doc-comment',
-          arguments: [' * [u32] - The count from the MerkleTree.'],
-        },
-        {
-          name: 'storage',
-          arguments: ['read'],
-        },
-      ],
-    },
-    {
-      inputs: [],
-      name: 'count_and_block',
-      output:
-        'c01e801cd76e1f67f52a84fd90af41cca92724d7aa0326270953a5fb5e9f5af1',
-      attributes: [
-        {
-          name: 'doc-comment',
-          arguments: [' Gets the stored count of the MerkleTree.'],
-        },
-        {
-          name: 'doc-comment',
-          arguments: [' And the current block number.'],
-        },
-        {
-          name: 'doc-comment',
-          arguments: [' Used since we cannot query point in time data.'],
-        },
-        {
-          name: 'doc-comment',
-          arguments: [''],
-        },
-        {
-          name: 'doc-comment',
-          arguments: [' ### Returns'],
-        },
-        {
-          name: 'doc-comment',
-          arguments: [''],
-        },
-        {
-          name: 'doc-comment',
-          arguments: [
-            ' * [(u32, u32)] - The count and the current block number.',
-          ],
+          arguments: [' * `hooks`: [Vec<ContractId>] - The hooks.'],
         },
         {
           name: 'storage',
@@ -493,9 +365,14 @@ const abi = {
     {
       inputs: [
         {
-          name: 'mailbox',
+          name: 'owner',
           concreteTypeId:
-            '29c10735d33b5159f0c71ee1dbd17b36a3e69e41f00fab0d42e1bd9f428d8a54',
+            'ab7cd04e05be58e3fc15d424c2c4a57f824a2a2d97d67252440a3925ebdc1335',
+        },
+        {
+          name: 'hooks',
+          concreteTypeId:
+            'b8ca7626a08e8fb93379b5d9d58d8a12eede8de9f087bfa21feccca44f92e211',
         },
       ],
       name: 'initialize',
@@ -504,9 +381,7 @@ const abi = {
       attributes: [
         {
           name: 'doc-comment',
-          arguments: [
-            ' Initializes the MerkleTreeHook contract with the given mailbox contract ID.',
-          ],
+          arguments: [' Initializes the AggregationHook contract.'],
         },
         {
           name: 'doc-comment',
@@ -522,8 +397,12 @@ const abi = {
         },
         {
           name: 'doc-comment',
+          arguments: [' * `owner`: [Identity] - The owner of the contract.'],
+        },
+        {
+          name: 'doc-comment',
           arguments: [
-            ' * `mailbox`: [ContractId] - The contract ID of the mailbox contract.',
+            ' * `hooks`: [Vec<ContractId>] - The hooks to initialize with.',
           ],
         },
         {
@@ -545,86 +424,6 @@ const abi = {
         {
           name: 'storage',
           arguments: ['write'],
-        },
-      ],
-    },
-    {
-      inputs: [],
-      name: 'latest_checkpoint',
-      output:
-        'ca65b5ac32a1d2b9c2c913a704974f17a67f9ed81cdd78007c6584eb8feb5e95',
-      attributes: [
-        {
-          name: 'storage',
-          arguments: ['read'],
-        },
-      ],
-    },
-    {
-      inputs: [],
-      name: 'root',
-      output:
-        '7c5ee1cecf5f8eacd1284feb5f0bf2bdea533a51e2f0c9aabe9236d335989f3b',
-      attributes: [
-        {
-          name: 'doc-comment',
-          arguments: [' Returns the root from the MerkleTree.'],
-        },
-        {
-          name: 'doc-comment',
-          arguments: [''],
-        },
-        {
-          name: 'doc-comment',
-          arguments: [' ### Returns'],
-        },
-        {
-          name: 'doc-comment',
-          arguments: [''],
-        },
-        {
-          name: 'doc-comment',
-          arguments: [' * [b256] - The root from the MerkleTree.'],
-        },
-        {
-          name: 'storage',
-          arguments: ['read'],
-        },
-      ],
-    },
-    {
-      inputs: [],
-      name: 'tree',
-      output:
-        '4f367a560e7594cc203b566f49d1b5f9a43fb5e5c4172cef5eb32b9dc5a0d0df',
-      attributes: [
-        {
-          name: 'doc-comment',
-          arguments: [' Returns the latest checkpoint from the MerkleTree.'],
-        },
-        {
-          name: 'doc-comment',
-          arguments: [''],
-        },
-        {
-          name: 'doc-comment',
-          arguments: [' ### Returns'],
-        },
-        {
-          name: 'doc-comment',
-          arguments: [''],
-        },
-        {
-          name: 'doc-comment',
-          arguments: [' * [b256] - The root from the MerkleTree.'],
-        },
-        {
-          name: 'doc-comment',
-          arguments: [' * [u32] - The count from the MerkleTree.'],
-        },
-        {
-          name: 'storage',
-          arguments: ['read'],
         },
       ],
     },
@@ -659,7 +458,7 @@ const abi = {
     {
       inputs: [
         {
-          name: '_metadata',
+          name: 'metadata',
           concreteTypeId:
             'cdd87b7d12fe505416570c294c884bca819364863efe3bf539245fa18515fbbb',
         },
@@ -675,15 +474,7 @@ const abi = {
       attributes: [
         {
           name: 'doc-comment',
-          arguments: [
-            ' Post action after a message is dispatched via the Mailbox',
-          ],
-        },
-        {
-          name: 'doc-comment',
-          arguments: [
-            ' For the MerkleTreeHook, this function inserts the message ID into the MerkleTree.',
-          ],
+          arguments: [' Executes the postDispatch call on all hooks'],
         },
         {
           name: 'doc-comment',
@@ -705,31 +496,7 @@ const abi = {
         },
         {
           name: 'doc-comment',
-          arguments: [' * `message`: [Bytes] - The message to be processed.'],
-        },
-        {
-          name: 'doc-comment',
-          arguments: [''],
-        },
-        {
-          name: 'doc-comment',
-          arguments: [' ### Reverts'],
-        },
-        {
-          name: 'doc-comment',
-          arguments: [''],
-        },
-        {
-          name: 'doc-comment',
-          arguments: [' * If the contract is not initialized.'],
-        },
-        {
-          name: 'doc-comment',
-          arguments: [' * If the message ID is not the latest dispatched ID.'],
-        },
-        {
-          name: 'doc-comment',
-          arguments: [' * If there was assets sent with the function call.'],
+          arguments: [' * `message`: [Bytes] - The message being dispatched.'],
         },
         {
           name: 'payable',
@@ -744,12 +511,12 @@ const abi = {
     {
       inputs: [
         {
-          name: '_metadata',
+          name: 'metadata',
           concreteTypeId:
             'cdd87b7d12fe505416570c294c884bca819364863efe3bf539245fa18515fbbb',
         },
         {
-          name: '_message',
+          name: 'message',
           concreteTypeId:
             'cdd87b7d12fe505416570c294c884bca819364863efe3bf539245fa18515fbbb',
         },
@@ -782,7 +549,7 @@ const abi = {
         },
         {
           name: 'doc-comment',
-          arguments: [' * `message`: [Bytes] - The message to be processed.'],
+          arguments: [' * `message`: [Bytes] - The message being dispatched.'],
         },
         {
           name: 'doc-comment',
@@ -811,7 +578,7 @@ const abi = {
     {
       inputs: [
         {
-          name: '_metadata',
+          name: 'metadata',
           concreteTypeId:
             'cdd87b7d12fe505416570c294c884bca819364863efe3bf539245fa18515fbbb',
         },
@@ -861,44 +628,30 @@ const abi = {
   ],
   loggedTypes: [
     {
-      logId: '4786760882046128079',
+      logId: '2161305517876418151',
       concreteTypeId:
-        '426dfda92f184fcf45cda17321259db8a156eaf4feb660630f639da630463334',
+        '1dfe7feadc1d9667a4351761230f948744068a090fe91b1bc6763a90ed5d3893',
     },
     {
-      logId: '15984911484641280648',
+      logId: '16280289466020123285',
       concreteTypeId:
-        'ddd5d04db81b028838a7ccd28dd2d24122ce431e475b353a1d076c740b9168cb',
-    },
-    {
-      logId: '15201438314412997588',
-      concreteTypeId:
-        'd2f65b9b35997bd4c25ba60c8fdfc379fb7277a88e621b81804e37ee727dee7b',
+        'e1ef35033ea9d2956f17c3292dea4a46ce7d61fdf37bbebe03b7b965073f43b5',
     },
   ],
   messagesTypes: [],
   configurables: [],
 };
 
-const storageSlots: StorageSlot[] = [
-  {
-    key: 'd5354b695493bac2ed3dd4f37b9e77c1d20cfa9a5eef204fdc8e09703a43359c',
-    value: '0000000000000000000000000000000000000000000000000000000000000000',
-  },
-];
+const storageSlots: StorageSlot[] = [];
 
-export class MerkleTreeHookInterface extends Interface {
+export class AggregationInterface extends Interface {
   constructor() {
     super(abi);
   }
 
   declare functions: {
-    count: FunctionFragment;
-    count_and_block: FunctionFragment;
+    get_hooks: FunctionFragment;
     initialize: FunctionFragment;
-    latest_checkpoint: FunctionFragment;
-    root: FunctionFragment;
-    tree: FunctionFragment;
     hook_type: FunctionFragment;
     post_dispatch: FunctionFragment;
     quote_dispatch: FunctionFragment;
@@ -906,22 +659,21 @@ export class MerkleTreeHookInterface extends Interface {
   };
 }
 
-export class MerkleTreeHook extends Contract {
+export class Aggregation extends Contract {
   static readonly abi = abi;
   static readonly storageSlots = storageSlots;
 
-  declare interface: MerkleTreeHookInterface;
+  declare interface: AggregationInterface;
   declare functions: {
-    count: InvokeFunction<[], number>;
-    count_and_block: InvokeFunction<[], [number, number]>;
-    initialize: InvokeFunction<[mailbox: ContractIdInput], void>;
-    latest_checkpoint: InvokeFunction<[], [string, number]>;
-    root: InvokeFunction<[], string>;
-    tree: InvokeFunction<[], MerkleTreeOutput>;
+    get_hooks: InvokeFunction<[], Vec<ContractIdOutput>>;
+    initialize: InvokeFunction<
+      [owner: IdentityInput, hooks: Vec<ContractIdInput>],
+      void
+    >;
     hook_type: InvokeFunction<[], PostDispatchHookTypeOutput>;
-    post_dispatch: InvokeFunction<[_metadata: Bytes, message: Bytes], void>;
-    quote_dispatch: InvokeFunction<[_metadata: Bytes, _message: Bytes], BN>;
-    supports_metadata: InvokeFunction<[_metadata: Bytes], boolean>;
+    post_dispatch: InvokeFunction<[metadata: Bytes, message: Bytes], void>;
+    quote_dispatch: InvokeFunction<[metadata: Bytes, message: Bytes], BN>;
+    supports_metadata: InvokeFunction<[metadata: Bytes], boolean>;
   };
 
   constructor(id: string | Address, accountOrProvider: Account | Provider) {

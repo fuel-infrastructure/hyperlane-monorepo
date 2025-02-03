@@ -86,40 +86,34 @@ export type StateOutput = Enum<{
   Revoked: void;
 }>;
 export enum TokenRouterErrorInput {
-  ContractAlreadyInitialized = 'ContractAlreadyInitialized',
-  ContractNotInitialized = 'ContractNotInitialized',
   RouterNotSet = 'RouterNotSet',
-  InvalidSender = 'InvalidSender',
   RouterLengthMismatch = 'RouterLengthMismatch',
 }
 export enum TokenRouterErrorOutput {
-  ContractAlreadyInitialized = 'ContractAlreadyInitialized',
-  ContractNotInitialized = 'ContractNotInitialized',
   RouterNotSet = 'RouterNotSet',
-  InvalidSender = 'InvalidSender',
   RouterLengthMismatch = 'RouterLengthMismatch',
 }
 export enum WarpRouteErrorInput {
   InvalidAssetSend = 'InvalidAssetSend',
   PaymentNotEqualToRequired = 'PaymentNotEqualToRequired',
-  AlreadyInitialized = 'AlreadyInitialized',
   InvalidAddress = 'InvalidAddress',
   AssetIdRequiredForCollateral = 'AssetIdRequiredForCollateral',
   MaxMinted = 'MaxMinted',
   RemoteDecimalsNotSet = 'RemoteDecimalsNotSet',
   AmountNotConvertible = 'AmountNotConvertible',
   SenderNotMailbox = 'SenderNotMailbox',
+  AssetNotReceivedForTransfer = 'AssetNotReceivedForTransfer',
 }
 export enum WarpRouteErrorOutput {
   InvalidAssetSend = 'InvalidAssetSend',
   PaymentNotEqualToRequired = 'PaymentNotEqualToRequired',
-  AlreadyInitialized = 'AlreadyInitialized',
   InvalidAddress = 'InvalidAddress',
   AssetIdRequiredForCollateral = 'AssetIdRequiredForCollateral',
   MaxMinted = 'MaxMinted',
   RemoteDecimalsNotSet = 'RemoteDecimalsNotSet',
   AmountNotConvertible = 'AmountNotConvertible',
   SenderNotMailbox = 'SenderNotMailbox',
+  AssetNotReceivedForTransfer = 'AssetNotReceivedForTransfer',
 }
 export enum WarpRouteTokenModeInput {
   SYNTHETIC = 'SYNTHETIC',
@@ -136,10 +130,13 @@ export type AddressInput = { bits: string };
 export type AddressOutput = AddressInput;
 export type AssetIdInput = { bits: string };
 export type AssetIdOutput = AssetIdInput;
-export type BeneficiarySetEventInput = { beneficiary: string };
-export type BeneficiarySetEventOutput = BeneficiarySetEventInput;
-export type ClaimEventInput = { beneficiary: string; amount: BigNumberish };
-export type ClaimEventOutput = { beneficiary: string; amount: BN };
+export type BeneficiarySetEventInput = { beneficiary: IdentityInput };
+export type BeneficiarySetEventOutput = { beneficiary: IdentityOutput };
+export type ClaimEventInput = {
+  beneficiary: IdentityInput;
+  amount: BigNumberish;
+};
+export type ClaimEventOutput = { beneficiary: IdentityOutput; amount: BN };
 export type ContractIdInput = { bits: string };
 export type ContractIdOutput = ContractIdInput;
 export type OwnershipRenouncedInput = { previous_owner: IdentityInput };
@@ -311,6 +308,24 @@ const abi = {
       ],
     },
     {
+      type: 'enum std::option::Option<struct std::bytes::Bytes>',
+      concreteTypeId:
+        '50b87f43f0097a720c18f3fb2100c4502484b716128f2706b3e187aa35a6dfe8',
+      metadataTypeId: 6,
+      typeArguments: [
+        'cdd87b7d12fe505416570c294c884bca819364863efe3bf539245fa18515fbbb',
+      ],
+    },
+    {
+      type: 'enum std::option::Option<struct std::contract_id::ContractId>',
+      concreteTypeId:
+        '0d79387ad3bacdc3b7aad9da3a96f4ce60d9a1b6002df254069ad95a3931d5c8',
+      metadataTypeId: 6,
+      typeArguments: [
+        '29c10735d33b5159f0c71ee1dbd17b36a3e69e41f00fab0d42e1bd9f428d8a54',
+      ],
+    },
+    {
       type: 'enum std::option::Option<struct std::string::String>',
       concreteTypeId:
         '7c06d929390a9aeeb8ffccf8173ac0d101a9976d99dda01cce74541a81e75ac0',
@@ -379,15 +394,15 @@ const abi = {
         '8c25cb3686462e9a86d2883c5688a22fe738b0bbc85f458d2d2b5f3f667c6d5a',
     },
     {
-      type: 'struct interfaces::claimable::BeneficiarySetEvent',
+      type: 'struct interfaces::warp_route::BeneficiarySetEvent',
       concreteTypeId:
-        '28da8704d9711bb3e5ae8de91a1339201b6e3a044065e47395c1f4064d8e07d8',
+        '8e47289443d8a10c3f7d4215ab86b95ffe6ec75dd3d12a2ccad26a1fa2f66548',
       metadataTypeId: 15,
     },
     {
-      type: 'struct interfaces::claimable::ClaimEvent',
+      type: 'struct interfaces::warp_route::ClaimEvent',
       concreteTypeId:
-        '6bcec70a463a07509f86d07955802bee953038650739d9b15f8ba95a0e2052aa',
+        'fda65a174152eff209e2507cb14003806f51b76a1e192d0cf07e1942cfee09c7',
       metadataTypeId: 16,
     },
     {
@@ -514,22 +529,7 @@ const abi = {
       metadataTypeId: 0,
       components: [
         {
-          name: 'ContractAlreadyInitialized',
-          typeId:
-            '2e38e77b22c314a449e91fafed92a43826ac6aa403ae6a8acb6cf58239fbaf5d',
-        },
-        {
-          name: 'ContractNotInitialized',
-          typeId:
-            '2e38e77b22c314a449e91fafed92a43826ac6aa403ae6a8acb6cf58239fbaf5d',
-        },
-        {
           name: 'RouterNotSet',
-          typeId:
-            '2e38e77b22c314a449e91fafed92a43826ac6aa403ae6a8acb6cf58239fbaf5d',
-        },
-        {
-          name: 'InvalidSender',
           typeId:
             '2e38e77b22c314a449e91fafed92a43826ac6aa403ae6a8acb6cf58239fbaf5d',
         },
@@ -551,11 +551,6 @@ const abi = {
         },
         {
           name: 'PaymentNotEqualToRequired',
-          typeId:
-            '2e38e77b22c314a449e91fafed92a43826ac6aa403ae6a8acb6cf58239fbaf5d',
-        },
-        {
-          name: 'AlreadyInitialized',
           typeId:
             '2e38e77b22c314a449e91fafed92a43826ac6aa403ae6a8acb6cf58239fbaf5d',
         },
@@ -586,6 +581,11 @@ const abi = {
         },
         {
           name: 'SenderNotMailbox',
+          typeId:
+            '2e38e77b22c314a449e91fafed92a43826ac6aa403ae6a8acb6cf58239fbaf5d',
+        },
+        {
+          name: 'AssetNotReceivedForTransfer',
           typeId:
             '2e38e77b22c314a449e91fafed92a43826ac6aa403ae6a8acb6cf58239fbaf5d',
         },
@@ -763,24 +763,22 @@ const abi = {
       metadataTypeId: 14,
     },
     {
-      type: 'struct interfaces::claimable::BeneficiarySetEvent',
+      type: 'struct interfaces::warp_route::BeneficiarySetEvent',
       metadataTypeId: 15,
       components: [
         {
           name: 'beneficiary',
-          typeId:
-            '7c5ee1cecf5f8eacd1284feb5f0bf2bdea533a51e2f0c9aabe9236d335989f3b',
+          typeId: 5,
         },
       ],
     },
     {
-      type: 'struct interfaces::claimable::ClaimEvent',
+      type: 'struct interfaces::warp_route::ClaimEvent',
       metadataTypeId: 16,
       components: [
         {
           name: 'beneficiary',
-          typeId:
-            '7c5ee1cecf5f8eacd1284feb5f0bf2bdea533a51e2f0c9aabe9236d335989f3b',
+          typeId: 5,
         },
         {
           name: 'amount',
@@ -1099,6 +1097,36 @@ const abi = {
   functions: [
     {
       inputs: [],
+      name: 'beneficiary',
+      output:
+        'ab7cd04e05be58e3fc15d424c2c4a57f824a2a2d97d67252440a3925ebdc1335',
+      attributes: [
+        {
+          name: 'storage',
+          arguments: ['read'],
+        },
+      ],
+    },
+    {
+      inputs: [
+        {
+          name: 'asset',
+          concreteTypeId:
+            '191bf2140761b3c5ab6c43992d162bb3dc9d7f2272b2ee5f5eeea411ddedcd32',
+        },
+      ],
+      name: 'claim',
+      output:
+        '2e38e77b22c314a449e91fafed92a43826ac6aa403ae6a8acb6cf58239fbaf5d',
+      attributes: [
+        {
+          name: 'storage',
+          arguments: ['read', 'write'],
+        },
+      ],
+    },
+    {
+      inputs: [],
       name: 'get_cumulative_supply',
       output:
         '1506e6f44c1d6291cdf46395a8e573276a4fa79e8ace3fc891e092ef32d1b0a0',
@@ -1270,7 +1298,7 @@ const abi = {
         {
           name: 'owner',
           concreteTypeId:
-            '7c5ee1cecf5f8eacd1284feb5f0bf2bdea533a51e2f0c9aabe9236d335989f3b',
+            'ab7cd04e05be58e3fc15d424c2c4a57f824a2a2d97d67252440a3925ebdc1335',
         },
         {
           name: 'mailbox_address',
@@ -1346,7 +1374,7 @@ const abi = {
         {
           name: 'doc-comment',
           arguments: [
-            ' * `owner`: [b256] - The address of the owner of the contract',
+            ' * `owner`: [Identity] - The address of the owner of the contract',
           ],
         },
         {
@@ -1472,6 +1500,24 @@ const abi = {
         {
           name: 'storage',
           arguments: ['read'],
+        },
+      ],
+    },
+    {
+      inputs: [
+        {
+          name: 'beneficiary',
+          concreteTypeId:
+            'ab7cd04e05be58e3fc15d424c2c4a57f824a2a2d97d67252440a3925ebdc1335',
+        },
+      ],
+      name: 'set_beneficiary',
+      output:
+        '2e38e77b22c314a449e91fafed92a43826ac6aa403ae6a8acb6cf58239fbaf5d',
+      attributes: [
+        {
+          name: 'storage',
+          arguments: ['read', 'write'],
         },
       ],
     },
@@ -1653,6 +1699,16 @@ const abi = {
           name: 'amount',
           concreteTypeId:
             '1506e6f44c1d6291cdf46395a8e573276a4fa79e8ace3fc891e092ef32d1b0a0',
+        },
+        {
+          name: 'metadata',
+          concreteTypeId:
+            '50b87f43f0097a720c18f3fb2100c4502484b716128f2706b3e187aa35a6dfe8',
+        },
+        {
+          name: 'hook',
+          concreteTypeId:
+            '0d79387ad3bacdc3b7aad9da3a96f4ce60d9a1b6002df254069ad95a3931d5c8',
         },
       ],
       name: 'transfer_remote',
@@ -2190,54 +2246,6 @@ const abi = {
     },
     {
       inputs: [],
-      name: 'beneficiary',
-      output:
-        'ab7cd04e05be58e3fc15d424c2c4a57f824a2a2d97d67252440a3925ebdc1335',
-      attributes: [
-        {
-          name: 'storage',
-          arguments: ['read'],
-        },
-      ],
-    },
-    {
-      inputs: [
-        {
-          name: 'asset',
-          concreteTypeId:
-            '191bf2140761b3c5ab6c43992d162bb3dc9d7f2272b2ee5f5eeea411ddedcd32',
-        },
-      ],
-      name: 'claim',
-      output:
-        '2e38e77b22c314a449e91fafed92a43826ac6aa403ae6a8acb6cf58239fbaf5d',
-      attributes: [
-        {
-          name: 'storage',
-          arguments: ['read'],
-        },
-      ],
-    },
-    {
-      inputs: [
-        {
-          name: 'beneficiary',
-          concreteTypeId:
-            'ab7cd04e05be58e3fc15d424c2c4a57f824a2a2d97d67252440a3925ebdc1335',
-        },
-      ],
-      name: 'set_beneficiary',
-      output:
-        '2e38e77b22c314a449e91fafed92a43826ac6aa403ae6a8acb6cf58239fbaf5d',
-      attributes: [
-        {
-          name: 'storage',
-          arguments: ['read', 'write'],
-        },
-      ],
-    },
-    {
-      inputs: [],
       name: 'is_paused',
       output:
         'b760f44fa5965c2474a3b471467a22c43185152129295af588b022ae50b50903',
@@ -2347,9 +2355,9 @@ const abi = {
   ],
   loggedTypes: [
     {
-      logId: '8469269053966207535',
+      logId: '18277395193656438770',
       concreteTypeId:
-        '7588e3551cdd4a2f634a12f13a7e13fd3fec214c44eb154a64cacbd2859159d9',
+        'fda65a174152eff209e2507cb14003806f51b76a1e192d0cf07e1942cfee09c7',
     },
     {
       logId: '2161305517876418151',
@@ -2382,9 +2390,19 @@ const abi = {
         'a8a4b78066c51a50da6349bd395fe1c67e774d75c1db2c5c22288a432d7a363d',
     },
     {
+      logId: '8469269053966207535',
+      concreteTypeId:
+        '7588e3551cdd4a2f634a12f13a7e13fd3fec214c44eb154a64cacbd2859159d9',
+    },
+    {
       logId: '4571204900286667806',
       concreteTypeId:
         '3f702ea3351c9c1ece2b84048006c8034a24cbc2bad2e740d0412b4172951d3d',
+    },
+    {
+      logId: '10252207693990764812',
+      concreteTypeId:
+        '8e47289443d8a10c3f7d4215ab86b95ffe6ec75dd3d12a2ccad26a1fa2f66548',
     },
     {
       logId: '5557842539076482339',
@@ -2432,16 +2450,6 @@ const abi = {
         'bbfc507feb87aa539acdfac1829090f6ef621885b47880f5c521d5d41a89830a',
     },
     {
-      logId: '7768365254202492752',
-      concreteTypeId:
-        '6bcec70a463a07509f86d07955802bee953038650739d9b15f8ba95a0e2052aa',
-    },
-    {
-      logId: '2943813761337727923',
-      concreteTypeId:
-        '28da8704d9711bb3e5ae8de91a1339201b6e3a044065e47395c1f4064d8e07d8',
-    },
-    {
       logId: '4883303303013154842',
       concreteTypeId:
         '43c4fa7b3297401afbf300127e59ea913e5c8f0c7ae69abbec789ab0bb872bed',
@@ -2458,13 +2466,13 @@ const abi = {
       name: 'MAX_SUPPLY',
       concreteTypeId:
         '1506e6f44c1d6291cdf46395a8e573276a4fa79e8ace3fc891e092ef32d1b0a0',
-      offset: 97168,
+      offset: 102400,
     },
     {
       name: 'DEFAULT_DECIMALS',
       concreteTypeId:
         'c89951a24c6ca28c13fd1cfdc646b2b656d69e61a92b91023be7eb58eb914b6b',
-      offset: 97160,
+      offset: 102392,
     },
   ],
 };
@@ -2484,6 +2492,10 @@ const storageSlots: StorageSlot[] = [
   },
   {
     key: '4d5263c1face7959369ed416164a203ede6156c87fe65b4666dbdd794ee8f0fa',
+    value: '0000000000000000000000000000000000000000000000000000000000000000',
+  },
+  {
+    key: '693acfbc935dc1d73b81fcc38580f377b1edfde0def9402a446c443400d0fc65',
     value: '0000000000000000000000000000000000000000000000000000000000000000',
   },
   {
@@ -2514,6 +2526,8 @@ export class WarpRouteInterface extends Interface {
   }
 
   declare functions: {
+    beneficiary: FunctionFragment;
+    claim: FunctionFragment;
     get_cumulative_supply: FunctionFragment;
     get_hook: FunctionFragment;
     get_mailbox: FunctionFragment;
@@ -2521,6 +2535,7 @@ export class WarpRouteInterface extends Interface {
     get_token_mode: FunctionFragment;
     initialize: FunctionFragment;
     quote_gas_payment: FunctionFragment;
+    set_beneficiary: FunctionFragment;
     set_hook: FunctionFragment;
     set_ism: FunctionFragment;
     set_mailbox: FunctionFragment;
@@ -2535,9 +2550,6 @@ export class WarpRouteInterface extends Interface {
     unenroll_remote_router: FunctionFragment;
     handle: FunctionFragment;
     interchain_security_module: FunctionFragment;
-    beneficiary: FunctionFragment;
-    claim: FunctionFragment;
-    set_beneficiary: FunctionFragment;
     is_paused: FunctionFragment;
     pause: FunctionFragment;
     unpause: FunctionFragment;
@@ -2555,6 +2567,8 @@ export class WarpRoute extends Contract {
 
   declare interface: WarpRouteInterface;
   declare functions: {
+    beneficiary: InvokeFunction<[], IdentityOutput>;
+    claim: InvokeFunction<[asset?: Option<AssetIdInput>], void>;
     get_cumulative_supply: InvokeFunction<[], BN>;
     get_hook: InvokeFunction<[], ContractIdOutput>;
     get_mailbox: InvokeFunction<[], ContractIdOutput>;
@@ -2562,7 +2576,7 @@ export class WarpRoute extends Contract {
     get_token_mode: InvokeFunction<[], WarpRouteTokenModeOutput>;
     initialize: InvokeFunction<
       [
-        owner: string,
+        owner: IdentityInput,
         mailbox_address: string,
         mode: WarpRouteTokenModeInput,
         hook: string,
@@ -2577,6 +2591,7 @@ export class WarpRoute extends Contract {
       void
     >;
     quote_gas_payment: InvokeFunction<[destination_domain: BigNumberish], BN>;
+    set_beneficiary: InvokeFunction<[beneficiary: IdentityInput], void>;
     set_hook: InvokeFunction<[hook: ContractIdInput], void>;
     set_ism: InvokeFunction<[module: ContractIdInput], void>;
     set_mailbox: InvokeFunction<[mailbox_address: ContractIdInput], void>;
@@ -2585,6 +2600,8 @@ export class WarpRoute extends Contract {
         destination_domain: BigNumberish,
         recipient: string,
         amount: BigNumberish,
+        metadata?: Option<Bytes>,
+        hook?: Option<ContractIdInput>,
       ],
       string
     >;
@@ -2610,9 +2627,6 @@ export class WarpRoute extends Contract {
       void
     >;
     interchain_security_module: InvokeFunction<[], ContractIdOutput>;
-    beneficiary: InvokeFunction<[], IdentityOutput>;
-    claim: InvokeFunction<[asset?: Option<AssetIdInput>], void>;
-    set_beneficiary: InvokeFunction<[beneficiary: IdentityInput], void>;
     is_paused: InvokeFunction<[], boolean>;
     pause: InvokeFunction<[], void>;
     unpause: InvokeFunction<[], void>;
