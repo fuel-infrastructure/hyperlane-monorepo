@@ -11,7 +11,7 @@ import { Address } from '@hyperlane-xyz/utils';
 
 import { readYamlOrJson } from '../../utils/files.js';
 
-import { ANVIL_KEY, REGISTRY_PATH, getDeployedWarpAddress } from './helpers.js';
+import { ANVIL_KEY, FUEL_LOCAL_REGISTRY_PATH, REGISTRY_PATH, getDeployedWarpAddress } from './helpers.js';
 
 $.verbose = true;
 
@@ -49,6 +49,19 @@ export function hyperlaneWarpDeployRaw({
         ${privateKey ? ['--key', privateKey] : ''} \
         --verbosity debug \
         ${skipConfirmationPrompts ? ['--yes'] : ''}`;
+}
+
+/**
+ * Deploys the Warp route to the specified chain using the provided config.
+ */
+export function hyperlaneWarpInitFuel(warpCorePath: string): ProcessPromise {
+  // --overrides is " " to allow local testing to work
+  return $`yarn workspace @hyperlane-xyz/cli run hyperlane warp init \
+        --registry ${FUEL_LOCAL_REGISTRY_PATH} \
+        --overrides " " \
+        --out ${warpCorePath} \
+        --verbosity debug \
+        --yes`;
 }
 
 /**

@@ -20,7 +20,7 @@ import { Address, sleep } from '@hyperlane-xyz/utils';
 import { getContext } from '../../context/context.js';
 import { readYamlOrJson, writeYamlOrJson } from '../../utils/files.js';
 
-import { hyperlaneCoreDeploy } from './core.js';
+import { hyperlaneCoreDeploy, hyperlaneCoreDeployFuel } from './core.js';
 import {
   hyperlaneWarpApply,
   hyperlaneWarpSendRelay,
@@ -29,15 +29,18 @@ import {
 
 export const E2E_TEST_CONFIGS_PATH = './test-configs';
 export const REGISTRY_PATH = `${E2E_TEST_CONFIGS_PATH}/anvil`;
+export const FUEL_REGISTRY_PATH = `${E2E_TEST_CONFIGS_PATH}/fuel`;
 export const TEMP_PATH = '/tmp'; // /temp gets removed at the end of all-test.sh
 
 export const ANVIL_KEY =
   '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';
+export const FUEL_KEY = "0x560651e6d8824272b34a229a492293091d0f8f735c4534cdf76addc57774b711"
 export const E2E_TEST_BURN_ADDRESS =
   '0x0000000000000000000000000000000000000001';
 
 export const CHAIN_NAME_2 = 'anvil2';
 export const CHAIN_NAME_3 = 'anvil3';
+export const FUEL_CHAIN_NAME = 'fueltestnet';
 
 export const EXAMPLES_PATH = './examples';
 export const CORE_CONFIG_PATH = `${EXAMPLES_PATH}/core-config.yaml`;
@@ -45,6 +48,10 @@ export const CORE_CONFIG_PATH_2 = `${TEMP_PATH}/${CHAIN_NAME_2}/core-config.yaml
 export const CORE_READ_CONFIG_PATH_2 = `${TEMP_PATH}/${CHAIN_NAME_2}/core-config-read.yaml`;
 export const CHAIN_2_METADATA_PATH = `${REGISTRY_PATH}/chains/${CHAIN_NAME_2}/metadata.yaml`;
 export const CHAIN_3_METADATA_PATH = `${REGISTRY_PATH}/chains/${CHAIN_NAME_3}/metadata.yaml`;
+
+export const FUEL_LOCAL_REGISTRY_PATH = `${E2E_TEST_CONFIGS_PATH}/fuel`;
+export const FUEL_EXAMPLE_CONFIG_PATH = `${EXAMPLES_PATH}/fuel/core-config.yaml`;
+export const FUEL_CONFIG_PATH = `${TEMP_PATH}/${FUEL_CHAIN_NAME}/warp-route-deployment-fueltestnet.yaml`;
 
 export const WARP_CONFIG_PATH_EXAMPLE = `${EXAMPLES_PATH}/warp-route-deployment.yaml`;
 export const WARP_CONFIG_PATH_2 = `${TEMP_PATH}/${CHAIN_NAME_2}/warp-route-deployment-anvil2.yaml`;
@@ -112,6 +119,8 @@ export const SELECT_ANVIL_2_FROM_MULTICHAIN_PICKER = `${KeyBoardKeys.ARROW_DOWN.
   3,
 )}${KeyBoardKeys.TAB}`;
 
+export const SELECT_FUEL_FROM_MULTICHAIN_PICKER = `${KeyBoardKeys.ARROW_DOWN}${KeyBoardKeys.TAB}`;
+
 export const SELECT_ANVIL_3_AFTER_ANVIL_2_FROM_MULTICHAIN_PICKER = `${KeyBoardKeys.ARROW_DOWN.repeat(
   2,
 )}${KeyBoardKeys.TAB}`;
@@ -121,6 +130,13 @@ export const SELECT_MAINNET_CHAIN_TYPE_STEP: TestPromptAction = {
     currentOutput.includes('Select network type'),
   // Select mainnet chains
   input: KeyBoardKeys.ENTER,
+};
+
+export const SELECT_TESTNET_CHAIN_TYPE_STEP: TestPromptAction = {
+  check: (currentOutput: string) =>
+    currentOutput.includes('Select network type'),
+  // Select testnet chains
+  input: `${KeyBoardKeys.ARROW_DOWN}${KeyBoardKeys.ENTER}`,
 };
 
 export const SELECT_ANVIL_2_AND_ANVIL_3_STEPS: ReadonlyArray<TestPromptAction> =
@@ -252,6 +268,30 @@ export async function deployOrUseExistingCore(
 
   if (!addresses) {
     await hyperlaneCoreDeploy(chain, coreInputPath);
+    return deployOrUseExistingCore(chain, coreInputPath, key);
+  }
+
+  return addresses;
+}
+
+
+/**
+ * Deploys new core contracts on the specified chain if it doesn't already exist, and returns the chain addresses.
+ */
+export async function deployOrUseExistingCoreFuel(
+  chain: string,
+  coreInputPath: string,
+  key: string,
+) {
+  const { registry } = await getContext({
+    registryUri: FUEL_REGISTRY_PATH,
+    registryOverrideUri: '',
+    key,
+  });
+  const addresses = (await registry.getChainAddresses(chain)) as ChainAddresses;
+
+  if (!addresses) {
+    await hyperlaneCoreDeployFuel(chain, coreInputPath);
     return deployOrUseExistingCore(chain, coreInputPath, key);
   }
 

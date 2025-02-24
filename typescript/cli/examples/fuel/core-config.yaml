@@ -1,0 +1,19 @@
+# A config to define the core contract deployments
+owner: '0x3CD71D5638D4BaCf43F26A5B43028BF6581a18d262d88dA0912F32ad3d25b963'
+defaultIsm:
+  type: 'testIsm'
+  threshold: 1 # Number: Signatures required to approve a message
+  validators: # Array: List of validator addresses
+    - '0x26dce42ec5348cfaae7f0fc582afc3f71e81ba75d527460397faf2226a45ffce'
+defaultHook:
+  type: protocolFee
+  maxProtocolFee: '1000000000000000000' # in wei (string)
+  protocolFee: '200000000000000' # in wei (string)
+  beneficiary: '0x3CD71D5638D4BaCf43F26A5B43028BF6581a18d262d88dA0912F32ad3d25b963'
+  owner: '0x3CD71D5638D4BaCf43F26A5B43028BF6581a18d262d88dA0912F32ad3d25b963'
+requiredHook:
+  type: protocolFee
+  maxProtocolFee: '1000000000000000000' # in wei (string)
+  protocolFee: '200000000000000' # in wei (string)
+  beneficiary: '0x3CD71D5638D4BaCf43F26A5B43028BF6581a18d262d88dA0912F32ad3d25b963'
+  owner: '0x3CD71D5638D4BaCf43F26A5B43028BF6581a18d262d88dA0912F32ad3d25b963'

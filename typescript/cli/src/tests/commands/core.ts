@@ -5,7 +5,7 @@ import { Address } from '@hyperlane-xyz/utils';
 
 import { readYamlOrJson } from '../../utils/files.js';
 
-import { ANVIL_KEY, REGISTRY_PATH } from './helpers.js';
+import { ANVIL_KEY, FUEL_KEY, FUEL_REGISTRY_PATH, REGISTRY_PATH } from './helpers.js';
 
 /**
  * Deploys the Hyperlane core contracts to the specified chain using the provided config.
@@ -52,6 +52,22 @@ export async function hyperlaneCoreDeploy(
         --config ${coreInputPath} \
         --chain ${chain} \
         --key ${ANVIL_KEY} \
+        --verbosity debug \
+        --yes`;
+}
+
+/**
+ * Deploys the Hyperlane core contracts to the specified chain using the provided config.
+ */
+export async function hyperlaneCoreDeployFuel(
+  chain: string,
+  coreInputPath: string,
+) {
+  return $`yarn workspace @hyperlane-xyz/cli run hyperlane core deploy \
+        --registry ${FUEL_REGISTRY_PATH} \
+        --config ${coreInputPath} \
+        --chain ${chain} \
+        --key ${FUEL_KEY} \
         --verbosity debug \
         --yes`;
 }
