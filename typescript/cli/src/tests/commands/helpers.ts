@@ -52,6 +52,8 @@ export const CHAIN_3_METADATA_PATH = `${REGISTRY_PATH}/chains/${CHAIN_NAME_3}/me
 export const FUEL_LOCAL_REGISTRY_PATH = `${E2E_TEST_CONFIGS_PATH}/fuel`;
 export const FUEL_EXAMPLE_CONFIG_PATH = `${EXAMPLES_PATH}/fuel/core-config.yaml`;
 export const FUEL_CONFIG_PATH = `${TEMP_PATH}/${FUEL_CHAIN_NAME}/warp-route-deployment-fueltestnet.yaml`;
+export const FUEL_WARP_CONFIG_PATH_EXAMPLE = `${EXAMPLES_PATH}/fuel/warp-route-deployment.yaml`;
+export const FUEL_CORE_CONFIG_PATH = `${FUEL_LOCAL_REGISTRY_PATH}/deployments/warp_routes/ETH/fueltestnet-config.yaml`
 
 export const WARP_CONFIG_PATH_EXAMPLE = `${EXAMPLES_PATH}/warp-route-deployment.yaml`;
 export const WARP_CONFIG_PATH_2 = `${TEMP_PATH}/${CHAIN_NAME_2}/warp-route-deployment-anvil2.yaml`;
