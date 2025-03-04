@@ -1,9 +1,9 @@
-name: Canary Watchtower - Build and publish Docker image
+name: Hyperlane - Build and publish Docker image
 
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     types: [opened, synchronize]
   release:
