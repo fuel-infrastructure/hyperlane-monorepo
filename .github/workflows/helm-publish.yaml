@@ -1,0 +1,49 @@
+name: Hyperlane - Build and publish Helm Chart
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'helm/fuel-hyperlane-service/Chart.yaml'
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  helm-release:
+    name: Build Helm Chart
+    runs-on: buildjet-4vcpu-ubuntu-2204
+    if: |
+      (github.event_name == 'release' && github.event.action == 'published') ||
+      github.ref == 'refs/heads/master' || github.ref == 'refs/heads/staging' || github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials for ECR publishing
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::024848458133:role/github_oidc_FuelLabs_fuel-hyperlane-service
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Package and push Helm chart to Amazon ECR
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          PATH_TO_CHART: ./helm/fuel-hyperlane-service
+        run: |
+          PKG_RESPONSE=$(helm package $PATH_TO_CHART)
+          CHART_TAR_GZ=$(basename "$PKG_RESPONSE")
+          helm push "$CHART_TAR_GZ" oci://$REGISTRY
