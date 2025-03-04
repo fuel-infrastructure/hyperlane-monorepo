@@ -1,5 +1,6 @@
 import { confirm } from '@inquirer/prompts';
 import { BigNumber, ethers } from 'ethers';
+import 'fuels';
 
 import {
   ChainMap,
@@ -41,19 +42,43 @@ export async function runPreflightChecksForChains({
   chainsToGasCheck?: ChainName[];
 }) {
   log('Running pre-flight checks for chains...');
-  const { multiProvider, skipConfirmation } = context;
+  const { multiProvider, skipConfirmation, multiProtocolProvider } = context;
 
   if (!chains?.length) throw new Error('Empty chain selection');
   for (const chain of chains) {
-    const metadata = multiProvider.tryGetChainMetadata(chain);
-    if (!metadata) throw new Error(`No chain config found for ${chain}`);
-    if (metadata.protocol !== ProtocolType.Ethereum)
-      throw new Error('Only Ethereum chains are supported for now');
-    const signer = multiProvider.getSigner(chain);
-    assertSigner(signer);
-    logGreen(`✅ ${metadata.displayName ?? chain} signer is valid`);
+    const chainProtocol = context.chainMetadata[chain].protocol;
+    switch (chainProtocol) {
+      case ProtocolType.Ethereum: {
+        const metadata = multiProvider.tryGetChainMetadata(chain);
+        if (!metadata) throw new Error(`No chain config found for ${chain}`);
+        if (metadata.protocol !== ProtocolType.Ethereum)
+          throw new Error('Invalid metadata protocol');
+        const signer = multiProvider.getSigner(chain);
+        assertSigner(signer);
+        logGreen(`✅ ${metadata.displayName ?? chain} signer is valid`);
+
+        break;
+      }
+      case ProtocolType.Fuel: {
+        const metadata = multiProtocolProvider?.tryGetChainMetadata(chain);
+        if (!metadata) throw new Error(`No chain config found for ${chain}`);
+        if (metadata.protocol !== ProtocolType.Fuel)
+          throw new Error('Invalid metadata protocol');
+
+        const signer = await multiProtocolProvider?.getSigner(
+          chainProtocol,
+          chain,
+        );
+        logGreen(`signer type: ${typeof signer}`);
+        if (signer) assertSigner(signer);
+        logGreen(`✅ ${chain} signer is valid`);
+
+        break;
+      }
+      default:
+        throw new Error(`Unsupported protocol: ${chainProtocol}`);
+    }
   }
-  logGreen('✅ Chains are valid');
 
   await nativeBalancesAreSufficient(
     multiProvider,
@@ -61,6 +86,7 @@ export async function runPreflightChecksForChains({
     minGas,
     skipConfirmation,
   );
+  logGreen('✅ Chains are valid');
 }
 
 export async function runDeployPlanStep({
@@ -132,17 +158,40 @@ export async function prepareDeploy(
   userAddress: Address | null,
   chains: ChainName[],
 ): Promise<Record<string, BigNumber>> {
-  const { multiProvider, isDryRun } = context;
+  const { multiProvider, isDryRun, multiProtocolProvider } = context;
   const initialBalances: Record<string, BigNumber> = {};
+
   await Promise.all(
     chains.map(async (chain: ChainName) => {
-      const provider = isDryRun
-        ? getLocalProvider(ENV.ANVIL_IP_ADDR, ENV.ANVIL_PORT)
-        : multiProvider.getProvider(chain);
-      const address =
-        userAddress ?? (await multiProvider.getSigner(chain).getAddress());
-      const currentBalance = await provider.getBalance(address);
-      initialBalances[chain] = currentBalance;
+      const chainProtocol = context.chainMetadata[chain].protocol;
+
+      switch (chainProtocol) {
+        case ProtocolType.Ethereum: {
+          const provider = isDryRun
+            ? getLocalProvider(ENV.ANVIL_IP_ADDR, ENV.ANVIL_PORT)
+            : multiProvider.getProvider(chain);
+
+          const address =
+            userAddress ?? (await multiProvider.getSigner(chain).getAddress());
+          const currentBalance = await provider.getBalance(address);
+          initialBalances[chain] = currentBalance;
+
+          break;
+        }
+        case ProtocolType.Fuel: {
+          const provider = await multiProtocolProvider.getFuelProvider(chain);
+          const address =
+            userAddress ??
+            (await multiProtocolProvider.getSigner(chainProtocol, chain))
+              .address;
+          const baseAsset = await provider.getBaseAssetId();
+          const currentBalance = await provider.getBalance(address, baseAsset);
+          initialBalances[chain] = BigNumber.from(currentBalance.toString());
+          break;
+        }
+        default:
+          throw new Error(`Unsupported protocol: ${chainProtocol}`);
+      }
     }),
   );
   return initialBalances;

@@ -1,10 +1,11 @@
 import { confirm } from '@inquirer/prompts';
+import { TransactionResponse } from 'fuels';
 import { groupBy } from 'lodash-es';
 import { stringify as yamlStringify } from 'yaml';
 
 import { ProxyAdmin__factory } from '@hyperlane-xyz/core';
 import { buildArtifact as coreBuildArtifact } from '@hyperlane-xyz/core/buildArtifact.js';
-import { AddWarpRouteOptions, ChainAddresses } from '@hyperlane-xyz/registry';
+import { ChainAddresses } from '@hyperlane-xyz/registry';
 import {
   AggregationIsmConfig,
   AnnotatedEV5Transaction,
@@ -19,6 +20,9 @@ import {
   EvmHookModule,
   EvmIsmModule,
   ExplorerLicenseType,
+  FuelHookModule,
+  FuelIsmModule,
+  FuelSRC20WarpModule,
   HookConfig,
   HypERC20Deployer,
   HypERC20Factories,
@@ -38,6 +42,7 @@ import {
   RoutingIsmConfig,
   SubmissionStrategy,
   TOKEN_TYPE_TO_STANDARD,
+  TOKEN_TYPE_TO_STANDARD_FUEL,
   TokenFactories,
   TrustedRelayerIsmConfig,
   TxSubmitterBuilder,
@@ -51,6 +56,7 @@ import {
   getTokenConnectionId,
   hypERC20factories,
   isCollateralTokenConfig,
+  isFuelTokenType,
   isTokenMetadata,
 } from '@hyperlane-xyz/sdk';
 import {
@@ -138,29 +144,47 @@ export async function runWarpRouteDeploy({
 
   await runDeployPlanStep(deploymentParams);
 
-  // Some of the below functions throw if passed non-EVM chains
-  const ethereumChains = chains.filter(
-    (chain) => chainMetadata[chain].protocol === ProtocolType.Ethereum,
+  // Only Ethereum and Fuel chains are supported for now
+  // Some of the steps below throw if the chain is not supported
+  // Only a single protocol deployment at a time is supported
+  const protocols = new Set(
+    chains.map((chain) => chainMetadata[chain].protocol),
   );
+  if (protocols.size > 1)
+    throw new Error('Only single protocol deployments are supported for now');
+
+  const singleProtocol = protocols.values().next().value;
+  if (
+    singleProtocol !== ProtocolType.Ethereum &&
+    singleProtocol !== ProtocolType.Fuel
+  )
+    throw new Error('Only Ethereum and Fuel chains are supported for now');
 
   await runPreflightChecksForChains({
     context,
-    chains: ethereumChains,
+    chains,
     minGas: MINIMUM_WARP_DEPLOY_GAS,
   });
 
-  const initialBalances = await prepareDeploy(context, null, ethereumChains);
-
-  const deployedContracts = await executeDeploy(deploymentParams, apiKeys);
-
-  const { warpCoreConfig, addWarpRouteOptions } = await getWarpCoreConfig(
-    deploymentParams,
-    deployedContracts,
-  );
-
-  await writeDeploymentArtifacts(warpCoreConfig, context, addWarpRouteOptions);
-
-  await completeDeploy(context, 'warp', initialBalances, null, ethereumChains!);
+  const initialBalances = await prepareDeploy(context, null, chains);
+  let warpCoreConfig: WarpCoreConfig;
+  if (singleProtocol === ProtocolType.Ethereum) {
+    const deployedContracts = await executeDeploy(deploymentParams, apiKeys);
+    warpCoreConfig = await getWarpCoreConfig(
+      deploymentParams,
+      deployedContracts,
+    );
+  } else {
+    const warpRouteDeployment = await executeFuelDeploy(deploymentParams);
+    warpCoreConfig = await getFuelWarpCoreConfig(
+      deploymentParams,
+      warpRouteDeployment,
+    );
+  }
+  await writeDeploymentArtifacts(warpCoreConfig, context);
+  // TODO for fuel
+  if (singleProtocol === ProtocolType.Ethereum)
+    await completeDeploy(context, 'warp', initialBalances, null, chains!);
 }
 
 async function runDeployPlanStep({ context, warpDeployConfig }: DeployParams) {
@@ -174,6 +198,16 @@ async function runDeployPlanStep({ context, warpDeployConfig }: DeployParams) {
     message: 'Is this deployment plan correct?',
   });
   if (!isConfirmed) throw new Error('Deployment cancelled');
+}
+
+async function executeFuelDeploy(params: DeployParams) {
+  logBlue('Beginning deployment...');
+
+  const { warpDeployConfig, context } = params;
+  const { multiProtocolProvider } = context;
+
+  const modifiedConfig = await resolveWarpIsmAndHook(warpDeployConfig, context);
+  return FuelSRC20WarpModule.deploy(multiProtocolProvider, modifiedConfig);
 }
 
 async function executeDeploy(
@@ -226,11 +260,10 @@ async function executeDeploy(
 async function writeDeploymentArtifacts(
   warpCoreConfig: WarpCoreConfig,
   context: WriteCommandContext,
-  addWarpRouteOptions?: AddWarpRouteOptions,
 ) {
   if (!context.isDryRun) {
     log('Writing deployment artifacts...');
-    await context.registry.addWarpRoute(warpCoreConfig, addWarpRouteOptions);
+    await context.registry.addWarpRoute(warpCoreConfig);
   }
   log(indentYamlOrJson(yamlStringify(warpCoreConfig, null, 2), 4));
 }
@@ -238,7 +271,7 @@ async function writeDeploymentArtifacts(
 async function resolveWarpIsmAndHook(
   warpConfig: WarpRouteDeployConfig,
   context: WriteCommandContext,
-  ismFactoryDeployer: HyperlaneProxyFactoryDeployer,
+  ismFactoryDeployer?: HyperlaneProxyFactoryDeployer,
   contractVerifier?: ContractVerifier,
 ): Promise<WarpRouteDeployConfig> {
   return promiseObjAll(
@@ -288,7 +321,7 @@ async function createWarpIsm({
   context: WriteCommandContext;
   contractVerifier?: ContractVerifier;
   warpConfig: HypTokenRouterConfig;
-  ismFactoryDeployer: HyperlaneProxyFactoryDeployer;
+  ismFactoryDeployer?: HyperlaneProxyFactoryDeployer;
 }): Promise<IsmConfig | undefined> {
   const { interchainSecurityModule } = warpConfig;
   if (
@@ -312,7 +345,45 @@ async function createWarpIsm({
   logGreen(
     `Finished creating ${interchainSecurityModule.type} ISM for token on ${chain} chain.`,
   );
+  const protocol = context.chainMetadata[chain].protocol;
 
+  return protocol === ProtocolType.Ethereum
+    ? createEvmWarpIsm(
+        chainAddresses,
+        context,
+        chain,
+        interchainSecurityModule,
+        contractVerifier,
+      )
+    : createFuelWarpIsm(
+        chain,
+        context,
+        interchainSecurityModule,
+        chainAddresses.mailbox,
+      );
+}
+
+async function createFuelWarpIsm(
+  chain: string,
+  { multiProtocolProvider }: WriteCommandContext,
+  interchainSecurityModule: IsmConfig,
+  mailbox: string,
+) {
+  return FuelIsmModule.deploy(
+    multiProtocolProvider,
+    chain,
+    interchainSecurityModule,
+    mailbox,
+  );
+}
+
+async function createEvmWarpIsm(
+  chainAddresses: Record<string, string>,
+  context: WriteCommandContext,
+  chain: string,
+  interchainSecurityModule: IsmConfig,
+  contractVerifier?: ContractVerifier,
+) {
   const {
     mailbox,
     domainRoutingIsmFactory,
@@ -339,8 +410,7 @@ async function createWarpIsm({
     config: interchainSecurityModule,
     contractVerifier,
   });
-  const { deployedIsm } = evmIsmModule.serialize();
-  return deployedIsm;
+  return evmIsmModule.serialize().deployedIsm;
 }
 
 async function createWarpHook({
@@ -355,7 +425,7 @@ async function createWarpHook({
   context: WriteCommandContext;
   contractVerifier?: ContractVerifier;
   warpConfig: HypTokenRouterConfig;
-  ismFactoryDeployer: HyperlaneProxyFactoryDeployer;
+  ismFactoryDeployer?: HyperlaneProxyFactoryDeployer;
 }): Promise<HookConfig | undefined> {
   const { hook } = warpConfig;
 
@@ -368,6 +438,32 @@ async function createWarpHook({
 
   logGray(`Creating ${hook.type} Hook for token on ${chain} chain...`);
 
+  const protocol = context.chainMetadata[chain].protocol;
+
+  const deployedHook =
+    protocol === ProtocolType.Ethereum
+      ? createEvmWarpHook(
+          chainAddresses,
+          context,
+          chain,
+          hook,
+          warpConfig,
+          contractVerifier,
+        )
+      : createFuelWarpHook(chain, context, hook, chainAddresses.mailbox);
+
+  logGreen(`Finished creating ${hook.type} Hook for token on ${chain} chain.`);
+  return deployedHook;
+}
+
+async function createEvmWarpHook(
+  chainAddresses: Record<string, string>,
+  context: WriteCommandContext,
+  chain: string,
+  hook: HookConfig,
+  warpConfig: HypTokenRouterConfig,
+  contractVerifier?: ContractVerifier,
+) {
   const {
     mailbox,
     domainRoutingIsmFactory,
@@ -410,18 +506,57 @@ async function createWarpHook({
     contractVerifier,
     proxyFactoryFactories,
   });
-  logGreen(`Finished creating ${hook.type} Hook for token on ${chain} chain.`);
-  const { deployedHook } = evmHookModule.serialize();
-  return deployedHook;
+  return evmHookModule.serialize().deployedHook;
+}
+
+async function createFuelWarpHook(
+  chain: string,
+  { multiProtocolProvider }: WriteCommandContext,
+  hook: HookConfig,
+  mailbox: string,
+) {
+  return FuelHookModule.deploy(multiProtocolProvider, chain, hook, mailbox);
+}
+
+async function getFuelWarpCoreConfig(
+  { context: { multiProtocolProvider } }: DeployParams,
+  warpRouteDeployments: Record<
+    string,
+    { contractId: string; config: HypTokenRouterConfig }
+  >,
+): Promise<WarpCoreConfig> {
+  const warpCoreConfig: WarpCoreConfig = { tokens: [] };
+
+  const tokenMetadata = await FuelSRC20WarpModule.deriveTokenMetadata(
+    multiProtocolProvider,
+    // warpDeployConfig,
+    warpRouteDeployments,
+  );
+  assert(
+    tokenMetadata && isTokenMetadata(tokenMetadata),
+    'Missing required token metadata',
+  );
+
+  const { decimals, symbol, name } = tokenMetadata;
+  assert(decimals, 'Missing decimals on token metadata');
+
+  generateFuelTokenConfigs(
+    warpCoreConfig,
+    warpRouteDeployments,
+    symbol,
+    name,
+    decimals,
+  );
+
+  fullyConnectTokens(warpCoreConfig, ProtocolType.Fuel);
+
+  return warpCoreConfig;
 }
 
 async function getWarpCoreConfig(
   { warpDeployConfig, context }: DeployParams,
   contracts: HyperlaneContractsMap<TokenFactories>,
-): Promise<{
-  warpCoreConfig: WarpCoreConfig;
-  addWarpRouteOptions?: AddWarpRouteOptions;
-}> {
+): Promise<WarpCoreConfig> {
   const warpCoreConfig: WarpCoreConfig = { tokens: [] };
 
   // TODO: replace with warp read
@@ -447,7 +582,38 @@ async function getWarpCoreConfig(
 
   fullyConnectTokens(warpCoreConfig);
 
-  return { warpCoreConfig, addWarpRouteOptions: { symbol } };
+  return warpCoreConfig;
+}
+
+function generateFuelTokenConfigs(
+  warpCoreConfig: WarpCoreConfig,
+  warpRouteDeployments: Record<
+    string,
+    { contractId: string; config: HypTokenRouterConfig }
+  >,
+  symbol: string,
+  name: string,
+  decimals: number,
+) {
+  for (const [chain, { contractId, config }] of Object.entries(
+    warpRouteDeployments,
+  )) {
+    const collateralAddressOrDenom = isCollateralTokenConfig(config)
+      ? config.token // gets set in the above deriveTokenMetadata()
+      : undefined;
+    if (!isFuelTokenType(config.type))
+      throw new Error('Unsupported Fuel token type');
+
+    warpCoreConfig.tokens.push({
+      chainName: chain,
+      standard: TOKEN_TYPE_TO_STANDARD_FUEL[config.type],
+      decimals,
+      symbol,
+      name,
+      addressOrDenom: contractId,
+      collateralAddressOrDenom,
+    });
+  }
 }
 
 /**
@@ -471,7 +637,7 @@ function generateTokenConfigs(
       chainName,
       standard: TOKEN_TYPE_TO_STANDARD[config.type],
       decimals,
-      symbol: config.symbol || symbol,
+      symbol,
       name,
       addressOrDenom:
         contract[warpDeployConfig[chainName].type as keyof TokenFactories]
@@ -487,7 +653,10 @@ function generateTokenConfigs(
  * Assumes full interconnectivity between all tokens for now b.c. that's
  * what the deployers do by default.
  */
-function fullyConnectTokens(warpCoreConfig: WarpCoreConfig): void {
+function fullyConnectTokens(
+  warpCoreConfig: WarpCoreConfig,
+  protocol?: ProtocolType,
+): void {
   for (const token1 of warpCoreConfig.tokens) {
     for (const token2 of warpCoreConfig.tokens) {
       if (
@@ -498,7 +667,7 @@ function fullyConnectTokens(warpCoreConfig: WarpCoreConfig): void {
       token1.connections ||= [];
       token1.connections.push({
         token: getTokenConnectionId(
-          ProtocolType.Ethereum,
+          protocol ? protocol : ProtocolType.Ethereum,
           token2.chainName,
           token2.addressOrDenom!,
         ),
@@ -510,11 +679,58 @@ function fullyConnectTokens(warpCoreConfig: WarpCoreConfig): void {
 export async function runWarpRouteApply(
   params: WarpApplyParams,
 ): Promise<void> {
-  const { warpDeployConfig, warpCoreConfig, context } = params;
-  const { chainMetadata, skipConfirmation } = context;
+  const {
+    warpDeployConfig,
+    warpCoreConfig,
+    context: { chainMetadata },
+  } = params;
 
   WarpRouteDeployConfigSchema.parse(warpDeployConfig);
   WarpCoreConfigSchema.parse(warpCoreConfig);
+
+  const chains = Object.keys(warpDeployConfig);
+  const protocols = new Set(
+    chains.map((chain) => chainMetadata[chain].protocol),
+  );
+  if (protocols.size > 1)
+    throw new Error('Only single protocol updates are supported for now');
+
+  const singleProtocol = protocols.values().next().value;
+
+  logGreen('repo deploy config');
+  for (const [chain, config] of Object.entries(warpDeployConfig)) {
+    logGreen(chain, JSON.stringify(config));
+  }
+  logGreen('registry core config');
+  for (const [chain, config] of Object.entries(warpCoreConfig)) {
+    logGreen(chain, JSON.stringify(config));
+  }
+
+  if (singleProtocol === ProtocolType.Fuel) return runFuelWarpApply(params);
+  else return runEVMWarpApply(params);
+}
+
+async function runFuelWarpApply(params: WarpApplyParams) {
+  const { warpDeployConfig, warpCoreConfig } = params;
+
+  const warpCoreConfigByChain = Object.fromEntries(
+    warpCoreConfig.tokens.map((token) => [token.chainName, token]),
+  );
+
+  const transactions = await updateExistingFuelWarpRoute(
+    params,
+    warpDeployConfig,
+    warpCoreConfigByChain,
+  );
+  if (transactions.length == 0)
+    return logGreen(`Warp config is the same as target. No updates applied.`);
+
+  await writeFuelApplyTransactions(params, transactions);
+}
+
+async function runEVMWarpApply(params: WarpApplyParams) {
+  const { warpDeployConfig, warpCoreConfig, context } = params;
+  const { chainMetadata, skipConfirmation } = context;
 
   const warpCoreConfigByChain = Object.fromEntries(
     warpCoreConfig.tokens.map((token) => [token.chainName, token]),
@@ -596,17 +812,46 @@ async function extendWarpRoute(
     warpCoreConfigByChain,
   );
 
-  const { warpCoreConfig: updatedWarpCoreConfig, addWarpRouteOptions } =
-    await getWarpCoreConfig(params, mergedRouters);
+  const updatedWarpCoreConfig = await getWarpCoreConfig(params, mergedRouters);
   WarpCoreConfigSchema.parse(updatedWarpCoreConfig);
-
-  await writeDeploymentArtifacts(
-    updatedWarpCoreConfig,
-    params.context,
-    addWarpRouteOptions,
-  );
+  await writeDeploymentArtifacts(updatedWarpCoreConfig, params.context);
 
   return enrollRemoteRouters(params, mergedRouters);
+}
+
+async function updateExistingFuelWarpRoute(
+  params: WarpApplyParams,
+  warpDeployConfig: WarpRouteDeployConfig,
+  warpCoreConfigByChain: ChainMap<WarpCoreConfig['tokens'][number]>,
+) {
+  logBlue('Updating deployed Fuel Warp Routes');
+  const { multiProtocolProvider } = params.context;
+
+  const receipts: TransactionResponse[] = [];
+
+  await promiseObjAll(
+    objMap(warpDeployConfig, async (chain, config) => {
+      await retryAsync(async () => {
+        logGray(`Update existing warp route for chain ${chain}`);
+        const deployedConfig = warpCoreConfigByChain[chain];
+        if (!deployedConfig)
+          return logGray(
+            `Missing artifacts for ${chain}. Probably new deployment. Skipping update...`,
+          );
+        const deployedTokenRoute = deployedConfig.addressOrDenom!;
+
+        const results = await FuelSRC20WarpModule.update(
+          multiProtocolProvider,
+          deployedTokenRoute,
+          chain,
+          config,
+        );
+        receipts.push(...results);
+      }, 1); // TODO remove
+    }),
+  );
+
+  return receipts;
 }
 
 async function updateExistingWarpRoute(
@@ -1018,36 +1263,46 @@ async function submitWarpApplyTransactions(
 
   await promiseObjAll(
     objMap(chainTransactions, async (chainId, transactions) => {
-      try {
-        await retryAsync(
-          async () => {
-            const chain = chainIdToName[chainId];
-            const submitter: TxSubmitterBuilder<ProtocolType> =
-              await getWarpApplySubmitter({
-                chain,
-                context: params.context,
-                strategyUrl: params.strategyUrl,
-              });
-            const transactionReceipts = await submitter.submit(...transactions);
-            if (transactionReceipts) {
-              const receiptPath = `${params.receiptsDir}/${chain}-${
-                submitter.txSubmitterType
-              }-${Date.now()}-receipts.json`;
-              writeYamlOrJson(receiptPath, transactionReceipts);
-              logGreen(
-                `Transactions receipts successfully written to ${receiptPath}`,
-              );
-            }
-          },
-          5, // attempts
-          100, // baseRetryMs
-        );
-      } catch (e) {
-        logBlue(`Error in submitWarpApplyTransactions`, e);
-        console.dir(transactions);
-      }
+      await retryAsync(
+        async () => {
+          const chain = chainIdToName[chainId];
+          const submitter: TxSubmitterBuilder<ProtocolType> =
+            await getWarpApplySubmitter({
+              chain,
+              context: params.context,
+              strategyUrl: params.strategyUrl,
+            });
+          const transactionReceipts = await submitter.submit(...transactions);
+          if (transactionReceipts) {
+            const receiptPath = `${params.receiptsDir}/${chain}-${
+              submitter.txSubmitterType
+            }-${Date.now()}-receipts.json`;
+            writeYamlOrJson(receiptPath, transactionReceipts);
+            logGreen(
+              `Transactions receipts successfully written to ${receiptPath}`,
+            );
+          }
+        },
+        5, // attempts
+        100, // baseRetryMs
+      );
     }),
   );
+}
+
+/**
+ * Writes Fuel transaction summaries to a file.
+ */
+async function writeFuelApplyTransactions(
+  params: WarpApplyParams,
+  transactions: TransactionResponse[],
+) {
+  const receiptPath = `${params.receiptsDir}/fuel-${Date.now()}-receipts.json`;
+  const summaries = await Promise.all(
+    transactions.map((txn) => txn.getTransactionSummary()),
+  );
+  writeYamlOrJson(receiptPath, summaries);
+  logGreen(`Transaction summaries successfully written to ${receiptPath}`);
 }
 
 /**

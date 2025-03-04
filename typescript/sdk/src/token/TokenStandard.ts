@@ -30,6 +30,12 @@ export enum TokenStandard {
   SealevelHypCollateral = 'SealevelHypCollateral',
   SealevelHypSynthetic = 'SealevelHypSynthetic',
 
+  // Fuel
+  FuelNative = 'FuelNative',
+  FuelHypNative = 'FuelHypNative',
+  FuelHypCollateral = 'FuelHypCollateral',
+  FuelHypSynthetic = 'FuelHypSynthetic',
+
   // Cosmos
   CosmosIcs20 = 'CosmosIcs20',
   CosmosIcs721 = 'CosmosIcs721',
@@ -69,6 +75,12 @@ export const TOKEN_STANDARD_TO_PROTOCOL: Record<TokenStandard, ProtocolType> = {
   SealevelHypCollateral: ProtocolType.Sealevel,
   SealevelHypSynthetic: ProtocolType.Sealevel,
 
+  // Fuel
+  FuelNative: ProtocolType.Fuel,
+  FuelHypNative: ProtocolType.Fuel,
+  FuelHypCollateral: ProtocolType.Fuel,
+  FuelHypSynthetic: ProtocolType.Fuel,
+
   // Cosmos
   CosmosIcs20: ProtocolType.Cosmos,
   CosmosIcs721: ProtocolType.Cosmos,
@@ -106,6 +118,8 @@ export const TOKEN_COLLATERALIZED_STANDARDS = [
   TokenStandard.SealevelHypNative,
   TokenStandard.CwHypCollateral,
   TokenStandard.CwHypNative,
+  TokenStandard.FuelHypCollateral,
+  TokenStandard.FuelHypNative,
 ];
 
 export const XERC20_STANDARDS = [
@@ -131,6 +145,9 @@ export const TOKEN_HYP_STANDARDS = [
   TokenStandard.CwHypNative,
   TokenStandard.CwHypCollateral,
   TokenStandard.CwHypSynthetic,
+  TokenStandard.FuelHypNative,
+  TokenStandard.FuelHypCollateral,
+  TokenStandard.FuelHypSynthetic,
 ];
 
 export const TOKEN_MULTI_CHAIN_STANDARDS = [
@@ -166,9 +183,19 @@ export const TOKEN_TYPE_TO_STANDARD: Record<TokenType, TokenStandard> = {
   [TokenType.nativeScaled]: TokenStandard.EvmHypNative,
 };
 
+export const TOKEN_TYPE_TO_STANDARD_FUEL: Record<
+  TokenType.native | TokenType.collateral | TokenType.synthetic,
+  TokenStandard
+> = {
+  [TokenType.native]: TokenStandard.FuelHypNative,
+  [TokenType.collateral]: TokenStandard.FuelHypCollateral,
+  [TokenType.synthetic]: TokenStandard.FuelHypSynthetic,
+};
+
 export const PROTOCOL_TO_NATIVE_STANDARD: Record<ProtocolType, TokenStandard> =
   {
     [ProtocolType.Ethereum]: TokenStandard.EvmNative,
     [ProtocolType.Cosmos]: TokenStandard.CosmosNative,
     [ProtocolType.Sealevel]: TokenStandard.SealevelNative,
+    [ProtocolType.Fuel]: TokenStandard.FuelNative,
   };

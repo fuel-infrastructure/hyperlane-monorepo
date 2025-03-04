@@ -45,6 +45,10 @@ export const CollateralTokenConfigSchema = TokenMetadataSchema.partial().extend(
       .describe(
         'Existing token address to extend with Warp Route functionality',
       ),
+    assetId: z
+      .string()
+      .optional()
+      .describe('(Used for FuelVM chains) Asset ID of the token'),
   },
 );
 export type CollateralTokenConfig = z.infer<typeof CollateralTokenConfigSchema>;
@@ -118,21 +122,9 @@ export const WarpRouteDeployConfigSchema = z
     const collateralRebaseEntry = Object.entries(warpRouteDeployConfig).find(
       ([_, config]) => isCollateralRebaseTokenConfig(config),
     );
+    if (!collateralRebaseEntry) return warpRouteDeployConfig; // Pass through for other token types
 
-    const syntheticRebaseEntry = Object.entries(warpRouteDeployConfig).find(
-      ([_, config]) => isSyntheticRebaseTokenConfig(config),
-    );
-
-    // Require both collateral rebase and synthetic rebase to be present in the config
-    if (!collateralRebaseEntry && !syntheticRebaseEntry) {
-      //  Pass through for other token types
-      return warpRouteDeployConfig;
-    }
-
-    if (
-      collateralRebaseEntry &&
-      isCollateralRebasePairedCorrectly(warpRouteDeployConfig)
-    ) {
+    if (isCollateralRebasePairedCorrectly(warpRouteDeployConfig)) {
       const collateralChainName = collateralRebaseEntry[0];
       return objMap(warpRouteDeployConfig, (_, config) => {
         if (config.type === TokenType.syntheticRebase)
@@ -166,3 +158,7 @@ function isCollateralRebasePairedCorrectly(
   );
   return allOthersSynthetic;
 }
+
+export const isFuelTokenType = isCompliant(
+  z.enum([TokenType.native, TokenType.collateral, TokenType.synthetic]),
+);

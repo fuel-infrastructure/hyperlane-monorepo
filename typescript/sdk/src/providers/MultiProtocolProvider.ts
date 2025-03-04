@@ -1,8 +1,11 @@
+import { ethers } from 'ethers';
+import { Provider as FuelProvider, WalletUnlocked as FuelWallet } from 'fuels';
 import { Logger } from 'pino';
 
 import {
   Address,
   HexString,
+  ProtocolMap,
   ProtocolType,
   objFilter,
   objMap,
@@ -20,6 +23,7 @@ import {
   CosmJsProvider,
   CosmJsWasmProvider,
   EthersV5Provider,
+  FuelsProvider,
   PROTOCOL_TO_DEFAULT_PROVIDER_TYPE,
   ProviderMap,
   ProviderType,
@@ -40,6 +44,7 @@ import {
 export interface MultiProtocolProviderOptions {
   logger?: Logger;
   providers?: ChainMap<ProviderMap<TypedProvider>>;
+  signers?: ProtocolMap<ethers.Wallet | FuelWallet>;
   providerBuilders?: Partial<ProviderBuilderMap>;
 }
 
@@ -58,8 +63,8 @@ export class MultiProtocolProvider<
 > extends ChainMetadataManager<MetaExt> {
   // Chain name -> provider type -> provider
   protected readonly providers: ChainMap<ProviderMap<TypedProvider>>;
-  // Chain name -> provider type -> signer
-  protected signers: ChainMap<ProviderMap<never>> = {}; // TODO signer support
+  // Protocol  -> signer
+  protected readonly signers: ProtocolMap<ethers.Wallet | FuelWallet>;
   protected readonly providerBuilders: Partial<ProviderBuilderMap>;
   public readonly logger: Logger;
 
@@ -74,6 +79,7 @@ export class MultiProtocolProvider<
         module: 'MultiProtocolProvider',
       });
     this.providers = options.providers || {};
+    this.signers = options.signers || {};
     this.providerBuilders =
       options.providerBuilders || defaultProviderBuilderMap;
   }
@@ -119,6 +125,49 @@ export class MultiProtocolProvider<
       providers: this.providers,
     });
     return newMp;
+  }
+
+  /**
+   * Get an Ethers signer for a given chain name or domain id
+   * If signer is not yet connected, it will be connected
+   * @throws if chain's metadata or signer has not been set
+   */
+  async getSigner(
+    protocol: ProtocolType,
+    chain: ChainNameOrId,
+  ): Promise<ethers.Wallet | FuelWallet> {
+    const signer = await this.tryGetSigner(protocol, chain);
+    if (!signer) throw new Error(`No chain signer set for ${protocol}`);
+    return signer;
+  }
+
+  /**
+   * Get a signer for a given protocol
+   * If signer is not yet connected, it will be connected
+   */
+  async tryGetSigner(
+    protocol: ProtocolType,
+    chainNameOrId: ChainNameOrId,
+  ): Promise<ethers.Wallet | FuelWallet | null> {
+    const signer = this.signers[protocol];
+    if (!signer) return null;
+
+    if (signer instanceof ethers.Wallet) {
+      if (signer.provider) return signer;
+      // Auto-connect the signer for convenience
+      const provider = this.tryGetProvider(chainNameOrId);
+      if (provider instanceof ethers.providers.Provider) {
+        return provider ? signer.connect(provider) : signer;
+      }
+    }
+    if (signer instanceof FuelWallet) {
+      const provider = await this.getFuelProvider(chainNameOrId);
+      if (provider instanceof FuelProvider) {
+        signer.connect(provider);
+        return signer;
+      }
+    }
+    return null;
   }
 
   tryGetProvider(
@@ -193,6 +242,13 @@ export class MultiProtocolProvider<
     return this.getSpecificProvider<CosmJsProvider['provider']>(
       chainNameOrId,
       ProviderType.CosmJs,
+    );
+  }
+
+  getFuelProvider(chainNameOrId: ChainNameOrId): FuelsProvider['provider'] {
+    return this.getSpecificProvider<FuelsProvider['provider']>(
+      chainNameOrId,
+      ProviderType.Fuels,
     );
   }
 

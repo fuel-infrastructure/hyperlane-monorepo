@@ -21,6 +21,7 @@ export {
   isAddress,
   isAddressCosmos,
   isAddressEvm,
+  isAddressFuel,
   isAddressSealevel,
   isValidAddress,
   isValidAddressCosmos,
@@ -39,6 +40,7 @@ export {
   padBytesToLength,
   shortenAddress,
   strip0x,
+  validProtocolAddressGuard,
 } from './addresses.js';
 export {
   addBufferToGasLimit,
@@ -166,6 +168,7 @@ export {
   ParsedMessage,
   ProtocolSmallestUnit,
   ProtocolType,
+  ProtocolMap,
   ProtocolTypeValue,
   S3Announcement,
   S3Checkpoint,

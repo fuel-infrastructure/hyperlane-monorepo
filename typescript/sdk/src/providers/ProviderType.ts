@@ -16,6 +16,11 @@ import type {
   PopulatedTransaction as EV5Transaction,
 } from 'ethers';
 import type {
+  Contract as FContract,
+  Provider as FProvider,
+  TransactionRequest as FTransaction,
+} from 'fuels';
+import type {
   GetContractReturnType,
   PublicClient,
   Transaction as VTransaction,
@@ -31,6 +36,7 @@ export enum ProviderType {
   CosmJs = 'cosmjs',
   CosmJsWasm = 'cosmjs-wasm',
   GnosisTxBuilder = 'gnosis-txBuilder',
+  Fuels = 'fuels',
 }
 
 export const PROTOCOL_TO_DEFAULT_PROVIDER_TYPE: Record<
@@ -40,6 +46,7 @@ export const PROTOCOL_TO_DEFAULT_PROVIDER_TYPE: Record<
   [ProtocolType.Ethereum]: ProviderType.EthersV5,
   [ProtocolType.Sealevel]: ProviderType.SolanaWeb3,
   [ProtocolType.Cosmos]: ProviderType.CosmJsWasm,
+  [ProtocolType.Fuel]: ProviderType.Fuels,
 };
 
 export type ProviderMap<Value> = Partial<Record<ProviderType, Value>>;
@@ -62,6 +69,12 @@ type ProtocolTypesMapping = {
     provider: CosmJsWasmProvider;
     contract: CosmJsWasmContract;
     receipt: CosmJsWasmTransactionReceipt;
+  };
+  [ProtocolType.Fuel]: {
+    transaction: FuelsTransaction;
+    provider: FuelsProvider;
+    contract: FuelsContract;
+    receipt: FuelsTransactionReceipt;
   };
 };
 
@@ -112,6 +125,11 @@ export interface SolanaWeb3Provider extends TypedProviderBase<Connection> {
   provider: Connection;
 }
 
+export interface FuelsProvider extends TypedProviderBase<Promise<FProvider>> {
+  type: ProviderType.Fuels;
+  provider: Promise<FProvider>;
+}
+
 export interface CosmJsProvider
   extends TypedProviderBase<Promise<StargateClient>> {
   type: ProviderType.CosmJs;
@@ -129,6 +147,7 @@ export type TypedProvider =
   // | EthersV6Provider
   | ViemProvider
   | SolanaWeb3Provider
+  | FuelsProvider
   | CosmJsProvider
   | CosmJsWasmProvider;
 
@@ -157,6 +176,11 @@ export interface SolanaWeb3Contract extends TypedContractBase<never> {
   contract: never;
 }
 
+export interface FuelsContract extends TypedContractBase<FContract> {
+  type: ProviderType.Fuels;
+  contract: FContract;
+}
+
 export interface CosmJsContract extends TypedContractBase<never> {
   type: ProviderType.CosmJs;
   // TODO, research if cosmos sdk modules have an equivalent for here
@@ -174,6 +198,7 @@ export type TypedContract =
   // | EthersV6Contract
   | ViemContract
   | SolanaWeb3Contract
+  | FuelsContract
   | CosmJsContract
   | CosmJsWasmContract;
 
@@ -210,6 +235,11 @@ export interface CosmJsTransaction extends TypedTransactionBase<CmTransaction> {
   transaction: CmTransaction;
 }
 
+export interface FuelsTransaction extends TypedTransactionBase<FTransaction> {
+  type: ProviderType.Fuels;
+  transaction: FTransaction;
+}
+
 export interface CosmJsWasmTransaction
   extends TypedTransactionBase<ExecuteInstruction> {
   type: ProviderType.CosmJsWasm;
@@ -221,6 +251,7 @@ export type TypedTransaction =
   // | EthersV6Transaction
   | ViemTransaction
   | SolanaWeb3Transaction
+  | FuelsTransaction
   | CosmJsTransaction
   | CosmJsWasmTransaction;
 
@@ -251,6 +282,12 @@ export interface SolanaWeb3TransactionReceipt
   receipt: SolTransactionReceipt;
 }
 
+export interface FuelsTransactionReceipt
+  extends TypedTransactionReceiptBase<Array<any>> {
+  type: ProviderType.Fuels;
+  receipt: Array<any>; // Fuel logs are of any type
+}
+
 export interface CosmJsTransactionReceipt
   extends TypedTransactionReceiptBase<DeliverTxResponse> {
   type: ProviderType.CosmJs;
@@ -267,5 +304,6 @@ export type TypedTransactionReceipt =
   | EthersV5TransactionReceipt
   | ViemTransactionReceipt
   | SolanaWeb3TransactionReceipt
+  | FuelsTransactionReceipt
   | CosmJsTransactionReceipt
   | CosmJsWasmTransactionReceipt;

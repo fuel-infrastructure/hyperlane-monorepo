@@ -19,6 +19,7 @@ import {
   isAddress,
   objMap,
   promiseObjAll,
+  validProtocolAddressGuard,
 } from '@hyperlane-xyz/utils';
 
 import { CommandContext } from '../context/types.js';
@@ -134,13 +135,16 @@ export async function createWarpRouteDeployConfig({
   const result: WarpRouteDeployConfig = {};
   let typeChoices = TYPE_CHOICES;
   for (const chain of warpChains) {
-    logBlue(`${chain}: Configuring warp route...`);
+
+    const chainProtocol = context.chainMetadata[chain].protocol;
     const owner = await detectAndConfirmOrPrompt(
       async () => context.signerAddress,
       'Enter the desired',
       'owner address',
       'signer',
     );
+
+    validProtocolAddressGuard(owner, chainProtocol);
 
     // default to the mailbox from the registry and if not found ask to the user to submit one
     const chainAddresses = await context.registry.getChainAddresses(chain);

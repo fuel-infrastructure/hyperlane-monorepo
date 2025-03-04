@@ -559,6 +559,7 @@ export {
   TOKEN_STANDARD_TO_PROTOCOL,
   TOKEN_STANDARD_TO_PROVIDER_TYPE,
   TOKEN_TYPE_TO_STANDARD,
+  TOKEN_TYPE_TO_STANDARD_FUEL,
   TokenStandard,
   XERC20_STANDARDS,
 } from './token/TokenStandard.js';
@@ -572,6 +573,7 @@ export {
   HypTokenRouterConfigSchema,
   isCollateralRebaseTokenConfig,
   isCollateralTokenConfig,
+  isFuelTokenType,
   isNativeTokenConfig,
   isSyntheticRebaseTokenConfig,
   isSyntheticTokenConfig,
@@ -642,3 +644,10 @@ export {
   WarpTypedTransaction,
 } from './warp/types.js';
 export { WarpCore, WarpCoreOptions } from './warp/WarpCore.js';
+export { FuelHookModule } from './hook/FuelHookModule.js';
+export { FuelIsmModule } from './ism/FuelIsmModule.js';
+export { FuelSRC20WarpModule } from './token/FuelSRC20WarpModule.js';
+
+
+
+

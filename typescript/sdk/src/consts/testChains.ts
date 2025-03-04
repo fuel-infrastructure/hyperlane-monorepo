@@ -81,6 +81,23 @@ export const testChainMetadata: ChainMap<ChainMetadata> = {
   test4,
 };
 
+export const testFuelChain: ChainMetadata = {
+  blockExplorers: [
+    {
+      apiUrl: 'https://app-testnet.fuel.network',
+      family: ExplorerFamily.Other,
+      name: 'Fuel Testnet Explorer',
+      url: 'https://app-testnet.fuel.network',
+    },
+  ],
+  chainId: 1717982312,
+  domainId: 1717982312,
+  name: 'testfuel',
+  nativeToken: { decimals: 9, name: 'Ethereum', symbol: 'ETH' },
+  protocol: ProtocolType.Fuel,
+  rpcUrls: [{ http: 'http://127.0.0.1:4000' }],
+};
+
 export const testCosmosChain: ChainMetadata = {
   bech32Prefix: 'testcosmos',
   blockExplorers: [
@@ -123,6 +140,7 @@ export const multiProtocolTestChainMetadata: ChainMap<ChainMetadata> = {
   ...testChainMetadata,
   testcosmos: testCosmosChain,
   testsealevel: testSealevelChain,
+  testfuel: testFuelChain,
 };
 
 export const multiProtocolTestChains: Array<ChainName> = Object.keys(

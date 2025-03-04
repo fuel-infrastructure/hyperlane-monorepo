@@ -9,6 +9,7 @@ import {
   TestChainName,
   test1,
   testCosmosChain,
+  testFuelChain,
   testSealevelChain,
 } from '../consts/testChains.js';
 import { MultiProtocolProvider } from '../providers/MultiProtocolProvider.js';
@@ -178,6 +179,7 @@ const STANDARD_TO_TOKEN: Record<TokenStandard, TokenArgs | null> = {
     symbol: 'ASTRO',
     name: 'ASTRO',
   },
+
   [TokenStandard.CW721]: null,
   [TokenStandard.CwHypNative]: {
     chainName: testCosmosChain.name,
@@ -200,6 +202,52 @@ const STANDARD_TO_TOKEN: Record<TokenStandard, TokenArgs | null> = {
     name: 'TIA.n',
   },
   [TokenStandard.CwHypSynthetic]: null,
+
+  // Fuel
+  [TokenStandard.FuelNative]: {
+    chainName: testFuelChain.name,
+    standard: TokenStandard.FuelNative,
+    addressOrDenom:
+      '0xe4582f4e0bf3ff1dece741b7771868e4bb1b519a16f6bf49c884c88b896ddb93',
+    collateralAddressOrDenom:
+      '0xf8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad07',
+    decimals: 9,
+    symbol: 'ETH',
+    name: 'Ethereum',
+  },
+  [TokenStandard.FuelHypNative]: {
+    chainName: testFuelChain.name,
+    standard: TokenStandard.FuelHypNative,
+    addressOrDenom:
+      '0xe4582f4e0bf3ff1dece741b7771868e4bb1b519a16f6bf49c884c88b896ddb93',
+    collateralAddressOrDenom:
+      '0xf8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad07',
+    decimals: 9,
+    symbol: 'ETH',
+    name: 'Ethereum',
+  },
+  [TokenStandard.FuelHypSynthetic]: {
+    chainName: testFuelChain.name,
+    standard: TokenStandard.FuelHypSynthetic,
+    addressOrDenom:
+      '0xe4582f4e0bf3ff1dece741b7771868e4bb1b519a16f6bf49c884c88b896ddb93',
+    collateralAddressOrDenom:
+      '0xf8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad07',
+    decimals: 9,
+    symbol: 'ETH',
+    name: 'Ethereum',
+  },
+  [TokenStandard.FuelHypCollateral]: {
+    chainName: testFuelChain.name,
+    standard: TokenStandard.FuelHypCollateral,
+    addressOrDenom:
+      '0x7c139f5d8627a1497fcb3cf1ba8b8be57a7ae075339e729fa94435080e37b35c',
+    collateralAddressOrDenom:
+      '0xf8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad07',
+    decimals: 9,
+    symbol: 'ETH',
+    name: 'Ethereum',
+  },
 };
 
 const PROTOCOL_TO_ADDRESS_FOR_BALANCE_CHECK: Partial<
@@ -209,6 +257,8 @@ const PROTOCOL_TO_ADDRESS_FOR_BALANCE_CHECK: Partial<
   [ProtocolType.Cosmos]:
     'neutron13we0myxwzlpx8l5ark8elw5gj5d59dl6cjkzmt80c5q5cv5rt54qvzkv2a',
   [ProtocolType.Sealevel]: 'EK6cs8jNnu2d9pmKTGf1Bvre9oW2xNhcCKNdLKx6t74w',
+  [ProtocolType.Fuel]:
+    '0x3dF6585fcD45866cA26079258E1eAE82327EdF1f72828bc9F850Cb8802DcB0c8',
 };
 
 const STANDARD_TO_ADDRESS_FOR_BALANCE_CHECK: Partial<
@@ -216,6 +266,8 @@ const STANDARD_TO_ADDRESS_FOR_BALANCE_CHECK: Partial<
 > = {
   [TokenStandard.SealevelSpl]: 'HVSZJ2juJnMxd6yCNarTL56YmgUqzfUiwM7y7LtTXKHR',
   [TokenStandard.CwHypNative]: 'inj1fl48vsnmsdzcv85q5d2q4z5ajdha8yu3lj7tt0',
+  [TokenStandard.FuelHypNative]:
+    '0x3dF6585fcD45866cA26079258E1eAE82327EdF1f72828bc9F850Cb8802DcB0c8',
 };
 
 describe('Token', () => {

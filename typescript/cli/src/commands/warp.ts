@@ -41,6 +41,7 @@ import {
   symbolCommandOption,
   warpCoreConfigCommandOption,
   warpDeploymentConfigCommandOption,
+  warpDeploymentKeysCommandOption
 } from './options.js';
 import { MessageOptionsArgTypes, messageSendOptions } from './send.js';
 
@@ -76,6 +77,7 @@ export const apply: CommandModuleWithWriteContext<{
   describe: 'Update Warp Route contracts',
   builder: {
     config: warpDeploymentConfigCommandOption,
+    keys: warpDeploymentKeysCommandOption,
     symbol: {
       ...symbolCommandOption,
       demandOption: false,
@@ -132,6 +134,7 @@ export const deploy: CommandModuleWithWriteContext<{
   describe: 'Deploy Warp Route contracts',
   builder: {
     config: warpDeploymentConfigCommandOption,
+    keys: warpDeploymentKeysCommandOption,
     'dry-run': dryRunCommandOption,
     'from-address': fromAddressCommandOption,
   },
@@ -205,6 +208,7 @@ export const read: CommandModuleWithContext<{
       false,
       'The path to output a Warp Config JSON or YAML file.',
     ),
+    keys: warpDeploymentKeysCommandOption,
   },
   handler: async ({
     context,
@@ -252,6 +256,7 @@ const send: CommandModuleWithWriteContext<
       ...symbolCommandOption,
       demandOption: false,
     },
+    keys: warpDeploymentKeysCommandOption,
     warp: {
       ...warpCoreConfigCommandOption,
       demandOption: false,
@@ -279,6 +284,11 @@ const send: CommandModuleWithWriteContext<
     recipient,
     roundTrip,
   }) => {
+    logBlue(JSON.stringify(origin));
+    logBlue(JSON.stringify(destination));
+    logBlue(JSON.stringify(roundTrip));
+    logBlue(JSON.stringify(amount));
+
     const warpCoreConfig = await getWarpCoreConfigOrExit({
       symbol,
       warp,
@@ -286,6 +296,7 @@ const send: CommandModuleWithWriteContext<
     });
 
     let chains: ChainName[] = warpCoreConfig.tokens.map((t) => t.chainName);
+    logBlue(JSON.stringify(chains));
     if (roundTrip) {
       // Appends the reverse of the array, excluding the 1st (e.g. [1,2,3] becomes [1,2,3,2,1])
       const reversed = [...chains].reverse().slice(1, chains.length + 1); // We make a copy because .reverse() is mutating
@@ -352,6 +363,7 @@ export const check: CommandModuleWithContext<{
       ...warpCoreConfigCommandOption,
       demandOption: false,
     },
+    keys: warpDeploymentKeysCommandOption,
     config: inputFileCommandOption({
       defaultPath: DEFAULT_WARP_ROUTE_DEPLOYMENT_CONFIG_PATH,
       description: 'The path to a warp route deployment configuration file',
