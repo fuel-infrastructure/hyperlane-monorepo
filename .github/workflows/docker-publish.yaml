@@ -1,0 +1,43 @@
+name: Hyperlane - Build and publish Docker image
+
+on:
+  push:
+    branches:
+      - feat/fuel-integration
+  pull_request:
+    types: [opened, synchronize]
+  release:
+    types: [published]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-publish-image:
+    runs-on: buildjet-4vcpu-ubuntu-2204
+    if: |
+      (github.event_name == 'release' && github.event.action == 'published') ||
+      github.ref == 'refs/heads/master' || github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Git LFS
+        run: |
+          git lfs install
+      - name: Fetch LFS files
+        run: |
+          git lfs pull
+
+      - name: Build and push
+        uses: ./.github/actions/docker-publish
+        id: publish
+        with:
+          aws_role_arn: arn:aws:iam::024848458133:role/github_oidc_FuelLabs_fuel-hyperlane-service
+          image: 024848458133.dkr.ecr.us-east-1.amazonaws.com/fuel-hyperlane-service
+          dockerfile: rust/Dockerfile
+          context: .
