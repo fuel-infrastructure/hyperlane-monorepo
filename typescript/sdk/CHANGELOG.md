@@ -1,5 +1,16 @@
 # @hyperlane-xyz/sdk
 
+## 8.9.0
+
+### Minor Changes
+
+- d6ddf5b9e: make warp:read and warp:check/warp:verify operations independent of signer requirements
+
+### Patch Changes
+
+- @hyperlane-xyz/utils@8.9.0
+- @hyperlane-xyz/core@5.11.7
+
 ## 8.8.1
 
 ### Patch Changes
