@@ -170,6 +170,23 @@ export class MultiProtocolProvider<
     return null;
   }
 
+  async setFuelSigner(
+    chainNameOrId: ChainNameOrId,
+    signer: FuelWallet,
+  ): Promise<void> {
+    const chainName = this.tryGetChainName(chainNameOrId);
+    if (!chainName) {
+      throw new Error(`Chain ${chainNameOrId} not found in metadata`);
+    }
+
+    const typedProvider = this.tryGetProvider(chainName, ProviderType.Fuels);
+    if (typedProvider && typedProvider.type === ProviderType.Fuels) {
+      signer.connect(await typedProvider.provider);
+    }
+
+    this.signers[ProtocolType.Fuel] = signer;
+  }
+
   tryGetProvider(
     chainNameOrId: ChainNameOrId,
     type?: ProviderType,

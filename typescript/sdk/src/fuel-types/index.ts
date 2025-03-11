@@ -17,5 +17,6 @@ export { MessageIdMultisigIsmFactory } from './MessageIdMultisigIsmFactory.js';
 export { ProtocolFee } from './ProtocolFee.js';
 export { PausableIsm } from './PausableIsm.js';
 export { PausableHook } from './PausableHook.js';
+export { Src20Test } from './Src20Test.js';
 export { ValidatorAnnounce } from './ValidatorAnnounce.js';
 export { WarpRoute } from './WarpRoute.js';

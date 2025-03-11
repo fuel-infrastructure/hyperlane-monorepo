@@ -5,6 +5,7 @@ import { Uint53 } from '@cosmjs/math';
 import { Registry } from '@cosmjs/proto-signing';
 import { StargateClient, defaultRegistryTypes } from '@cosmjs/stargate';
 import { MsgExecuteContract } from 'cosmjs-types/cosmwasm/wasm/v1/tx.js';
+import { BN } from 'fuels';
 
 import { Address, HexString, Numberish, assert } from '@hyperlane-xyz/utils';
 
@@ -17,6 +18,8 @@ import {
   CosmJsWasmTransaction,
   EthersV5Provider,
   EthersV5Transaction,
+  FuelsProvider,
+  FuelsTransaction,
   ProviderType,
   SolanaWeb3Provider,
   SolanaWeb3Transaction,
@@ -222,6 +225,26 @@ export async function estimateTransactionFeeCosmJsWasm({
   });
 }
 
+export async function estimateTransactionFeeFuel({
+  provider,
+  transaction,
+}: {
+  transaction: FuelsTransaction;
+  provider: FuelsProvider;
+}): Promise<TransactionFeeEstimate> {
+  const { gasPrice } = await (
+    await provider.provider
+  ).estimateTxGasAndFee({
+    transactionRequest: transaction.transaction,
+    gasPrice: new BN(0),
+  });
+  return {
+    gasUnits: gasPrice.toNumber(),
+    gasPrice: gasPrice.toNumber(),
+    fee: gasPrice.toNumber(),
+  };
+}
+
 export function estimateTransactionFee({
   transaction,
   provider,
@@ -250,6 +273,11 @@ export function estimateTransactionFee({
     provider.type === ProviderType.SolanaWeb3
   ) {
     return estimateTransactionFeeSolanaWeb3({ transaction, provider });
+  } else if (
+    transaction.type === ProviderType.Fuels &&
+    provider.type === ProviderType.Fuels
+  ) {
+    return estimateTransactionFeeFuel({ transaction, provider });
   } else if (
     transaction.type === ProviderType.CosmJs &&
     provider.type === ProviderType.CosmJs

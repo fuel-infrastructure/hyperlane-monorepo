@@ -1,3 +1,4 @@
+import { WalletUnlocked } from 'fuels';
 import { Logger } from 'pino';
 
 import {
@@ -853,5 +854,28 @@ export class WarpCore {
     return this.tokens.filter(
       (t) => t.chainName === origin && t.getConnectionForChain(destination),
     );
+  }
+
+  // Add this method to WarpCore class in typescript/sdk/src/warp/WarpCore.ts
+  static async FromConfigWithFuel(
+    multiProvider: MultiProtocolProvider<{ mailbox?: Address }>,
+    config: unknown,
+    fuelSigner: WalletUnlocked,
+    fuelChain: ChainName,
+  ): Promise<WarpCore> {
+    // First create the WarpCore using the existing FromConfig method
+    const warpCore = WarpCore.FromConfig(multiProvider, config);
+
+    await multiProvider.setFuelSigner(fuelChain, fuelSigner);
+
+    const signer_test = multiProvider.tryGetSigner(
+      ProtocolType.Fuel,
+      fuelChain,
+    ) as unknown as WalletUnlocked;
+    warpCore.logger.warn(`signer test `, signer_test.address);
+
+    warpCore.logger.warn(`Set Fuel signer for chain ${fuelChain} in WarpCore`);
+
+    return warpCore;
   }
 }
