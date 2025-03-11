@@ -1,10 +1,12 @@
 import { ethers, providers } from 'ethers';
+import { WalletUnlocked } from 'fuels';
 import { Logger } from 'pino';
 import { z } from 'zod';
 
 import {
   Address,
   ParsedMessage,
+  ProtocolType,
   assert,
   bytes32ToAddress,
   messageId,
@@ -16,14 +18,17 @@ import {
 } from '@hyperlane-xyz/utils';
 
 import { DerivedHookConfig, EvmHookReader } from '../hook/EvmHookReader.js';
+import { FuelHookModule } from '../hook/FuelHookModule.js';
 import { HookConfigSchema } from '../hook/types.js';
 import { DerivedIsmConfig, EvmIsmReader } from '../ism/EvmIsmReader.js';
 import { BaseMetadataBuilder } from '../ism/metadata/builder.js';
 import { IsmConfigSchema } from '../ism/types.js';
+import { MultiProtocolProvider } from '../providers/MultiProtocolProvider.js';
 import { MultiProvider } from '../providers/MultiProvider.js';
 import { ChainMap, ChainName } from '../types.js';
 
 import { HyperlaneCore } from './HyperlaneCore.js';
+import { FuelCoreAdapter } from './adapters/FuelCoreAdapter.js';
 import { DispatchedMessage } from './types.js';
 
 const WithAddressSchema = z.object({
@@ -199,11 +204,21 @@ export class HyperlaneRelayer {
     return this.getHookConfig(originChain, hook, message);
   }
 
+  async getSenderHookConfigFuel(message: DispatchedMessage): Promise<string> {
+    const hook = await this.core.getSenderHookAddress(message);
+    return hook;
+  }
+
   async getRecipientIsmConfig(
     message: DispatchedMessage,
   ): Promise<DerivedIsmConfig> {
     const destinationChain = this.core.getDestination(message);
-    const ism = await this.core.getRecipientIsmAddress(message);
+    let ism;
+    if (destinationChain === 'fuel' || destinationChain === 'fueltestnet') {
+      ism = await this.core.getRecipientIsmAddressFuel(message);
+    } else {
+      ism = await this.core.getRecipientIsmAddress(message);
+    }
     return this.getIsmConfig(destinationChain, ism, message);
   }
 
@@ -273,6 +288,119 @@ export class HyperlaneRelayer {
       this.getRecipientIsmConfig(message),
       this.getSenderHookConfig(message),
     ]);
+    this.logger.debug({ ism, hook }, `Retrieved ISM and hook configs`);
+
+    const metadata = await this.metadataBuilder.build({
+      message,
+      ism,
+      hook,
+      dispatchTx,
+    });
+
+    this.logger.info(`Relaying message ${message.id}`);
+    return this.core.deliver(message, metadata);
+  }
+
+  async relayMessageToFuel(
+    dispatchTx: providers.TransactionReceipt,
+    messageIndex = 0,
+    message = HyperlaneCore.getDispatchedMessages(dispatchTx)[messageIndex],
+    multiProtocolProvider: MultiProtocolProvider,
+    mailboxAddress: string,
+  ): Promise<boolean> {
+    if (this.whitelist) {
+      // add human readable names for use in whitelist checks
+      message.parsed = {
+        originChain: this.core.getOrigin(message),
+        destinationChain: this.core.getDestination(message),
+        ...message.parsed,
+      };
+      assert(
+        messageMatchesWhitelist(this.whitelist, message.parsed),
+        `Message ${message.id} does not match whitelist`,
+      );
+    }
+
+    this.logger.info(`Preparing to relay message ${message.id}`);
+
+    const destination = this.core.getDestination(message);
+
+    const fuelAdapter = new FuelCoreAdapter(
+      destination,
+      multiProtocolProvider,
+      { mailbox: mailboxAddress },
+    );
+
+    const isDelivered = await fuelAdapter.delivered(message.id);
+
+    this.logger.info(`isDelivered output ${isDelivered}`);
+    if (isDelivered) {
+      this.logger.info(`Message ${message.id} already delivered`);
+      return true;
+    }
+
+    this.logger.debug({ message }, `Simulating recipient message handling`);
+
+    const res = await fuelAdapter.process('', message);
+    return res;
+  }
+
+  async relayMessageFromFuel(
+    dispatchTx: providers.TransactionReceipt,
+    messageIndex = 0,
+    message = HyperlaneCore.getDispatchedMessages(dispatchTx)[messageIndex],
+    mailboxAddress: string,
+    multiProtocolProvider: MultiProtocolProvider,
+  ): Promise<ethers.ContractReceipt> {
+    if (this.whitelist) {
+      // add human readable names for use in whitelist checks
+      message.parsed = {
+        originChain: this.core.getOrigin(message),
+        destinationChain: this.core.getDestination(message),
+        ...message.parsed,
+      };
+      assert(
+        messageMatchesWhitelist(this.whitelist, message.parsed),
+        `Message ${message.id} does not match whitelist`,
+      );
+    }
+
+    this.logger.info(`Preparing to relay message ${message.id}`);
+
+    const isDelivered = await this.core.isDelivered(message);
+    this.logger.info(`isDelivered output ${isDelivered}`);
+    if (isDelivered) {
+      this.logger.info(`Message ${message.id} already delivered`);
+      return this.core.getProcessedReceipt(message);
+    }
+
+    this.logger.debug({ message }, `Simulating recipient message handling`);
+    await this.core.estimateHandle(message);
+
+    const fuel_origin = this.core.getOrigin(message);
+
+    const fuelAdapter = new FuelCoreAdapter(
+      fuel_origin,
+      multiProtocolProvider,
+      { mailbox: mailboxAddress },
+    );
+
+    const hookAddress = await fuelAdapter.defaultHook();
+    this.logger.info(`hookAddress: ${hookAddress}`);
+
+    const signer = (await multiProtocolProvider.tryGetSigner(
+      ProtocolType.Fuel,
+      fuel_origin,
+    )) as WalletUnlocked;
+
+    const hook = await FuelHookModule.deriveHookConfig(
+      multiProtocolProvider,
+      hookAddress,
+      signer,
+    );
+
+    // parallelizable because configs are on different chains
+    const [ism] = await Promise.all([this.getRecipientIsmConfig(message)]);
     this.logger.debug({ ism, hook }, `Retrieved ISM and hook configs`);
 
     const metadata = await this.metadataBuilder.build({

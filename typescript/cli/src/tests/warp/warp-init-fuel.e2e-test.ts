@@ -10,8 +10,7 @@ import {
 } from '@hyperlane-xyz/sdk';
 import { Address } from '@hyperlane-xyz/utils';
 
-import { readYamlOrJson } from '../utils/files.js';
-
+import { readYamlOrJson } from '../../utils/files.js';
 import {
   DEFAULT_E2E_TEST_TIMEOUT,
   FUEL_CHAIN_NAME,
@@ -23,8 +22,8 @@ import {
   TestPromptAction,
   deployOrUseExistingCoreFuel,
   handlePrompts,
-} from './commands/helpers.js';
-import { hyperlaneWarpInitFuel } from './commands/warp.js';
+} from '../commands/helpers.js';
+import { hyperlaneWarpInitFuel } from '../commands/warp-fuel.js';
 
 describe('hyperlane warp init e2e tests', async function () {
   this.timeout(2 * DEFAULT_E2E_TEST_TIMEOUT);

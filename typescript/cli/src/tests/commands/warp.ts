@@ -11,7 +11,7 @@ import { Address } from '@hyperlane-xyz/utils';
 
 import { readYamlOrJson } from '../../utils/files.js';
 
-import { ANVIL_KEY, FUEL_KEY, FUEL_LOCAL_REGISTRY_PATH, REGISTRY_PATH, getDeployedWarpAddress } from './helpers.js';
+import { ANVIL_KEY, REGISTRY_PATH, getDeployedWarpAddress } from './helpers.js';
 
 $.verbose = true;
 
@@ -54,40 +54,12 @@ export function hyperlaneWarpDeployRaw({
 /**
  * Deploys the Warp route to the specified chain using the provided config.
  */
-export function hyperlaneWarpInitFuel(warpCorePath: string): ProcessPromise {
-  // --overrides is " " to allow local testing to work
-  return $`yarn workspace @hyperlane-xyz/cli run hyperlane warp init \
-        --registry ${FUEL_LOCAL_REGISTRY_PATH} \
-        --overrides " " \
-        --out ${warpCorePath} \
-        --verbosity debug \
-        --yes`;
-}
-
-/**
- * Deploys the Warp route to the specified chain using the provided config.
- */
 export function hyperlaneWarpDeploy(warpCorePath: string): ProcessPromise {
   return hyperlaneWarpDeployRaw({
     privateKey: ANVIL_KEY,
     warpCorePath: warpCorePath,
     skipConfirmationPrompts: true,
   });
-}
-
-/**
- * Deploys the Warp route to the specified chain using the provided config.
- */
-export async function hyperlaneWarpDeployFuel(warpCorePath: string) {
-  // --overrides is " " to allow local testing to work
-  return $`yarn workspace @hyperlane-xyz/cli run hyperlane warp deploy \
-        --registry ${FUEL_LOCAL_REGISTRY_PATH} \
-        --overrides " " \
-        --config ${warpCorePath} \
-        --key ${ANVIL_KEY} \
-        --keys fuel:${FUEL_KEY} \
-        --verbosity debug \
-        --yes`;
 }
 
 /**
@@ -375,37 +347,4 @@ export function generateWarpConfigs(
     );
 
   return configs;
-}
-
-export async function hyperlaneWarpReadFuel(
-  chain: string,
-  warpAddress: string,
-  warpDeployPath: string,
-) {
-  return $`yarn workspace @hyperlane-xyz/cli run hyperlane warp read \
-        --registry ${FUEL_LOCAL_REGISTRY_PATH} \
-        --overrides " " \
-        --address ${warpAddress} \
-        --chain ${chain} \
-        --key ${ANVIL_KEY} \
-        --keys fuel:${FUEL_KEY} \
-        --verbosity debug \
-        --config ${warpDeployPath}`;
-}
-
-
-/**
- * Reads the Warp route deployment config to specified output path.
- * @param warpCorePath path to warp core
- * @param warpDeployPath path to output the resulting read
- * @returns The Warp route deployment config.
- */
-export async function readWarpConfigFuel(
-  chain: string,
-  warpCorePath: string,
-  warpDeployPath: string,
-): Promise<WarpRouteDeployConfig> {
-  const warpAddress = getDeployedWarpAddress(chain, warpCorePath);
-  await hyperlaneWarpReadFuel(chain, warpAddress!, warpDeployPath);
-  return readYamlOrJson(warpDeployPath);
 }

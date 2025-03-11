@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 const envScheme = z.object({
   HYP_KEY: z.string().optional(),
+  HYP_KEYS: z.string().optional(),
   ANVIL_IP_ADDR: z.string().optional(),
   ANVIL_PORT: z.number().optional(),
   AWS_ACCESS_KEY_ID: z.string().optional(),

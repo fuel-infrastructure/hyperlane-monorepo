@@ -1,5 +1,6 @@
 import { TransactionReceipt } from '@ethersproject/providers';
 import { ethers } from 'ethers';
+import { TransactionResult } from 'fuels';
 import type { TransactionReceipt as ViemTxReceipt } from 'viem';
 
 import {
@@ -11,6 +12,7 @@ import {
 import {
   Address,
   AddressBytes32,
+  ParsedMessage,
   ProtocolType,
   addBufferToGasLimit,
   addressToBytes32,
@@ -33,11 +35,13 @@ import {
 } from '../contracts/types.js';
 import { DerivedHookConfig, EvmHookReader } from '../hook/EvmHookReader.js';
 import { DerivedIsmConfig, EvmIsmReader } from '../ism/EvmIsmReader.js';
+import { MultiProtocolProvider } from '../providers/MultiProtocolProvider.js';
 import { MultiProvider } from '../providers/MultiProvider.js';
 import { RouterConfig } from '../router/types.js';
 import { ChainMap, ChainName, OwnableConfig } from '../types.js';
 import { findMatchingLogEvents } from '../utils/logUtils.js';
 
+import { FuelCoreAdapter } from './adapters/FuelCoreAdapter.js';
 import { CoreFactories, coreFactories } from './contracts.js';
 import { DispatchEvent } from './events.js';
 import { DispatchedMessage } from './types.js';
@@ -112,6 +116,14 @@ export class HyperlaneCore extends HyperlaneApp<CoreFactories> {
   }
 
   async getRecipientIsmAddress(message: DispatchedMessage): Promise<Address> {
+    const destinationMailbox = this.contractsMap[this.getDestination(message)];
+    const ethAddress = bytes32ToAddress(message.parsed.recipient);
+    return destinationMailbox.mailbox.recipientIsm(ethAddress);
+  }
+
+  async getRecipientIsmAddressFuel(
+    message: DispatchedMessage,
+  ): Promise<Address> {
     const destinationMailbox = this.contractsMap[this.getDestination(message)];
     const ethAddress = bytes32ToAddress(message.parsed.recipient);
     return destinationMailbox.mailbox.recipientIsm(ethAddress);
@@ -299,6 +311,22 @@ export class HyperlaneCore extends HyperlaneApp<CoreFactories> {
     return originMailbox.defaultHook();
   }
 
+  async getHookFuel(
+    originChain: ChainName,
+    mailboxAddress: Address,
+    multiProtocolProvider: MultiProtocolProvider,
+  ): Promise<Address> {
+    const originMailbox = new FuelCoreAdapter(
+      originChain,
+      multiProtocolProvider,
+      {
+        mailbox: mailboxAddress,
+      },
+    );
+    const hook = await originMailbox.defaultHook();
+    return hook;
+  }
+
   isDelivered(message: DispatchedMessage): Promise<boolean> {
     const destinationChain = this.getDestination(message);
     return this.getContracts(destinationChain).mailbox.delivered(message.id);
@@ -308,6 +336,15 @@ export class HyperlaneCore extends HyperlaneApp<CoreFactories> {
     const originChain = this.getOrigin(message);
     const senderAddress = bytes32ToAddress(message.parsed.sender);
     return this.getHook(originChain, senderAddress);
+  }
+
+  async getSenderHookAddressFuel(
+    message: DispatchedMessage,
+    mailboxAddress: string,
+    multiProtocolProvider: MultiProtocolProvider,
+  ): Promise<Address> {
+    const originChain = this.getOrigin(message);
+    return this.getHookFuel(originChain, mailboxAddress, multiProtocolProvider);
   }
 
   async getProcessedReceipt(
@@ -375,6 +412,38 @@ export class HyperlaneCore extends HyperlaneApp<CoreFactories> {
     return true;
   }
 
+  async waitForMessageIdProcessedFuel(
+    messageId: string,
+    destination: ChainName,
+    mailboxAddress: string,
+    multiProtocolProvider: MultiProtocolProvider,
+    delayMs?: number,
+    maxAttempts?: number,
+  ): Promise<true> {
+    await pollAsync(
+      async () => {
+        this.logger.debug(`Checking if message ${messageId} was processed`);
+        const mailbox = new FuelCoreAdapter(
+          destination,
+          multiProtocolProvider,
+          {
+            mailbox: mailboxAddress,
+          },
+        );
+        const delivered = await mailbox.delivered(messageId);
+        if (delivered) {
+          this.logger.info(`Message ${messageId} was processed`);
+          return true;
+        } else {
+          throw new Error(`Message ${messageId} not yet processed`);
+        }
+      },
+      delayMs,
+      maxAttempts,
+    );
+    return true;
+  }
+
   waitForMessageProcessing(
     sourceTx: ethers.ContractReceipt | ViemTxReceipt,
   ): Promise<ethers.ContractReceipt[]> {
@@ -400,6 +469,32 @@ export class HyperlaneCore extends HyperlaneApp<CoreFactories> {
       ),
     );
     this.logger.info(
+      `All messages processed for tx ${sourceTx.transactionHash}`,
+    );
+  }
+
+  async waitForMessageProcessedOnFuel(
+    sourceTx: ethers.ContractReceipt | ViemTxReceipt,
+    mailboxAddress: string,
+    multiProtocolProvider: MultiProtocolProvider,
+    delay?: number,
+    maxAttempts?: number,
+  ): Promise<void> {
+    const messages = HyperlaneCore.getDispatchedMessages(sourceTx);
+    this.logger.debug('messages on process check', messages);
+    await Promise.all(
+      messages.map((msg) =>
+        this.waitForMessageIdProcessedFuel(
+          msg.id,
+          this.getDestination(msg),
+          mailboxAddress,
+          multiProtocolProvider,
+          delay,
+          maxAttempts,
+        ),
+      ),
+    );
+    this.logger.debug(
       `All messages processed for tx ${sourceTx.transactionHash}`,
     );
   }
@@ -461,5 +556,115 @@ export class HyperlaneCore extends HyperlaneApp<CoreFactories> {
       const id = messageId(message);
       return { id, message, parsed };
     });
+  }
+
+  /**
+   * Extract dispatched messages from Fuel transaction results
+   * @param fuelTxResult The Fuel transaction result
+   * @returns Array of dispatched messages
+   */
+  static getDispatchedMessagesFromFuel(
+    fuelTx: TransactionResult<any>,
+    origin: number,
+    originChain: string,
+    destinationChain: string,
+  ): DispatchedMessage {
+    const messageIdLog: any = fuelTx.logs?.find((log: any) => log.message_id);
+    const messageId = messageIdLog?.message_id;
+
+    if (!messageId) {
+      throw new Error('No message ID found in Fuel transaction logs');
+    }
+
+    // Find the destination and recipient from the last log
+    const destinationLog: any = fuelTx.logs?.[fuelTx.logs?.length - 1];
+
+    if (!destinationLog) {
+      throw new Error(
+        'No destination/recipient information found in Fuel transaction logs',
+      );
+    }
+
+    const destination = destinationLog.destination;
+    const recipient = destinationLog.recipient;
+    const amount = destinationLog.amount;
+
+    // Find the sender from the first log
+    const senderLog: any = fuelTx.logs?.find(
+      (log: any) => log.sender && log.destination_domain,
+    );
+    const sender = senderLog?.sender;
+
+    // Convert amount to a number we can work with
+    let amountValue = 0;
+    if (amount) {
+      if (typeof amount === 'string') {
+        // Handle string amounts (with or without 0x prefix)
+        amountValue = parseInt(
+          amount.startsWith('0x') ? amount : `0x${amount}`,
+          16,
+        );
+      } else if (typeof amount === 'number') {
+        // Handle number amounts directly
+        amountValue = amount;
+      } else if (amount.toString) {
+        // Handle BN or similar objects by converting to string first
+        const amountStr = amount.toString();
+        // Check if it's a hex string or decimal string
+        if (amountStr.startsWith('0x')) {
+          amountValue = parseInt(amountStr, 16);
+        } else {
+          amountValue = parseInt(amountStr, 10);
+        }
+      }
+    }
+
+    // Format recipient and amount for the body
+    const recipientBytes = ethers.utils.hexZeroPad(recipient, 32);
+    const amountBytes = ethers.utils.hexZeroPad(
+      `0x${amountValue.toString(16)}`,
+      32,
+    );
+
+    // Combine them for the body
+    const body = ethers.utils.hexConcat([recipientBytes, amountBytes]);
+
+    const parsed: ParsedMessage = {
+      version: 3,
+      nonce: 0,
+      origin,
+      originChain,
+      sender,
+      destination,
+      destinationChain,
+      recipient,
+      body,
+    };
+
+    // Create the message using the same approach
+    const versionHex = ethers.utils.hexZeroPad(
+      `0x${parsed.version.toString(16)}`,
+      1,
+    );
+    const nonceHex = ethers.utils.hexZeroPad(
+      `0x${parsed.nonce.toString(16)}`,
+      4,
+    );
+    const senderHex = ethers.utils.hexZeroPad(sender, 32);
+    const destinationHex = ethers.utils.hexZeroPad(
+      `0x${destination.toString(16)}`,
+      4,
+    );
+
+    const message = ethers.utils.hexConcat([
+      versionHex,
+      nonceHex,
+      senderHex,
+      destinationHex,
+      recipientBytes,
+      amountBytes,
+    ]);
+
+    return { id: messageId, message, parsed };
   }
 }

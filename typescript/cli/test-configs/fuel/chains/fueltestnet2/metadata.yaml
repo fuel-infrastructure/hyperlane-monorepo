@@ -3,9 +3,9 @@
 # Consists of a map of chain names to metadata
 # Schema here: https://github.com/hyperlane-xyz/hyperlane-monorepo/blob/main/typescript/sdk/src/metadata/chainMetadataTypes.ts
 ---
-chainId: 1717982312
-domainId: 1717982312
-name: fueltestnet
+chainId: 1717982313
+domainId: 1717982313
+name: fueltestnet2
 protocol: fuel
 isTestnet: true
 rpcUrls:
@@ -19,4 +19,3 @@ nativeToken:
   decimals: 9
   name: Ethereum
   symbol: ETH
-  denom: '0xf8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad07'

@@ -2,8 +2,7 @@ import { expect } from 'chai';
 
 import { WarpRouteDeployConfig } from '@hyperlane-xyz/sdk';
 
-import { readYamlOrJson, writeYamlOrJson } from '../utils/files.js';
-
+import { readYamlOrJson, writeYamlOrJson } from '../../utils/files.js';
 import {
   DEFAULT_E2E_TEST_TIMEOUT,
   FUEL_CHAIN_NAME,
@@ -14,8 +13,11 @@ import {
   FUEL_WARP_CONFIG_PATH_EXAMPLE,
   TEMP_PATH,
   deployOrUseExistingCoreFuel,
-} from './commands/helpers.js';
-import { hyperlaneWarpDeployFuel, readWarpConfigFuel } from './commands/warp.js';
+} from '../commands/helpers.js';
+import {
+  hyperlaneWarpDeployFuel,
+  readWarpConfigFuel,
+} from '../commands/warp-fuel.js';
 
 describe('hyperlane warp read e2e tests', async function () {
   this.timeout(DEFAULT_E2E_TEST_TIMEOUT);
@@ -23,7 +25,11 @@ describe('hyperlane warp read e2e tests', async function () {
   let fuelConfig: WarpRouteDeployConfig;
 
   before(async function () {
-    await deployOrUseExistingCoreFuel(FUEL_CHAIN_NAME, FUEL_EXAMPLE_CONFIG_PATH, FUEL_KEY);
+    await deployOrUseExistingCoreFuel(
+      FUEL_CHAIN_NAME,
+      FUEL_EXAMPLE_CONFIG_PATH,
+      FUEL_KEY,
+    );
 
     // Create a new warp config using the example
     const exampleWarpConfig: WarpRouteDeployConfig = readYamlOrJson(

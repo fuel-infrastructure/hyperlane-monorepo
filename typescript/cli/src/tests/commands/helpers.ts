@@ -21,6 +21,7 @@ import { getContext } from '../../context/context.js';
 import { readYamlOrJson, writeYamlOrJson } from '../../utils/files.js';
 
 import { hyperlaneCoreDeploy, hyperlaneCoreDeployFuel } from './core.js';
+import { hyperlaneWarpApplyFuel, readWarpConfigFuel } from './warp-fuel.js';
 import {
   hyperlaneWarpApply,
   hyperlaneWarpSendRelay,
@@ -34,13 +35,15 @@ export const TEMP_PATH = '/tmp'; // /temp gets removed at the end of all-test.sh
 
 export const ANVIL_KEY =
   '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';
-export const FUEL_KEY = "0x560651e6d8824272b34a229a492293091d0f8f735c4534cdf76addc57774b711"
+export const FUEL_KEY =
+  '0x560651e6d8824272b34a229a492293091d0f8f735c4534cdf76addc57774b711';
 export const E2E_TEST_BURN_ADDRESS =
   '0x0000000000000000000000000000000000000001';
 
 export const CHAIN_NAME_2 = 'anvil2';
 export const CHAIN_NAME_3 = 'anvil3';
 export const FUEL_CHAIN_NAME = 'fueltestnet';
+export const FUEL_CHAIN_NAME_2 = 'fueltestnet2';
 
 export const EXAMPLES_PATH = './examples';
 export const CORE_CONFIG_PATH = `${EXAMPLES_PATH}/core-config.yaml`;
@@ -52,8 +55,12 @@ export const CHAIN_3_METADATA_PATH = `${REGISTRY_PATH}/chains/${CHAIN_NAME_3}/me
 export const FUEL_LOCAL_REGISTRY_PATH = `${E2E_TEST_CONFIGS_PATH}/fuel`;
 export const FUEL_EXAMPLE_CONFIG_PATH = `${EXAMPLES_PATH}/fuel/core-config.yaml`;
 export const FUEL_CONFIG_PATH = `${TEMP_PATH}/${FUEL_CHAIN_NAME}/warp-route-deployment-fueltestnet.yaml`;
+export const FUEL_CORE_CONFIG_PATH = `${FUEL_LOCAL_REGISTRY_PATH}/deployments/warp_routes/ETH/fueltestnet-config.yaml`;
+
 export const FUEL_WARP_CONFIG_PATH_EXAMPLE = `${EXAMPLES_PATH}/fuel/warp-route-deployment.yaml`;
-export const FUEL_CORE_CONFIG_PATH = `${FUEL_LOCAL_REGISTRY_PATH}/deployments/warp_routes/ETH/fueltestnet-config.yaml`
+export const WARP_DEPLOY_OUTPUT_PATH_FUEL = `${TEMP_PATH}/fueltestnet/warp-route-deployment-fueltestnet.yaml`;
+export const WARP_DEPLOY_OUTPUT_PATH_FUEL_2 = `${TEMP_PATH}/fueltestnet2/warp-route-deployment-fueltestnet2.yaml`;
+export const FUEL_CHAIN_METADATA_PATH = `${FUEL_LOCAL_REGISTRY_PATH}/chains/fueltestnet/metadata.yaml`;
 
 export const WARP_CONFIG_PATH_EXAMPLE = `${EXAMPLES_PATH}/warp-route-deployment.yaml`;
 export const WARP_CONFIG_PATH_2 = `${TEMP_PATH}/${CHAIN_NAME_2}/warp-route-deployment-anvil2.yaml`;
@@ -65,6 +72,16 @@ export function getCombinedWarpRoutePath(
   chains: string[],
 ): string {
   return `${REGISTRY_PATH}/deployments/warp_routes/${createWarpRouteConfigId(
+    tokenSymbol.toUpperCase(),
+    chains,
+  )}-config.yaml`;
+}
+
+export function getCombinedWarpRoutePathFuel(
+  tokenSymbol: string,
+  chains: string[],
+): string {
+  return `${FUEL_REGISTRY_PATH}/deployments/warp_routes/${createWarpRouteConfigId(
     tokenSymbol.toUpperCase(),
     chains,
   )}-config.yaml`;
@@ -83,7 +100,7 @@ export async function asyncStreamInputWrite(
   stream: NodeJS.WritableStream,
   data: string | Buffer,
 ): Promise<void> {
-  stream.write(data);
+  stream.write(data.toString());
   // Adding a slight delay to allow the buffer to update the output
   await sleep(500);
 }
@@ -211,6 +228,26 @@ export async function updateWarpOwnerConfig(
 }
 
 /**
+ * Updates the owner of the Warp route deployment config, and then output to a file
+ */
+export async function updateWarpOwnerConfigFuel(
+  chain: string,
+  owner: Address,
+  warpCorePath: string,
+  warpDeployPath: string,
+): Promise<string> {
+  const warpDeployConfig = await readWarpConfigFuel(
+    chain,
+    warpCorePath,
+    warpDeployPath,
+  );
+  warpDeployConfig[chain].owner = owner;
+  await writeYamlOrJson(warpDeployPath, warpDeployConfig);
+
+  return warpDeployPath;
+}
+
+/**
  * Updates the Warp route deployment configuration with a new owner, and then applies the changes.
  */
 export async function updateOwner(
@@ -223,6 +260,25 @@ export async function updateOwner(
   return hyperlaneWarpApply(warpConfigPath, warpCoreConfigPath);
 }
 
+/**
+ * Updates the Warp route deployment configuration with a new owner, and then applies the changes.
+ */
+export async function updateOwnerFuel(
+  owner: Address,
+  chain: string,
+  warpConfigPath: string,
+  warpCoreConfigPath: string,
+) {
+  await updateWarpOwnerConfigFuel(
+    chain,
+    owner,
+    warpCoreConfigPath,
+    warpConfigPath,
+  );
+  return hyperlaneWarpApplyFuel(warpConfigPath, warpCoreConfigPath);
+}
+
+/**
 /**
  * Extends the Warp route deployment with a new warp config
  */
@@ -255,6 +311,38 @@ export async function extendWarpConfig(params: {
 }
 
 /**
+/**
+ * Extends the Warp route deployment with a new warp config
+ */
+export async function extendWarpConfigFuel(params: {
+  chain: string;
+  chainToExtend: string;
+  extendedConfig: HypTokenRouterConfig;
+  warpCorePath: string;
+  warpDeployPath: string;
+  strategyUrl?: string;
+}): Promise<string> {
+  const {
+    chain,
+    chainToExtend,
+    extendedConfig,
+    warpCorePath,
+    warpDeployPath,
+    strategyUrl,
+  } = params;
+  const warpDeployConfig = await readWarpConfigFuel(
+    chain,
+    warpCorePath,
+    warpDeployPath,
+  );
+  warpDeployConfig[chainToExtend] = extendedConfig;
+  writeYamlOrJson(warpDeployPath, warpDeployConfig);
+  await hyperlaneWarpApplyFuel(warpDeployPath, warpCorePath, strategyUrl);
+
+  return warpDeployPath;
+}
+
+/**
  * Deploys new core contracts on the specified chain if it doesn't already exist, and returns the chain addresses.
  */
 export async function deployOrUseExistingCore(
@@ -276,7 +364,6 @@ export async function deployOrUseExistingCore(
   return addresses;
 }
 
-
 /**
  * Deploys new core contracts on the specified chain if it doesn't already exist, and returns the chain addresses.
  */
@@ -286,8 +373,7 @@ export async function deployOrUseExistingCoreFuel(
   key: string,
 ) {
   const { registry } = await getContext({
-    registryUri: FUEL_REGISTRY_PATH,
-    registryOverrideUri: '',
+    registryUris: [FUEL_REGISTRY_PATH, ''],
     key,
   });
   const addresses = (await registry.getChainAddresses(chain)) as ChainAddresses;

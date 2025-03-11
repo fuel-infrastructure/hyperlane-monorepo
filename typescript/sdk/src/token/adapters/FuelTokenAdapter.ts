@@ -1,13 +1,19 @@
-/* eslint-disable no-console */
 import { hexZeroPad } from 'ethers/lib/utils.js';
-import { BN, Provider, TransactionRequest, Wallet } from 'fuels';
+import {
+  BN,
+  Provider,
+  TransactionRequest,
+  Wallet,
+  WalletUnlocked,
+} from 'fuels';
 
-import { Address, Domain, Numberish } from '@hyperlane-xyz/utils';
+import { Address, Domain, Numberish, ProtocolType } from '@hyperlane-xyz/utils';
 
 import { BaseFuelAdapter } from '../../app/MultiProtocolApp.js';
 import { Mailbox } from '../../fuel-types/Mailbox.js';
+import { ProtocolFee } from '../../fuel-types/ProtocolFee.js';
+// import { Src20Test } from '../../fuel-types/Src20Test.js';
 import { TokenMetadataOutput, WarpRoute } from '../../fuel-types/WarpRoute.js';
-import { AggregationIsm } from '../../fuel-types/index.js';
 import { MultiProtocolProvider } from '../../providers/MultiProtocolProvider.js';
 import { ChainName } from '../../types.js';
 import { TokenMetadata } from '../types.js';
@@ -34,14 +40,9 @@ export class FuelNativeTokenAdapter
   }
 
   async getBalance(address: Address): Promise<bigint> {
-    console.log('getBalance from FuelNativeTokenAdapter');
     const provider = await this.getProvider();
-    const balance = await provider.getBalance(
-      address.toString(),
-      this.addresses.token,
-    );
-    console.log('balance from FuelNativeTokenAdapter', balance);
-    console.log('balance.toString() from FuelNativeTokenAdapter', BigInt(balance.toString() ));
+    const baseAssetId = await provider.getBaseAssetId();
+    const balance = await provider.getBalance(address.toString(), baseAssetId);
     return BigInt(balance.toString());
   }
 
@@ -88,6 +89,7 @@ export class BaseFuelHypTokenAdapter
 {
   protected contract!: WarpRoute;
   protected provider!: Provider;
+  protected signer!: WalletUnlocked;
 
   constructor(
     public readonly chainName: ChainName,
@@ -97,13 +99,40 @@ export class BaseFuelHypTokenAdapter
     super(chainName, multiProvider, addresses);
   }
 
+  async initializeWithSigner(signer: WalletUnlocked) {
+    this.signer = signer;
+  }
+
   async initialize() {
     this.provider = await this.getProvider();
-    this.contract = new WarpRoute(this.addresses.warpRouter, this.provider);
+    this.signer = (await this.multiProvider.tryGetSigner(
+      ProtocolType.Fuel,
+      this.chainName,
+    )) as unknown as WalletUnlocked;
+    this.contract = new WarpRoute(this.addresses.warpRouter, this.signer);
+  }
+
+  async sendAssetToContract(weiAmountOrId: Numberish): Promise<boolean> {
+    await this.initialize();
+
+    const fund_res = await (
+      await this.signer.transferToContract(
+        this.addresses.warpRouter,
+        new BN(weiAmountOrId.toString()),
+        this.addresses.token ?? '',
+      )
+    ).waitForResult();
+
+    return fund_res.isStatusSuccess;
   }
 
   async isApproveRequired(): Promise<boolean> {
     return false;
+  }
+
+  async getBaseAssetId(): Promise<string> {
+    await this.initialize();
+    return this.provider.getBaseAssetId();
   }
 
   async populateTransferRemoteTx({
@@ -143,12 +172,15 @@ export class BaseFuelHypTokenAdapter
     destination: Domain,
   ): Promise<InterchainGasQuote> {
     await this.initialize();
+    const base_asset = await this.provider.getBaseAssetId();
+
     const quoteGasPayment = await this.contract.functions
       .quote_gas_payment(destination)
+      .txParams({ gasLimit: 300000 })
       .get();
     return {
       amount: BigInt(quoteGasPayment.value.toString()),
-      addressOrDenom: this.addresses.token,
+      addressOrDenom: base_asset,
     };
   }
 
@@ -160,29 +192,23 @@ export class BaseFuelHypTokenAdapter
 
   async getBalance(address: Address): Promise<bigint> {
     await this.initialize();
-    console.log('getBalance from BaseFuelHypTokenAdapter');
-    try {
-      let token = this.addresses.token?.toString();
-      console.log('this.addresses.token', token);
+    let token = this.addresses.token?.toString();
 
-      if(token == undefined) {
-        //const metadata = (await this.contract.functions.get_token_info().simulate()).value.asset_id.bits.toString()
-        const test =  (await this.contract.functions.get_token_info().simulate());
-        console.log("test output: ", test);
-        const wait = test.callResult.receipts.length;
-        console.log(wait);
-        console.log(test.value.asset_id.bits.toString())
-        token = test.value.asset_id.bits.toString();
-      }
-        
-      const balance = await this.provider.getBalance(address.toString(), token);
-      console.log('balance is called from BaseFuelHypTokenAdapter', balance);
-      console.log('balance.toString() is called from BaseFuelHypTokenAdapter', BigInt(balance.toString()));
-      return BigInt(balance.toString());
-    } catch (error) {
-      console.error('Error getting balance:', (error as Error).message, "cause: ", (error as Error).cause );
-      throw error;
+    if (!token) {
+      token = await this.provider.getBaseAssetId();
     }
+
+    let balance = new BN(0);
+    if (address == this.addresses.warpRouter) {
+      balance = await this.provider.getContractBalance(
+        address.toString(),
+        token,
+      );
+    } else {
+      balance = await this.provider.getBalance(address.toString(), token);
+    }
+
+    return BigInt(balance.toString());
   }
 
   async getTotalSupply(): Promise<bigint | undefined> {
@@ -225,6 +251,78 @@ export class BaseFuelHypTokenAdapter
 
 // Interacts with Hyp Native Fuel token
 export class FuelHypNativeAdapter extends BaseFuelHypTokenAdapter {
+  async sendAssetToContract(_weiAmountOrId: Numberish): Promise<boolean> {
+    return true;
+  }
+
+  async populateTransferRemoteTx({
+    weiAmountOrId,
+    destination,
+    recipient,
+    interchainGas,
+  }: TransferRemoteParams): Promise<TransactionRequest> {
+    await this.initialize();
+    let gasPayment: bigint = 0n;
+    const baseAssetId = await this.provider.getBaseAssetId();
+
+    if (!interchainGas) {
+      gasPayment = (await this.quoteTransferRemoteGas(destination)).amount;
+    }
+
+    const totalPayment = gasPayment + BigInt(weiAmountOrId.toString());
+    let recipientB256 = recipient;
+    if (recipient.length === 42 && recipient.startsWith('0x')) {
+      recipientB256 = hexZeroPad(recipient, 32);
+    }
+
+    const mailbox = await this.contract.functions.get_mailbox().get();
+    const hook = await this.contract.functions.get_hook().get();
+    const tx = this.contract.functions
+      .transfer_remote(
+        destination,
+        recipientB256,
+        new BN(weiAmountOrId.toString()),
+      )
+      .callParams({
+        forward: {
+          amount: totalPayment.toString(),
+          assetId: baseAssetId,
+        },
+        gasLimit: 300000,
+      })
+      .addContracts([
+        new Mailbox(mailbox.value.bits, this.signer),
+        new ProtocolFee(hook.value.bits, this.signer),
+      ])
+      .getTransactionRequest();
+    return tx;
+  }
+}
+
+// Interacts with Hyp Collateral Fuel token
+export class FuelHypCollateralAdapter extends BaseFuelHypTokenAdapter {
+  async getTokenId(): Promise<string> {
+    if (this.addresses.token) {
+      return this.addresses.token?.toString();
+    } else {
+      return (
+        await this.contract.functions.get_token_info().get()
+      ).value.asset_id.bits.toString();
+    }
+  }
+
+  async getBalance(address: Address): Promise<bigint> {
+    await this.initialize();
+
+    const token = await this.getTokenId();
+
+    const balance =
+      address == this.addresses.warpRouter
+        ? await this.provider.getContractBalance(address.toString(), token) // For asset recieve
+        : await this.provider.getBalance(address.toString(), token); //For asset sending
+    return BigInt(balance.toString());
+  }
+
   async populateTransferRemoteTx({
     weiAmountOrId,
     destination,
@@ -237,7 +335,6 @@ export class FuelHypNativeAdapter extends BaseFuelHypTokenAdapter {
       gasPayment = (await this.quoteTransferRemoteGas(destination)).amount;
     }
 
-    const totalPayment = gasPayment + BigInt(weiAmountOrId.toString());
     const baseAssetId = await this.provider.getBaseAssetId();
 
     let recipientB256 = recipient;
@@ -245,35 +342,33 @@ export class FuelHypNativeAdapter extends BaseFuelHypTokenAdapter {
       recipientB256 = hexZeroPad(recipient, 32);
     }
 
-    const tx = this.contract.functions
+    await this.sendAssetToContract(weiAmountOrId);
+
+    const mailbox = await this.contract.functions.get_mailbox().get();
+    const hook = await this.contract.functions.get_hook().get();
+
+    const tx = await this.contract.functions
       .transfer_remote(
         destination,
         recipientB256,
         new BN(weiAmountOrId.toString()),
       )
+      .txParams({ variableOutputs: 5 })
       .callParams({
         forward: {
-          amount: totalPayment.toString(),
+          amount: gasPayment.toString(),
           assetId: baseAssetId,
         },
+        gasLimit: 300000,
       })
       .addContracts([
-        new Mailbox(
-          '0x8c625a7c909d1a888eef48eb61bf4707ba927f00d23eca698dfa8ec286392156',
-          this.provider,
-        ),
-        new AggregationIsm(
-          '0xf0a7d1817c16ed31f0477239e9cf7c198ac452f15acd2f32122fe4d55ce61d66',
-          this.provider,
-        ),
+        new Mailbox(mailbox.value.bits, this.signer),
+        new ProtocolFee(hook.value.bits, this.signer),
       ])
       .getTransactionRequest();
     return tx;
   }
-}
 
-// Interacts with Hyp Collateral Fuel token
-export class FuelHypCollateralAdapter extends BaseFuelHypTokenAdapter {
   async getTotalSupply(): Promise<bigint | undefined> {
     const metadata = await this.getMetadata();
     return BigInt(metadata.totalSupply.toString());
@@ -286,12 +381,79 @@ export class FuelHypCollateralAdapter extends BaseFuelHypTokenAdapter {
 
 // Interacts with Hyp Synthetic Fuel token
 export class FuelHypSyntheticAdapter extends BaseFuelHypTokenAdapter {
+  async getTokenId(): Promise<string> {
+    if (this.addresses.token) {
+      return this.addresses.token?.toString();
+    } else {
+      return (
+        await this.contract.functions.get_token_info().get()
+      ).value.asset_id.bits.toString();
+    }
+  }
+
+  async getBalance(address: Address): Promise<bigint> {
+    await this.initialize();
+    const token = await this.getTokenId();
+
+    const balance =
+      address == this.addresses.warpRouter
+        ? await this.provider.getContractBalance(address.toString(), token) // For asset recieve
+        : await this.provider.getBalance(address.toString(), token); //For asset sending
+    return BigInt(balance.toString());
+  }
+
+  async populateTransferRemoteTx({
+    weiAmountOrId,
+    destination,
+    recipient,
+    interchainGas,
+  }: TransferRemoteParams): Promise<TransactionRequest> {
+    await this.initialize();
+    let gasPayment: bigint = 0n;
+    if (!interchainGas) {
+      const gasRes = await this.quoteTransferRemoteGas(destination);
+      gasPayment = gasRes.amount;
+    }
+
+    let recipientB256 = recipient;
+    if (recipient.length === 42 && recipient.startsWith('0x')) {
+      recipientB256 = hexZeroPad(recipient, 32);
+    }
+
+    const baseAssetId = await this.provider.getBaseAssetId();
+    const mailbox = await this.contract.functions.get_mailbox().get();
+    const hook = await this.contract.functions.get_hook().get();
+
+    await this.sendAssetToContract(weiAmountOrId);
+
+    const tx = await this.contract.functions
+      .transfer_remote(
+        destination,
+        recipientB256,
+        new BN(weiAmountOrId.toString()),
+      )
+      .callParams({
+        forward: {
+          amount: gasPayment.toString(),
+          assetId: baseAssetId,
+        },
+        gasLimit: 3000000,
+      })
+      .addContracts([
+        new Mailbox(mailbox.value.bits, this.signer),
+        new ProtocolFee(hook.value.bits, this.signer),
+      ])
+      .getTransactionRequest();
+    return tx;
+  }
+
   async getBridgedSupply(): Promise<bigint | undefined> {
     const metadata = await this.getMetadata();
     return BigInt(metadata.totalSupply.toString());
   }
 }
 
+// Helpers
 const convertTokenInfoToMetadata = (
   info: TokenMetadataOutput,
 ): TokenMetadata => {
