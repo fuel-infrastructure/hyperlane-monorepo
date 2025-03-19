@@ -421,11 +421,22 @@ async function executeFuelDelivery({
   });
 
   const txReceipts = [];
+  // for (const transferTx of transferTxs) {
+  //   if (transferTx.type !== ProviderType.Fuels) {
+  //     continue;
+  //   }
+  //   const request = new ScriptTransactionRequest(transferTx.transaction);
+  //   await request.estimateAndFund(signer);
+
+  //   const tx = await signer.sendTransaction(request);
+  //   const result = await tx.waitForResult();
+  //   txReceipts.push(result);
+  // }
+
   for (const transferTx of transferTxs) {
     if (transferTx.type !== ProviderType.Fuels) {
       continue;
     }
-
     const request = new ScriptTransactionRequest(transferTx.transaction);
     await request.estimateAndFund(signer);
 

@@ -1,6 +1,7 @@
 import { hexZeroPad } from 'ethers/lib/utils.js';
 import {
   BN,
+  Address as FuelAddress,
   Provider,
   TransactionRequest,
   Wallet,
@@ -99,10 +100,6 @@ export class BaseFuelHypTokenAdapter
     super(chainName, multiProvider, addresses);
   }
 
-  async initializeWithSigner(signer: WalletUnlocked) {
-    this.signer = signer;
-  }
-
   async initialize() {
     this.provider = await this.getProvider();
     this.signer = (await this.multiProvider.tryGetSigner(
@@ -147,8 +144,8 @@ export class BaseFuelHypTokenAdapter
       gasPayment = (await this.quoteTransferRemoteGas(destination)).amount;
     }
 
-    const baseAssetId = await this.provider.getBaseAssetId();
-    const tx = this.contract.functions
+    const baseAssetId = await this.getBaseAssetId();
+    const tx = await this.contract.functions
       .transfer_remote(destination, recipient, new BN(weiAmountOrId.toString()))
       .callParams({
         forward: {
@@ -158,6 +155,19 @@ export class BaseFuelHypTokenAdapter
       })
       .getTransactionRequest();
 
+    const txCost = await this.provider.getTransactionCost(tx);
+    const { gasUsed, missingContractIds, outputVariables, maxFee } = txCost;
+
+    missingContractIds.forEach((contractId: string) => {
+      tx.addContractInputAndOutput(new FuelAddress(contractId));
+    });
+
+    tx.addVariableOutputs(outputVariables);
+
+    tx.gasLimit = gasUsed;
+    tx.maxFee = maxFee;
+
+    // await this.signer.fund(tx, txCost);
     return tx;
   }
 
@@ -172,7 +182,7 @@ export class BaseFuelHypTokenAdapter
     destination: Domain,
   ): Promise<InterchainGasQuote> {
     await this.initialize();
-    const base_asset = await this.provider.getBaseAssetId();
+    const base_asset = await this.getBaseAssetId();
 
     const quoteGasPayment = await this.contract.functions
       .quote_gas_payment(destination)
@@ -195,7 +205,7 @@ export class BaseFuelHypTokenAdapter
     let token = this.addresses.token?.toString();
 
     if (!token) {
-      token = await this.provider.getBaseAssetId();
+      token = await this.getBaseAssetId();
     }
 
     let balance = new BN(0);
@@ -263,7 +273,7 @@ export class FuelHypNativeAdapter extends BaseFuelHypTokenAdapter {
   }: TransferRemoteParams): Promise<TransactionRequest> {
     await this.initialize();
     let gasPayment: bigint = 0n;
-    const baseAssetId = await this.provider.getBaseAssetId();
+    const baseAssetId = await this.getBaseAssetId();
 
     if (!interchainGas) {
       gasPayment = (await this.quoteTransferRemoteGas(destination)).amount;
@@ -277,7 +287,7 @@ export class FuelHypNativeAdapter extends BaseFuelHypTokenAdapter {
 
     const mailbox = await this.contract.functions.get_mailbox().get();
     const hook = await this.contract.functions.get_hook().get();
-    const tx = this.contract.functions
+    const tx = await this.contract.functions
       .transfer_remote(
         destination,
         recipientB256,
@@ -288,13 +298,26 @@ export class FuelHypNativeAdapter extends BaseFuelHypTokenAdapter {
           amount: totalPayment.toString(),
           assetId: baseAssetId,
         },
-        gasLimit: 300000,
       })
       .addContracts([
         new Mailbox(mailbox.value.bits, this.signer),
         new ProtocolFee(hook.value.bits, this.signer),
       ])
       .getTransactionRequest();
+
+    const txCost = await this.provider.getTransactionCost(tx);
+    const { gasUsed, missingContractIds, outputVariables, maxFee } = txCost;
+
+    missingContractIds.forEach((contractId: string) => {
+      tx.addContractInputAndOutput(new FuelAddress(contractId));
+    });
+
+    tx.addVariableOutputs(outputVariables);
+
+    tx.gasLimit = gasUsed;
+    tx.maxFee = maxFee;
+
+    // await this.signer.fund(tx, txCost);
     return tx;
   }
 }
@@ -335,7 +358,7 @@ export class FuelHypCollateralAdapter extends BaseFuelHypTokenAdapter {
       gasPayment = (await this.quoteTransferRemoteGas(destination)).amount;
     }
 
-    const baseAssetId = await this.provider.getBaseAssetId();
+    const baseAssetId = await this.getBaseAssetId();
 
     let recipientB256 = recipient;
     if (recipient.length === 42 && recipient.startsWith('0x')) {
@@ -359,13 +382,26 @@ export class FuelHypCollateralAdapter extends BaseFuelHypTokenAdapter {
           amount: gasPayment.toString(),
           assetId: baseAssetId,
         },
-        gasLimit: 300000,
       })
       .addContracts([
         new Mailbox(mailbox.value.bits, this.signer),
         new ProtocolFee(hook.value.bits, this.signer),
       ])
       .getTransactionRequest();
+
+    const txCost = await this.provider.getTransactionCost(tx);
+    const { gasUsed, missingContractIds, outputVariables, maxFee } = txCost;
+
+    missingContractIds.forEach((contractId: string) => {
+      tx.addContractInputAndOutput(new FuelAddress(contractId));
+    });
+
+    tx.addVariableOutputs(outputVariables);
+
+    tx.gasLimit = gasUsed;
+    tx.maxFee = maxFee;
+
+    // await this.signer.fund(tx, txCost);
     return tx;
   }
 
@@ -420,7 +456,7 @@ export class FuelHypSyntheticAdapter extends BaseFuelHypTokenAdapter {
       recipientB256 = hexZeroPad(recipient, 32);
     }
 
-    const baseAssetId = await this.provider.getBaseAssetId();
+    const baseAssetId = await this.getBaseAssetId();
     const mailbox = await this.contract.functions.get_mailbox().get();
     const hook = await this.contract.functions.get_hook().get();
 
@@ -437,13 +473,26 @@ export class FuelHypSyntheticAdapter extends BaseFuelHypTokenAdapter {
           amount: gasPayment.toString(),
           assetId: baseAssetId,
         },
-        gasLimit: 3000000,
       })
       .addContracts([
         new Mailbox(mailbox.value.bits, this.signer),
         new ProtocolFee(hook.value.bits, this.signer),
       ])
       .getTransactionRequest();
+
+    const txCost = await this.provider.getTransactionCost(tx);
+    const { gasUsed, missingContractIds, outputVariables, maxFee } = txCost;
+
+    missingContractIds.forEach((contractId: string) => {
+      tx.addContractInputAndOutput(new FuelAddress(contractId));
+    });
+
+    tx.addVariableOutputs(outputVariables);
+
+    tx.gasLimit = gasUsed;
+    tx.maxFee = maxFee;
+
+    // await this.signer.fund(tx, txCost);
     return tx;
   }
 

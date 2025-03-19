@@ -856,14 +856,20 @@ export class WarpCore {
     );
   }
 
-  // Add this method to WarpCore class in typescript/sdk/src/warp/WarpCore.ts
+  /**
+   * Takes the serialized representation of a warp config and returns a WarpCore instance, ensuring instance has a Fuel Signer
+   * @param multiProvider
+   * @param config
+   * @param fuelSigner
+   * @param fuelChain
+   * @returns
+   */
   static async FromConfigWithFuel(
     multiProvider: MultiProtocolProvider<{ mailbox?: Address }>,
     config: unknown,
     fuelSigner: WalletUnlocked,
     fuelChain: ChainName,
   ): Promise<WarpCore> {
-    // First create the WarpCore using the existing FromConfig method
     const warpCore = WarpCore.FromConfig(multiProvider, config);
 
     await multiProvider.setFuelSigner(fuelChain, fuelSigner);
