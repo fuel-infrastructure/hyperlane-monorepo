@@ -72,8 +72,9 @@ export class FuelCoreAdapter extends BaseFuelAdapter implements ICoreAdapter {
 
   async latestDispatchedId(): Promise<string> {
     await this.initialize();
-    const mailbox = this.getMailbox();
-    const result = await mailbox.functions.latest_dispatched_id().get();
+    const result = await this.mailbox.functions
+      .latest_dispatched_id()
+      .simulate();
     return result.value;
   }
 

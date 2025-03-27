@@ -648,3 +648,4 @@ export { FuelHookModule } from './hook/FuelHookModule.js';
 export { FuelIsmModule } from './ism/FuelIsmModule.js';
 export { FuelSRC20WarpModule } from './token/FuelSRC20WarpModule.js';
 export { WarpRoute as FuelWarpRouteType } from './fuel-types/WarpRoute.js';
+export { FuelCoreAdapter } from './core/adapters/FuelCoreAdapter.js';

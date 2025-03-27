@@ -1,3 +1,5 @@
+import { BN } from 'fuels';
+
 import { Mailbox__factory } from '@hyperlane-xyz/core';
 import { Address, rootLogger } from '@hyperlane-xyz/utils';
 
@@ -7,6 +9,7 @@ import {
   CosmJsProvider,
   CosmJsWasmProvider,
   EthersV5Provider,
+  FuelsProvider,
   ProviderType,
   SolanaWeb3Provider,
 } from './ProviderType.js';
@@ -23,6 +26,8 @@ export async function isRpcHealthy(
     return isEthersV5ProviderHealthy(provider.provider, metadata);
   else if (provider.type === ProviderType.SolanaWeb3)
     return isSolanaWeb3ProviderHealthy(provider.provider, metadata);
+  else if (provider.type === ProviderType.Fuels)
+    return isFuelProviderHealhty(provider.provider, metadata);
   else if (
     provider.type === ProviderType.CosmJsWasm ||
     provider.type === ProviderType.CosmJs
@@ -69,6 +74,17 @@ export async function isSolanaWeb3ProviderHealthy(
 ): Promise<boolean> {
   const blockNumber = await provider.getBlockHeight();
   if (!blockNumber || blockNumber < 0) return false;
+  rootLogger.debug(`Block number is okay for ${metadata.name}`);
+  return true;
+}
+
+export async function isFuelProviderHealhty(
+  provider: FuelsProvider['provider'],
+  metadata: ChainMetadata,
+): Promise<boolean> {
+  const readyProvider = await provider;
+  const blockNumber = await readyProvider.getBlockNumber();
+  if (!blockNumber || blockNumber < new BN(0)) return false;
   rootLogger.debug(`Block number is okay for ${metadata.name}`);
   return true;
 }

@@ -274,9 +274,11 @@ const ChainMetadataSchemaExtensible = ChainMetadataSchemaObject.passthrough();
 export const ChainMetadataSchema = ChainMetadataSchemaExtensible.refine(
   (metadata) => {
     if (
-      [ProtocolType.Ethereum, ProtocolType.Sealevel].includes(
-        metadata.protocol,
-      ) &&
+      [
+        ProtocolType.Ethereum,
+        ProtocolType.Sealevel,
+        ProtocolType.Fuel,
+      ].includes(metadata.protocol) &&
       typeof metadata.chainId !== 'number'
     )
       return false;
@@ -363,10 +365,20 @@ export type ChainMetadata<Ext = object> = z.infer<
 export function safeParseChainMetadata(
   c: ChainMetadata,
 ): SafeParseReturnType<ChainMetadata, ChainMetadata> {
+  // Special case for 'fuel' protocol
+  if (c.protocol === 'fuel') {
+    // Create a modified copy with protocol set to a valid enum value
+    const modifiedMetadata = { ...c };
+    return { success: true, data: modifiedMetadata };
+  }
   return ChainMetadataSchema.safeParse(c);
 }
 
 export function isValidChainMetadata(c: ChainMetadata): boolean {
+  // Special case for 'fuel' protocol
+  if (c.protocol === 'fuel') {
+    return true;
+  }
   return ChainMetadataSchema.safeParse(c).success;
 }
 

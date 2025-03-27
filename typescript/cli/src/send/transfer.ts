@@ -1,6 +1,7 @@
 import { TransactionReceipt } from '@ethersproject/providers';
 import { BigNumber } from 'ethers';
 import {
+  Address,
   ScriptTransactionRequest,
   TransactionResult,
   WalletUnlocked,
@@ -18,7 +19,7 @@ import {
   Token,
   TokenAmount,
   WarpCore,
-  WarpCoreConfig,
+  WarpCoreConfig, // FuelCoreAdapter,
 } from '@hyperlane-xyz/sdk';
 import {
   ProtocolType,
@@ -302,6 +303,8 @@ async function getSignerAndSignerAddress(
 
 function fuelTxToEvmReceipt(
   fuelTx: TransactionResult<any>,
+  from: string,
+  to: string,
 ): TransactionReceipt {
   const gasUsed = fuelTx.gasUsed
     ? BigNumber.from(fuelTx.gasUsed.toString().replace(/^0x/, ''))
@@ -312,8 +315,8 @@ function fuelTxToEvmReceipt(
     : BigNumber.from(0);
 
   return {
-    to: fuelTx.id,
-    from: fuelTx.id,
+    to,
+    from,
     contractAddress: fuelTx.id,
     transactionIndex: 0,
     gasUsed: gasUsed,
@@ -402,6 +405,7 @@ async function executeFuelDelivery({
     token = warpCore.findToken(origin, routerAddress)!;
   }
 
+  const sender_wr = token.addressOrDenom;
   const errors = await warpCore.validateTransfer({
     originTokenAmount: token.amount(amount),
     destination,
@@ -421,25 +425,24 @@ async function executeFuelDelivery({
   });
 
   const txReceipts = [];
-  // for (const transferTx of transferTxs) {
-  //   if (transferTx.type !== ProviderType.Fuels) {
-  //     continue;
-  //   }
-  //   const request = new ScriptTransactionRequest(transferTx.transaction);
-  //   await request.estimateAndFund(signer);
-
-  //   const tx = await signer.sendTransaction(request);
-  //   const result = await tx.waitForResult();
-  //   txReceipts.push(result);
-  // }
-
   for (const transferTx of transferTxs) {
     if (transferTx.type !== ProviderType.Fuels) {
       continue;
     }
     const request = new ScriptTransactionRequest(transferTx.transaction);
-    await request.estimateAndFund(signer);
+    const txCost = await signer.getTransactionCost(request);
+    const { gasUsed, missingContractIds, outputVariables, maxFee } = txCost;
 
+    missingContractIds.forEach((contractId: string) => {
+      request.addContractInputAndOutput(new Address(contractId));
+    });
+
+    request.addVariableOutputs(outputVariables);
+
+    request.gasLimit = gasUsed;
+    request.maxFee = maxFee;
+
+    await signer.fund(request, txCost);
     const tx = await signer.sendTransaction(request);
     const result = await tx.waitForResult();
     txReceipts.push(result);
@@ -454,11 +457,11 @@ async function executeFuelDelivery({
     HyperlaneCore.getDispatchedMessagesFromFuel(
       transferTxReceipt,
       originChainId,
-      origin,
-      destination,
+      sender_wr ?? signer.address.toString(),
+      recipient,
+      amount,
     );
 
-  logBlue('message is printing', JSON.stringify({ message }, null, 2));
   const parsed = parseWarpRouteMessage(message.parsed.body);
 
   logBlue(
@@ -468,11 +471,15 @@ async function executeFuelDelivery({
   log(`Message:\n${indentYamlOrJson(yamlStringify(message, null, 2), 4)}`);
   log(`Body:\n${indentYamlOrJson(yamlStringify(parsed, null, 2), 4)}`);
 
-  const evmCompatibleReciept = fuelTxToEvmReceipt(transferTxReceipt);
+  const evmCompatibleReciept = fuelTxToEvmReceipt(
+    transferTxReceipt,
+    signer.address.toString(),
+    token.addressOrDenom,
+  );
+  const mailbox = chainAddresses[origin].mailbox;
 
   if (selfRelay) {
     const relayer = new HyperlaneRelayer({ core });
-    const mailbox = chainAddresses[origin].mailbox;
     const hookAddress = await core.getSenderHookAddressFuel(
       message,
       mailbox,
@@ -497,6 +504,11 @@ async function executeFuelDelivery({
   if (skipWaitForDelivery) return;
 
   // Max wait 10 minutes
-  await core.waitForMessageProcessed(evmCompatibleReciept, 10000, 60);
+  await core.waitForMessageDispatchedFromFuelProcessed(
+    [message],
+    evmCompatibleReciept,
+    10000,
+    60,
+  );
   logGreen(`Transfer sent to ${destination} chain!`);
 }

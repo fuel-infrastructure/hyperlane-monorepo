@@ -141,6 +141,7 @@ export class WarpCore {
     const defaultQuote = this.interchainFeeConstants.find(
       (q) => q.origin === originName && q.destination === destinationName,
     );
+
     if (defaultQuote) {
       gasAmount = BigInt(defaultQuote.amount.toString());
       gasAddressOrDenom = defaultQuote.addressOrDenom;
@@ -155,6 +156,7 @@ export class WarpCore {
         destinationDomainId,
         sender,
       );
+
       gasAmount = BigInt(quote.amount);
       gasAddressOrDenom = quote.addressOrDenom;
     }
@@ -871,17 +873,7 @@ export class WarpCore {
     fuelChain: ChainName,
   ): Promise<WarpCore> {
     const warpCore = WarpCore.FromConfig(multiProvider, config);
-
     await multiProvider.setFuelSigner(fuelChain, fuelSigner);
-
-    const signer_test = multiProvider.tryGetSigner(
-      ProtocolType.Fuel,
-      fuelChain,
-    ) as unknown as WalletUnlocked;
-    warpCore.logger.warn(`signer test `, signer_test.address);
-
-    warpCore.logger.warn(`Set Fuel signer for chain ${fuelChain} in WarpCore`);
-
     return warpCore;
   }
 }

@@ -218,6 +218,7 @@ export class HyperlaneRelayer {
       ism = await this.core.getRecipientIsmAddressFuel(message);
     } else {
       ism = await this.core.getRecipientIsmAddress(message);
+      this.logger.warn('ism addresses, ', ism);
     }
     return this.getIsmConfig(destinationChain, ism, message);
   }

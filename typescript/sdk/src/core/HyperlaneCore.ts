@@ -473,6 +473,42 @@ export class HyperlaneCore extends HyperlaneApp<CoreFactories> {
     );
   }
 
+  async waitForMessageDispatchedFromFuelProcessed(
+    messages: [DispatchedMessage],
+    sourceTx: ethers.ContractReceipt | ViemTxReceipt,
+    delay?: number,
+    maxAttempts?: number,
+  ): Promise<void> {
+    const originChainName = this.getOrigin(messages[0]);
+    const originChainId = this.multiProvider.getChainId(originChainName);
+    const destinationChainName = this.getDestination(messages[0]);
+    const sender = messages[0].parsed.sender;
+
+    const msg_id = await this.getProcessedMessages(
+      originChainId.toString(),
+      destinationChainName,
+      sender,
+    );
+    this.logger.warn(
+      'msg_id on remote mailbox',
+      JSON.stringify(msg_id, null, 4),
+    );
+
+    await Promise.all(
+      messages.map((msg) =>
+        this.waitForMessageIdProcessed(
+          msg_id,
+          this.getDestination(msg),
+          delay,
+          maxAttempts,
+        ),
+      ),
+    );
+    this.logger.info(
+      `All messages processed for tx ${sourceTx.transactionHash}`,
+    );
+  }
+
   async waitForMessageProcessedOnFuel(
     sourceTx: ethers.ContractReceipt | ViemTxReceipt,
     mailboxAddress: string,
@@ -481,7 +517,6 @@ export class HyperlaneCore extends HyperlaneApp<CoreFactories> {
     maxAttempts?: number,
   ): Promise<void> {
     const messages = HyperlaneCore.getDispatchedMessages(sourceTx);
-    this.logger.debug('messages on process check', messages);
     await Promise.all(
       messages.map((msg) =>
         this.waitForMessageIdProcessedFuel(
@@ -558,6 +593,30 @@ export class HyperlaneCore extends HyperlaneApp<CoreFactories> {
     });
   }
 
+  async getProcessedMessages(
+    origin: string,
+    destination: ChainName,
+    sender: Address,
+  ): Promise<string> {
+    const mailbox = this.contractsMap[destination].mailbox;
+    const filter = mailbox.filters.Process(origin, sender);
+    const filter2 = mailbox.filters.ProcessId();
+
+    const { fromBlock, toBlock } = await this.multiProvider.getLatestBlockRange(
+      destination,
+    );
+    const messageRecieved = await mailbox.queryFilter(
+      filter,
+      fromBlock,
+      toBlock,
+    );
+    const checkFrom = messageRecieved[0].blockHash;
+
+    const messageProcessed = await mailbox.queryFilter(filter2, checkFrom);
+    const messageId = messageProcessed[0].topics[1];
+    return messageId;
+  }
+
   /**
    * Extract dispatched messages from Fuel transaction results
    * @param fuelTxResult The Fuel transaction result
@@ -566,17 +625,17 @@ export class HyperlaneCore extends HyperlaneApp<CoreFactories> {
   static getDispatchedMessagesFromFuel(
     fuelTx: TransactionResult<any>,
     origin: number,
-    originChain: string,
-    destinationChain: string,
+    sender: string,
+    recipientRoute: string,
+    amount: string,
   ): DispatchedMessage {
-    const messageIdLog: any = fuelTx.logs?.find((log: any) => log.message_id);
-    const messageId = messageIdLog?.message_id;
+    const messageId = fuelTx.id;
 
     if (!messageId) {
       throw new Error('No message ID found in Fuel transaction logs');
     }
 
-    // Find the destination and recipient from the last log
+    // last log from fuel WR contains destination domain, recipient_user and amount
     const destinationLog: any = fuelTx.logs?.[fuelTx.logs?.length - 1];
 
     if (!destinationLog) {
@@ -587,61 +646,22 @@ export class HyperlaneCore extends HyperlaneApp<CoreFactories> {
 
     const destination = destinationLog.destination;
     const recipient = destinationLog.recipient;
-    const amount = destinationLog.amount;
 
-    // Find the sender from the first log
-    const senderLog: any = fuelTx.logs?.find(
-      (log: any) => log.sender && log.destination_domain,
-    );
-    const sender = senderLog?.sender;
-
-    // Convert amount to a number we can work with
-    let amountValue = 0;
-    if (amount) {
-      if (typeof amount === 'string') {
-        // Handle string amounts (with or without 0x prefix)
-        amountValue = parseInt(
-          amount.startsWith('0x') ? amount : `0x${amount}`,
-          16,
-        );
-      } else if (typeof amount === 'number') {
-        // Handle number amounts directly
-        amountValue = amount;
-      } else if (amount.toString) {
-        // Handle BN or similar objects by converting to string first
-        const amountStr = amount.toString();
-        // Check if it's a hex string or decimal string
-        if (amountStr.startsWith('0x')) {
-          amountValue = parseInt(amountStr, 16);
-        } else {
-          amountValue = parseInt(amountStr, 10);
-        }
-      }
-    }
-
-    // Format recipient and amount for the body
     const recipientBytes = ethers.utils.hexZeroPad(recipient, 32);
-    const amountBytes = ethers.utils.hexZeroPad(
-      `0x${amountValue.toString(16)}`,
-      32,
-    );
+    const amountBytes = ethers.utils.hexZeroPad(`0x${amount.toString()}`, 32);
 
-    // Combine them for the body
     const body = ethers.utils.hexConcat([recipientBytes, amountBytes]);
 
     const parsed: ParsedMessage = {
       version: 3,
-      nonce: 0,
+      nonce: 0, //TODO: Check here
       origin,
-      originChain,
       sender,
       destination,
-      destinationChain,
-      recipient,
+      recipient: recipientRoute,
       body,
     };
 
-    // Create the message using the same approach
     const versionHex = ethers.utils.hexZeroPad(
       `0x${parsed.version.toString(16)}`,
       1,

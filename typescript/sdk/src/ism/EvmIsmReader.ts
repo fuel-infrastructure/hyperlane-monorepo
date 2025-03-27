@@ -96,6 +96,7 @@ export class EvmIsmReader extends HyperlaneReader implements IsmReader {
       // Provider errors are expected because deriving will call methods that may not exist in the Bytecode
       this.setSmartProviderLogLevel('silent');
       moduleType = await ism.moduleType();
+      this.logger.warn('ism type:', { moduleType });
 
       switch (moduleType) {
         case ModuleType.UNUSED:

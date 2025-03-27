@@ -29,11 +29,11 @@ export function stubMultiProtocolProvider(
   } as any);
   sandbox.stub(multiProvider, 'getFuelProvider').returns({
     getBalance: async () => {
-      // eslint-disable-next-line no-console
-      console.log('getBalance called');
       return '100';
     },
-    getChain: async () => 'fuel',
+    getBaseAssetId: async () => {
+      return 'ETH';
+    },
   } as any);
   return sandbox;
 }

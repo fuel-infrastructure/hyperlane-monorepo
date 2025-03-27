@@ -1,7 +1,6 @@
 import { hexZeroPad } from 'ethers/lib/utils.js';
 import {
   BN,
-  Address as FuelAddress,
   Provider,
   TransactionRequest,
   Wallet,
@@ -12,8 +11,6 @@ import { Address, Domain, Numberish, ProtocolType } from '@hyperlane-xyz/utils';
 
 import { BaseFuelAdapter } from '../../app/MultiProtocolApp.js';
 import { Mailbox } from '../../fuel-types/Mailbox.js';
-import { ProtocolFee } from '../../fuel-types/ProtocolFee.js';
-// import { Src20Test } from '../../fuel-types/Src20Test.js';
 import { TokenMetadataOutput, WarpRoute } from '../../fuel-types/WarpRoute.js';
 import { MultiProtocolProvider } from '../../providers/MultiProtocolProvider.js';
 import { ChainName } from '../../types.js';
@@ -154,20 +151,6 @@ export class BaseFuelHypTokenAdapter
         },
       })
       .getTransactionRequest();
-
-    const txCost = await this.provider.getTransactionCost(tx);
-    const { gasUsed, missingContractIds, outputVariables, maxFee } = txCost;
-
-    missingContractIds.forEach((contractId: string) => {
-      tx.addContractInputAndOutput(new FuelAddress(contractId));
-    });
-
-    tx.addVariableOutputs(outputVariables);
-
-    tx.gasLimit = gasUsed;
-    tx.maxFee = maxFee;
-
-    // await this.signer.fund(tx, txCost);
     return tx;
   }
 
@@ -183,10 +166,12 @@ export class BaseFuelHypTokenAdapter
   ): Promise<InterchainGasQuote> {
     await this.initialize();
     const base_asset = await this.getBaseAssetId();
+    const mailbox = await this.contract.functions.get_mailbox().get();
+    let quoteGasPayment = { value: 1 };
 
-    const quoteGasPayment = await this.contract.functions
+    quoteGasPayment = await this.contract.functions
       .quote_gas_payment(destination)
-      .txParams({ gasLimit: 300000 })
+      .addContracts([new Mailbox(mailbox.value.bits, this.signer)])
       .get();
     return {
       amount: BigInt(quoteGasPayment.value.toString()),
@@ -286,7 +271,6 @@ export class FuelHypNativeAdapter extends BaseFuelHypTokenAdapter {
     }
 
     const mailbox = await this.contract.functions.get_mailbox().get();
-    const hook = await this.contract.functions.get_hook().get();
     const tx = await this.contract.functions
       .transfer_remote(
         destination,
@@ -299,25 +283,8 @@ export class FuelHypNativeAdapter extends BaseFuelHypTokenAdapter {
           assetId: baseAssetId,
         },
       })
-      .addContracts([
-        new Mailbox(mailbox.value.bits, this.signer),
-        new ProtocolFee(hook.value.bits, this.signer),
-      ])
+      .addContracts([new Mailbox(mailbox.value.bits, this.signer)])
       .getTransactionRequest();
-
-    const txCost = await this.provider.getTransactionCost(tx);
-    const { gasUsed, missingContractIds, outputVariables, maxFee } = txCost;
-
-    missingContractIds.forEach((contractId: string) => {
-      tx.addContractInputAndOutput(new FuelAddress(contractId));
-    });
-
-    tx.addVariableOutputs(outputVariables);
-
-    tx.gasLimit = gasUsed;
-    tx.maxFee = maxFee;
-
-    // await this.signer.fund(tx, txCost);
     return tx;
   }
 }
@@ -358,17 +325,14 @@ export class FuelHypCollateralAdapter extends BaseFuelHypTokenAdapter {
       gasPayment = (await this.quoteTransferRemoteGas(destination)).amount;
     }
 
-    const baseAssetId = await this.getBaseAssetId();
-
     let recipientB256 = recipient;
     if (recipient.length === 42 && recipient.startsWith('0x')) {
       recipientB256 = hexZeroPad(recipient, 32);
     }
 
-    await this.sendAssetToContract(weiAmountOrId);
-
+    const baseAssetId = await this.getBaseAssetId();
     const mailbox = await this.contract.functions.get_mailbox().get();
-    const hook = await this.contract.functions.get_hook().get();
+    await this.sendAssetToContract(weiAmountOrId);
 
     const tx = await this.contract.functions
       .transfer_remote(
@@ -376,32 +340,15 @@ export class FuelHypCollateralAdapter extends BaseFuelHypTokenAdapter {
         recipientB256,
         new BN(weiAmountOrId.toString()),
       )
-      .txParams({ variableOutputs: 5 })
       .callParams({
         forward: {
           amount: gasPayment.toString(),
           assetId: baseAssetId,
         },
       })
-      .addContracts([
-        new Mailbox(mailbox.value.bits, this.signer),
-        new ProtocolFee(hook.value.bits, this.signer),
-      ])
+      .addContracts([new Mailbox(mailbox.value.bits, this.signer)])
       .getTransactionRequest();
 
-    const txCost = await this.provider.getTransactionCost(tx);
-    const { gasUsed, missingContractIds, outputVariables, maxFee } = txCost;
-
-    missingContractIds.forEach((contractId: string) => {
-      tx.addContractInputAndOutput(new FuelAddress(contractId));
-    });
-
-    tx.addVariableOutputs(outputVariables);
-
-    tx.gasLimit = gasUsed;
-    tx.maxFee = maxFee;
-
-    // await this.signer.fund(tx, txCost);
     return tx;
   }
 
@@ -417,6 +364,37 @@ export class FuelHypCollateralAdapter extends BaseFuelHypTokenAdapter {
 
 // Interacts with Hyp Synthetic Fuel token
 export class FuelHypSyntheticAdapter extends BaseFuelHypTokenAdapter {
+  async initialize() {
+    this.provider = await this.getProvider();
+    this.signer = (await this.multiProvider.tryGetSigner(
+      ProtocolType.Fuel,
+      this.chainName,
+    )) as unknown as WalletUnlocked;
+    this.contract = new WarpRoute(this.addresses.warpRouter, this.signer);
+    this.addresses.token = await (
+      await this.contract.functions.get_token_info().get()
+    ).value.asset_id.bits.toString();
+  }
+
+  async sendAssetToContract(weiAmountOrId: Numberish): Promise<boolean> {
+    await this.initialize();
+
+    let tokenAddress = '';
+    if (this.addresses.token === '') {
+      tokenAddress = await this.getTokenId();
+    }
+
+    const fund_res = await (
+      await this.signer.transferToContract(
+        this.addresses.warpRouter,
+        new BN(weiAmountOrId.toString()),
+        this.addresses.token ?? tokenAddress,
+      )
+    ).waitForResult();
+
+    return fund_res.isStatusSuccess;
+  }
+
   async getTokenId(): Promise<string> {
     if (this.addresses.token) {
       return this.addresses.token?.toString();
@@ -445,7 +423,7 @@ export class FuelHypSyntheticAdapter extends BaseFuelHypTokenAdapter {
     interchainGas,
   }: TransferRemoteParams): Promise<TransactionRequest> {
     await this.initialize();
-    let gasPayment: bigint = 0n;
+    let gasPayment: bigint = interchainGas?.amount ?? 0n;
     if (!interchainGas) {
       const gasRes = await this.quoteTransferRemoteGas(destination);
       gasPayment = gasRes.amount;
@@ -458,8 +436,6 @@ export class FuelHypSyntheticAdapter extends BaseFuelHypTokenAdapter {
 
     const baseAssetId = await this.getBaseAssetId();
     const mailbox = await this.contract.functions.get_mailbox().get();
-    const hook = await this.contract.functions.get_hook().get();
-
     await this.sendAssetToContract(weiAmountOrId);
 
     const tx = await this.contract.functions
@@ -474,25 +450,9 @@ export class FuelHypSyntheticAdapter extends BaseFuelHypTokenAdapter {
           assetId: baseAssetId,
         },
       })
-      .addContracts([
-        new Mailbox(mailbox.value.bits, this.signer),
-        new ProtocolFee(hook.value.bits, this.signer),
-      ])
+      .addContracts([new Mailbox(mailbox.value.bits, this.signer)])
       .getTransactionRequest();
 
-    const txCost = await this.provider.getTransactionCost(tx);
-    const { gasUsed, missingContractIds, outputVariables, maxFee } = txCost;
-
-    missingContractIds.forEach((contractId: string) => {
-      tx.addContractInputAndOutput(new FuelAddress(contractId));
-    });
-
-    tx.addVariableOutputs(outputVariables);
-
-    tx.gasLimit = gasUsed;
-    tx.maxFee = maxFee;
-
-    // await this.signer.fund(tx, txCost);
     return tx;
   }
 
