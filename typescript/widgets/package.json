@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@cosmos-kit/react": "^2.18.0",
+    "@fuel-wallet/react": "^0.16.1",
     "@headlessui/react": "^2.1.8",
     "@hyperlane-xyz/sdk": "8.6.1",
     "@hyperlane-xyz/utils": "8.6.1",
@@ -19,7 +20,8 @@
     "clsx": "^2.1.1",
     "react-tooltip": "^5.28.0",
     "viem": "^2.21.45",
-    "wagmi": "^2.12.26"
+    "wagmi": "^2.12.26",
+    "fuels": "^0.100.1"
   },
   "devDependencies": {
     "@chakra-ui/react": "^2.8.2",
