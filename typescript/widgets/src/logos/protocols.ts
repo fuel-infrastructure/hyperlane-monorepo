@@ -6,6 +6,7 @@ import { CosmosLogo } from './Cosmos.js';
 import { EthereumLogo } from './Ethereum.js';
 import { FuelLogo } from './Fuel.js';
 import { SolanaLogo } from './Solana.js';
+import { FuelLogo } from './Fuel.js';
 
 export const PROTOCOL_TO_LOGO: Record<
   ProtocolType,

@@ -1,7 +1,7 @@
 {
-  "name": "@hyperlane-xyz/widgets",
+  "name": "@fuel-infrastructure/fuel-hyperlane-widgets",
   "description": "Common react components for Hyperlane projects",
-  "version": "8.6.1",
+  "version": "0.0.1",
   "peerDependencies": {
     "react": "^18",
     "react-dom": "^18"
