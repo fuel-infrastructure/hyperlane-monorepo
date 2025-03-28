@@ -11,6 +11,7 @@ import {
   MultisigIsmConfigSchema,
   TrustedRelayerIsmConfig,
 } from '@hyperlane-xyz/sdk';
+import { ProtocolType, isAddressEvm } from '@hyperlane-xyz/utils';
 
 import { CommandContext } from '../context/types.js';
 import {
@@ -85,8 +86,22 @@ const ISM_TYPE_DESCRIPTIONS: Record<string, string> = {
   [IsmType.TRUSTED_RELAYER]: 'Deliver messages from an authorized address',
 };
 
+const FUEL_SUPPORTED_ISM_TYPES = Object.fromEntries(
+  Object.entries(ISM_TYPE_DESCRIPTIONS).filter(([type]) =>
+    [
+      IsmType.AGGREGATION,
+      IsmType.FALLBACK_ROUTING,
+      IsmType.MERKLE_ROOT_MULTISIG,
+      IsmType.MESSAGE_ID_MULTISIG,
+      IsmType.ROUTING,
+      IsmType.TEST_ISM,
+    ].includes(type as IsmType),
+  ),
+);
+
 export async function createAdvancedIsmConfig(
   context: CommandContext,
+  protocol?: ProtocolType,
 ): Promise<IsmConfig> {
   logBlue('Creating a new advanced ISM config');
   logBoldUnderlinedRed('WARNING: USE AT YOUR RISK.');
@@ -94,20 +109,22 @@ export async function createAdvancedIsmConfig(
     'Advanced ISM configs require knowledge of different ISM types and how they work together topologically. If possible, use the basic ISM configs are recommended.',
   );
 
+  let ismChoices = ISM_TYPE_DESCRIPTIONS;
+  if (protocol && protocol === ProtocolType.Fuel)
+    ismChoices = FUEL_SUPPORTED_ISM_TYPES;
+
   const moduleType = await select({
     message: 'Select ISM type',
-    choices: Object.entries(ISM_TYPE_DESCRIPTIONS).map(
-      ([value, description]) => ({
-        value,
-        description,
-      }),
-    ),
+    choices: Object.entries(ismChoices).map(([value, description]) => ({
+      value,
+      description,
+    })),
     pageSize: 10,
   });
 
   switch (moduleType) {
     case IsmType.AGGREGATION:
-      return createAggregationConfig(context);
+      return createAggregationConfig(context, protocol);
     case IsmType.FALLBACK_ROUTING:
       return createFallbackRoutingConfig(context);
     case IsmType.MERKLE_ROOT_MULTISIG:
@@ -116,7 +133,7 @@ export async function createAdvancedIsmConfig(
     case IsmType.STORAGE_MESSAGE_ID_MULTISIG:
       return createMultisigConfig(moduleType);
     case IsmType.ROUTING:
-      return createRoutingConfig(context);
+      return createRoutingConfig(context, protocol);
     case IsmType.TEST_ISM:
       return { type: IsmType.TEST_ISM };
     case IsmType.TRUSTED_RELAYER:
@@ -134,6 +151,12 @@ export const createMultisigConfig = async (
       'Enter validator addresses (comma separated list) for multisig ISM:',
   });
   const validators = validatorsInput.split(',').map((v) => v.trim());
+  for (const validator of validators) {
+    if (!isAddressEvm(validator)) {
+      errorRed(`Invalid address: ${validator}, must be a valid EVM address`);
+      return createMultisigConfig(ismType);
+    }
+  }
   const threshold = parseInt(
     await input({
       message: 'Enter threshold of validators (number) for multisig ISM:',
@@ -171,16 +194,16 @@ export const createTrustedRelayerConfig = callWithConfigCreationLogs(
             'relayer address',
             'signer',
           );
-    return {
-      type: IsmType.TRUSTED_RELAYER,
-      relayer,
-    };
+    return { type: IsmType.TRUSTED_RELAYER, relayer };
   },
   IsmType.TRUSTED_RELAYER,
 );
 
 export const createAggregationConfig = callWithConfigCreationLogs(
-  async (context: CommandContext): Promise<AggregationIsmConfig> => {
+  async (
+    context: CommandContext,
+    protocol?: ProtocolType,
+  ): Promise<AggregationIsmConfig> => {
     const isms = parseInt(
       await input({
         message: 'Enter the number of ISMs to aggregate (number)',
@@ -197,19 +220,18 @@ export const createAggregationConfig = callWithConfigCreationLogs(
 
     const modules: Array<IsmConfig> = [];
     for (let i = 0; i < isms; i++) {
-      modules.push(await createAdvancedIsmConfig(context));
+      modules.push(await createAdvancedIsmConfig(context, protocol));
     }
-    return {
-      type: IsmType.AGGREGATION,
-      modules,
-      threshold,
-    };
+    return { type: IsmType.AGGREGATION, modules, threshold };
   },
   IsmType.AGGREGATION,
 );
 
 export const createRoutingConfig = callWithConfigCreationLogs(
-  async (context: CommandContext): Promise<IsmConfig> => {
+  async (
+    context: CommandContext,
+    protocol?: ProtocolType,
+  ): Promise<IsmConfig> => {
     const owner = await input({
       message: 'Enter owner address for routing ISM',
     });
@@ -223,14 +245,10 @@ export const createRoutingConfig = callWithConfigCreationLogs(
     const domainsMap: ChainMap<IsmConfig> = {};
     for (const chain of chains) {
       log(`You are about to configure routing ISM from source chain ${chain}.`);
-      const config = await createAdvancedIsmConfig(context);
+      const config = await createAdvancedIsmConfig(context, protocol);
       domainsMap[chain] = config;
     }
-    return {
-      type: IsmType.ROUTING,
-      owner: ownerAddress,
-      domains: domainsMap,
-    };
+    return { type: IsmType.ROUTING, owner: ownerAddress, domains: domainsMap };
   },
   IsmType.ROUTING,
 );
@@ -243,19 +261,23 @@ export const createFallbackRoutingConfig = callWithConfigCreationLogs(
       requireNumber: 1,
     });
 
+    const owner = await detectAndConfirmOrPrompt(
+      async () => context.signerAddress,
+      'Enter the desired',
+      'owner address for the fallback routing ISM',
+      'signer',
+    );
+
     const domainsMap: ChainMap<IsmConfig> = {};
     for (const chain of chains) {
       log(
         `You are about to configure fallback routing ISM from source chain ${chain}.`,
       );
+
       const config = await createAdvancedIsmConfig(context);
       domainsMap[chain] = config;
     }
-    return {
-      type: IsmType.FALLBACK_ROUTING,
-      owner: '',
-      domains: domainsMap,
-    };
+    return { type: IsmType.FALLBACK_ROUTING, owner, domains: domainsMap };
   },
   IsmType.FALLBACK_ROUTING,
 );

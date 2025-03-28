@@ -186,6 +186,28 @@ export async function estimateTransactionFeeCosmJs({
   };
 }
 
+export async function estimateTransactionFeeFuel({
+  transaction,
+  provider,
+  estimatedGasPrice,
+}: {
+  transaction: FuelsTransaction;
+  provider: FuelsProvider;
+  estimatedGasPrice: Numberish;
+}): Promise<TransactionFeeEstimate> {
+  const fuelsProvider = await provider.provider;
+  const { gasPrice, maxFee, maxGas } = await fuelsProvider.estimateTxGasAndFee({
+    transactionRequest: transaction.transaction,
+    gasPrice: new BN(estimatedGasPrice.toString()),
+  });
+
+  return {
+    gasUnits: BigInt(maxGas.toString()),
+    gasPrice: BigInt(gasPrice.toString()),
+    fee: BigInt(maxFee.toString()),
+  };
+}
+
 export async function estimateTransactionFeeCosmJsWasm({
   transaction,
   provider,
@@ -225,26 +247,6 @@ export async function estimateTransactionFeeCosmJsWasm({
   });
 }
 
-export async function estimateTransactionFeeFuel({
-  provider,
-  transaction,
-}: {
-  transaction: FuelsTransaction;
-  provider: FuelsProvider;
-}): Promise<TransactionFeeEstimate> {
-  const { gasPrice } = await (
-    await provider.provider
-  ).estimateTxGasAndFee({
-    transactionRequest: transaction.transaction,
-    gasPrice: new BN(0),
-  });
-  return {
-    gasUnits: gasPrice.toNumber(),
-    gasPrice: gasPrice.toNumber(),
-    fee: gasPrice.toNumber(),
-  };
-}
-
 export function estimateTransactionFee({
   transaction,
   provider,
@@ -269,15 +271,23 @@ export function estimateTransactionFee({
   ) {
     return estimateTransactionFeeViem({ transaction, provider, sender });
   } else if (
+    transaction.type === ProviderType.Fuels &&
+    provider.type === ProviderType.Fuels
+  ) {
+    const { transactionOverrides } = chainMetadata;
+    const estimatedGasPrice = transactionOverrides?.gasPrice as Numberish;
+    assert(estimatedGasPrice, 'gasPrice required for Fuel gas estimation');
+
+    return estimateTransactionFeeFuel({
+      transaction,
+      provider,
+      estimatedGasPrice,
+    });
+  } else if (
     transaction.type === ProviderType.SolanaWeb3 &&
     provider.type === ProviderType.SolanaWeb3
   ) {
     return estimateTransactionFeeSolanaWeb3({ transaction, provider });
-  } else if (
-    transaction.type === ProviderType.Fuels &&
-    provider.type === ProviderType.Fuels
-  ) {
-    return estimateTransactionFeeFuel({ transaction, provider });
   } else if (
     transaction.type === ProviderType.CosmJs &&
     provider.type === ProviderType.CosmJs

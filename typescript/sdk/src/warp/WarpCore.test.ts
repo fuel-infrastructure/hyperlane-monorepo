@@ -7,6 +7,7 @@ import {
   test1,
   test2,
   testCosmosChain,
+  testFuelChain,
   testSealevelChain,
 } from '../consts/testChains.js';
 import { MultiProtocolProvider } from '../providers/MultiProtocolProvider.js';
@@ -35,6 +36,9 @@ describe('WarpCore', () => {
   let cwHypCollateral: Token;
   let cw20: Token;
   let cosmosIbc: Token;
+  let fuelHypNative: Token;
+  let fuelHypSynthetic: Token;
+  let fuelHypCollateral: Token;
 
   // Stub MultiProvider fee estimation to avoid real network calls
   sinon
@@ -58,6 +62,9 @@ describe('WarpCore', () => {
       evmHypNative,
       evmHypSynthetic,
       sealevelHypSynthetic,
+      fuelHypNative,
+      fuelHypSynthetic,
+      fuelHypCollateral,
       cwHypCollateral,
       cw20,
       cosmosIbc,
@@ -79,6 +86,15 @@ describe('WarpCore', () => {
     ).to.be.instanceOf(Token);
     expect(warpCore.findToken(test1.name, sealevelHypSynthetic.addressOrDenom))
       .to.be.null;
+    expect(
+      warpCore.findToken(testFuelChain.name, fuelHypNative.addressOrDenom),
+    ).to.be.instanceOf(Token);
+    expect(
+      warpCore.findToken(testFuelChain.name, fuelHypSynthetic.addressOrDenom),
+    ).to.be.instanceOf(Token);
+    expect(
+      warpCore.findToken(testFuelChain.name, fuelHypCollateral.addressOrDenom),
+    ).to.be.instanceOf(Token);
   });
 
   it('Gets transfer gas quote', async () => {
@@ -130,6 +146,11 @@ describe('WarpCore', () => {
       testSealevelChain.name,
       TokenStandard.EvmNative,
     );
+    await testQuote(
+      fuelHypNative,
+      testFuelChain.name,
+      TokenStandard.FuelNative,
+    );
     await testQuote(evmHypSynthetic, test2.name, TokenStandard.EvmNative);
     await testQuote(
       sealevelHypSynthetic,
@@ -179,6 +200,7 @@ describe('WarpCore', () => {
     await testCollateral(evmHypNative, test2.name, true);
     await testCollateral(evmHypNative, testCosmosChain.name, false);
     await testCollateral(evmHypNative, testSealevelChain.name, true);
+    await testCollateral(evmHypNative, testFuelChain.name, true);
     await testCollateral(cwHypCollateral, test1.name, false);
 
     stubs.forEach((s) => s.restore());
@@ -222,6 +244,14 @@ describe('WarpCore', () => {
     });
     expect(Object.keys(invalidRecipient || {})[0]).to.equal('recipient');
 
+    const invalidFuelRecipient = await warpCore.validateTransfer({
+      originTokenAmount: evmHypNative.amount(TRANSFER_AMOUNT),
+      destination: testFuelChain.name,
+      recipient: MOCK_ADDRESS,
+      sender: MOCK_ADDRESS,
+    });
+    expect(Object.keys(invalidFuelRecipient || {})[0]).to.equal('recipient');
+
     const invalidAmount = await warpCore.validateTransfer({
       originTokenAmount: evmHypNative.amount(-10),
       destination: test2.name,
@@ -229,6 +259,14 @@ describe('WarpCore', () => {
       sender: MOCK_ADDRESS,
     });
     expect(Object.keys(invalidAmount || {})[0]).to.equal('amount');
+
+    const invalidFuelAmount = await warpCore.validateTransfer({
+      originTokenAmount: fuelHypNative.amount(-10),
+      destination: test1.name,
+      recipient: MOCK_ADDRESS,
+      sender: MOCK_ADDRESS,
+    });
+    expect(Object.keys(invalidFuelAmount || {})[0]).to.equal('amount');
 
     const insufficientAmount = await warpCore.validateTransfer({
       originTokenAmount: evmHypNative.amount(minimumTransferAmount - 1n),
@@ -287,10 +325,14 @@ describe('WarpCore', () => {
     await testGetTxs(evmHypNative, test1.name);
     await testGetTxs(evmHypNative, testCosmosChain.name);
     await testGetTxs(evmHypNative, testSealevelChain.name);
+    await testGetTxs(evmHypNative, testFuelChain.name);
     await testGetTxs(evmHypSynthetic, test2.name);
     await testGetTxs(sealevelHypSynthetic, test2.name, ProviderType.SolanaWeb3);
     await testGetTxs(cwHypCollateral, test1.name, ProviderType.CosmJsWasm);
     await testGetTxs(cosmosIbc, test1.name, ProviderType.CosmJs);
+    await testGetTxs(fuelHypNative, testFuelChain.name, ProviderType.Fuels);
+    await testGetTxs(fuelHypSynthetic, testFuelChain.name, ProviderType.Fuels);
+    await testGetTxs(fuelHypCollateral, testFuelChain.name, ProviderType.Fuels);
 
     coreStub.restore();
     adapterStubs.forEach((s) => s.restore());

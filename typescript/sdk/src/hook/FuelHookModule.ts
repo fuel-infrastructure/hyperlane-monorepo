@@ -31,13 +31,16 @@ import { PausableHook } from '../fuel-types/PausableHook.js';
 import { PausableHookFactory } from '../fuel-types/PausableHookFactory.js';
 import { ProtocolFee } from '../fuel-types/ProtocolFee.js';
 import { ProtocolFeeFactory } from '../fuel-types/ProtocolFeeFactory.js';
-import { WarpRoute } from '../fuel-types/WarpRoute.js';
+import {
+  IdentityInput,
+  StateOutput,
+  WarpRoute,
+} from '../fuel-types/WarpRoute.js';
 import { IgpConfig } from '../gas/types.js';
 import { MultiProtocolProvider } from '../providers/MultiProtocolProvider.js';
 import { ChainNameOrId } from '../types.js';
 import { normalizeConfig } from '../utils/ism.js';
 
-import { IdentityInput, StateOutput } from './../fuel-types/Mailbox.js';
 import { DerivedHookConfig } from './EvmHookReader.js';
 import {
   AggregationHookConfig,
@@ -352,12 +355,13 @@ export class FuelHookModule {
     hookAddress: string,
     signer: WalletUnlocked,
   ): Promise<DerivedHookConfig> {
-    // Could instantiate any Hook since they all have the `hook_type` function
-    const onChainHookType = (
-      await new MerkleTreeHook(hookAddress, signer).functions
-        .hook_type()
-        .simulate()
-    ).value;
+    const onChainHookType =
+      // Could instantiate any Hook since they all have the `hook_type` function
+      (
+        await new MerkleTreeHook(hookAddress, signer).functions
+          .hook_type()
+          .simulate()
+      ).value;
 
     switch (onChainHookType) {
       case PostDispatchHookTypeOutput.MERKLE_TREE:

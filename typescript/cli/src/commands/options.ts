@@ -50,15 +50,6 @@ export const skipConfirmationOption: Options = {
   alias: 'y',
 };
 
-export const warpDeploymentKeysCommandOption: Options = {
-  type: 'string',
-  description:
-    'A comma-separated list of keys with chain prefixes to deploy warp route contracts with, or use the HYP_KEYS env var.',
-  alias: 'wk',
-  default: ENV.HYP_KEYS,
-  defaultDescription: 'process.env.HYP_KEYS',
-};
-
 export const keyCommandOption: Options = {
   type: 'string',
   description:
@@ -66,6 +57,15 @@ export const keyCommandOption: Options = {
   alias: ['k', 'private-key', 'seed-phrase'],
   default: ENV.HYP_KEY,
   defaultDescription: 'process.env.HYP_KEY',
+};
+
+export const warpDeploymentKeysCommandOption: Options = {
+  type: 'string',
+  description:
+    'A comma-separated list of keys with chain prefixes to deploy warp route contracts with, or use the HYP_KEYS env var.',
+  alias: 'wk',
+  default: ENV.HYP_KEYS,
+  defaultDescription: 'process.env.HYP_KEYS',
 };
 
 export const disableProxyCommandOption: Options = {

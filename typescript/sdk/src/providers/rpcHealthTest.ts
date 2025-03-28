@@ -1,5 +1,3 @@
-import { BN } from 'fuels';
-
 import { Mailbox__factory } from '@hyperlane-xyz/core';
 import { Address, rootLogger } from '@hyperlane-xyz/utils';
 
@@ -26,13 +24,13 @@ export async function isRpcHealthy(
     return isEthersV5ProviderHealthy(provider.provider, metadata);
   else if (provider.type === ProviderType.SolanaWeb3)
     return isSolanaWeb3ProviderHealthy(provider.provider, metadata);
-  else if (provider.type === ProviderType.Fuels)
-    return isFuelProviderHealhty(provider.provider, metadata);
   else if (
     provider.type === ProviderType.CosmJsWasm ||
     provider.type === ProviderType.CosmJs
   )
     return isCosmJsProviderHealthy(provider.provider, metadata);
+  else if (provider.type === ProviderType.Fuels)
+    return isFuelProviderHealthy(provider.provider, metadata);
   else
     throw new Error(
       `Unsupported provider type ${provider.type}, new health check required`,
@@ -78,13 +76,13 @@ export async function isSolanaWeb3ProviderHealthy(
   return true;
 }
 
-export async function isFuelProviderHealhty(
+export async function isFuelProviderHealthy(
   provider: FuelsProvider['provider'],
   metadata: ChainMetadata,
 ): Promise<boolean> {
   const readyProvider = await provider;
   const blockNumber = await readyProvider.getBlockNumber();
-  if (!blockNumber || blockNumber < new BN(0)) return false;
+  if (!blockNumber || blockNumber.lt(0)) return false;
   rootLogger.debug(`Block number is okay for ${metadata.name}`);
   return true;
 }

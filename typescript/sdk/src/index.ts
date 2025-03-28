@@ -412,6 +412,7 @@ export {
   EV5InterchainAccountTxTransformerProps,
   EV5InterchainAccountTxTransformerPropsSchema,
 } from './providers/transactions/transformer/ethersV5/types.js';
+export { AggregationIsmFactory as FuelAggregationIsmFactory } from './fuel-types/AggregationIsmFactory.js';
 
 export { EvmCoreModule } from './core/EvmCoreModule.js';
 export {
@@ -438,6 +439,7 @@ export {
   RemoteIcaRouterConfigSchema,
 } from './ica/types.js';
 export { EvmIsmModule } from './ism/EvmIsmModule.js';
+export { FuelIsmModule } from './ism/FuelIsmModule.js';
 export {
   chainMetadataToCosmosChain,
   chainMetadataToViemChain,
@@ -534,6 +536,7 @@ export {
 } from './token/contracts.js';
 export { HypERC20Deployer, HypERC721Deployer } from './token/deploy.js';
 export { EvmERC20WarpModule } from './token/EvmERC20WarpModule.js';
+export { FuelSRC20WarpModule } from './token/FuelSRC20WarpModule.js';
 export { EvmERC20WarpRouteReader } from './token/EvmERC20WarpRouteReader.js';
 export { IToken, TokenArgs, TokenConfigSchema } from './token/IToken.js';
 export { Token } from './token/Token.js';
@@ -571,13 +574,6 @@ export {
   HypTokenConfigSchema,
   HypTokenRouterConfig,
   HypTokenRouterConfigSchema,
-  isCollateralRebaseTokenConfig,
-  isCollateralTokenConfig,
-  isFuelTokenType,
-  isNativeTokenConfig,
-  isSyntheticRebaseTokenConfig,
-  isSyntheticTokenConfig,
-  isTokenMetadata,
   NativeTokenConfig,
   NativeTokenConfigSchema,
   SyntheticRebaseTokenConfig,
@@ -589,6 +585,13 @@ export {
   WarpRouteDeployConfig,
   WarpRouteDeployConfigSchema,
   WarpRouteDeployConfigSchemaErrors,
+  isCollateralRebaseTokenConfig,
+  isCollateralTokenConfig,
+  isNativeTokenConfig,
+  isSyntheticRebaseTokenConfig,
+  isSyntheticTokenConfig,
+  isTokenMetadata,
+  isFuelTokenType,
 } from './token/types.js';
 export {
   ChainMap,
@@ -645,7 +648,5 @@ export {
 } from './warp/types.js';
 export { WarpCore, WarpCoreOptions } from './warp/WarpCore.js';
 export { FuelHookModule } from './hook/FuelHookModule.js';
-export { FuelIsmModule } from './ism/FuelIsmModule.js';
-export { FuelSRC20WarpModule } from './token/FuelSRC20WarpModule.js';
 export { WarpRoute as FuelWarpRouteType } from './fuel-types/WarpRoute.js';
 export { FuelCoreAdapter } from './core/adapters/FuelCoreAdapter.js';

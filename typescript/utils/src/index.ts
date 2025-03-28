@@ -39,8 +39,8 @@ export {
   normalizeAddressSealevel,
   padBytesToLength,
   shortenAddress,
-  strip0x,
   validProtocolAddressGuard,
+  strip0x,
 } from './addresses.js';
 export {
   addBufferToGasLimit,

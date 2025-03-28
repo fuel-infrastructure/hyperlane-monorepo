@@ -12,7 +12,6 @@ import {
 import {
   Address,
   AddressBytes32,
-  ParsedMessage,
   ProtocolType,
   addBufferToGasLimit,
   addressToBytes32,
@@ -475,38 +474,21 @@ export class HyperlaneCore extends HyperlaneApp<CoreFactories> {
 
   async waitForMessageDispatchedFromFuelProcessed(
     messages: [DispatchedMessage],
-    sourceTx: ethers.ContractReceipt | ViemTxReceipt,
+    txId: string,
     delay?: number,
     maxAttempts?: number,
   ): Promise<void> {
-    const originChainName = this.getOrigin(messages[0]);
-    const originChainId = this.multiProvider.getChainId(originChainName);
-    const destinationChainName = this.getDestination(messages[0]);
-    const sender = messages[0].parsed.sender;
-
-    const msg_id = await this.getProcessedMessages(
-      originChainId.toString(),
-      destinationChainName,
-      sender,
-    );
-    this.logger.warn(
-      'msg_id on remote mailbox',
-      JSON.stringify(msg_id, null, 4),
-    );
-
     await Promise.all(
       messages.map((msg) =>
         this.waitForMessageIdProcessed(
-          msg_id,
+          msg.id,
           this.getDestination(msg),
           delay,
           maxAttempts,
         ),
       ),
     );
-    this.logger.info(
-      `All messages processed for tx ${sourceTx.transactionHash}`,
-    );
+    this.logger.info(`All messages processed for tx ${txId}`);
   }
 
   async waitForMessageProcessedOnFuel(
@@ -593,30 +575,6 @@ export class HyperlaneCore extends HyperlaneApp<CoreFactories> {
     });
   }
 
-  async getProcessedMessages(
-    origin: string,
-    destination: ChainName,
-    sender: Address,
-  ): Promise<string> {
-    const mailbox = this.contractsMap[destination].mailbox;
-    const filter = mailbox.filters.Process(origin, sender);
-    const filter2 = mailbox.filters.ProcessId();
-
-    const { fromBlock, toBlock } = await this.multiProvider.getLatestBlockRange(
-      destination,
-    );
-    const messageRecieved = await mailbox.queryFilter(
-      filter,
-      fromBlock,
-      toBlock,
-    );
-    const checkFrom = messageRecieved[0].blockHash;
-
-    const messageProcessed = await mailbox.queryFilter(filter2, checkFrom);
-    const messageId = messageProcessed[0].topics[1];
-    return messageId;
-  }
-
   /**
    * Extract dispatched messages from Fuel transaction results
    * @param fuelTxResult The Fuel transaction result
@@ -624,67 +582,28 @@ export class HyperlaneCore extends HyperlaneApp<CoreFactories> {
    */
   static getDispatchedMessagesFromFuel(
     fuelTx: TransactionResult<any>,
-    origin: number,
-    sender: string,
-    recipientRoute: string,
-    amount: string,
   ): DispatchedMessage {
-    const messageId = fuelTx.id;
+    const logs = fuelTx.logs as
+      | { message_id?: string; message?: { bytes: Uint8Array } }[]
+      | undefined;
+    if (!logs) throw new Error('Failed to extract populated logs');
 
-    if (!messageId) {
-      throw new Error('No message ID found in Fuel transaction logs');
-    }
+    let messageId: string | undefined;
+    let messageBytes: Uint8Array | undefined;
 
-    // last log from fuel WR contains destination domain, recipient_user and amount
-    const destinationLog: any = fuelTx.logs?.[fuelTx.logs?.length - 1];
+    logs.forEach((log) => {
+      if (log.message_id) messageId = log.message_id;
+      if (log.message?.bytes) messageBytes = log.message.bytes;
+    });
 
-    if (!destinationLog) {
-      throw new Error(
-        'No destination/recipient information found in Fuel transaction logs',
-      );
-    }
+    if (!messageId || !messageBytes)
+      throw new Error('Failed to extract message ID or bytes from logs');
 
-    const destination = destinationLog.destination;
-    const recipient = destinationLog.recipient;
-
-    const recipientBytes = ethers.utils.hexZeroPad(recipient, 32);
-    const amountBytes = ethers.utils.hexZeroPad(`0x${amount.toString()}`, 32);
-
-    const body = ethers.utils.hexConcat([recipientBytes, amountBytes]);
-
-    const parsed: ParsedMessage = {
-      version: 3,
-      nonce: 0, //TODO: Check here
-      origin,
-      sender,
-      destination,
-      recipient: recipientRoute,
-      body,
+    const messageHexString = '0x' + Buffer.from(messageBytes).toString('hex');
+    return {
+      id: messageId,
+      message: messageHexString,
+      parsed: parseMessage(messageHexString),
     };
-
-    const versionHex = ethers.utils.hexZeroPad(
-      `0x${parsed.version.toString(16)}`,
-      1,
-    );
-    const nonceHex = ethers.utils.hexZeroPad(
-      `0x${parsed.nonce.toString(16)}`,
-      4,
-    );
-    const senderHex = ethers.utils.hexZeroPad(sender, 32);
-    const destinationHex = ethers.utils.hexZeroPad(
-      `0x${destination.toString(16)}`,
-      4,
-    );
-
-    const message = ethers.utils.hexConcat([
-      versionHex,
-      nonceHex,
-      senderHex,
-      destinationHex,
-      recipientBytes,
-      amountBytes,
-    ]);
-
-    return { id: messageId, message, parsed };
   }
 }

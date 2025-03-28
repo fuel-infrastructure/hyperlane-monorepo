@@ -697,9 +697,11 @@ export async function runWarpRouteApply(
 
   const singleProtocol = protocols.values().next().value;
 
+  logGreen('repo deploy config');
   for (const [chain, config] of Object.entries(warpDeployConfig)) {
     logGreen(chain, JSON.stringify(config));
   }
+  logGreen('registry core config');
   for (const [chain, config] of Object.entries(warpCoreConfig)) {
     logGreen(chain, JSON.stringify(config));
   }

@@ -280,15 +280,15 @@ async function getSignerAndSignerAddress(
 ) {
   const protocol = multiProvider.getProtocol(chain);
   if (protocol === ProtocolType.Fuel) {
-    const signer = (await multiProtocolProvider.tryGetSigner(
+    const signer = (await multiProtocolProvider.getSigner(
       protocol,
       chain,
-    )) as unknown as WalletUnlocked;
+    )) as WalletUnlocked;
 
     return {
       protocol,
       signer,
-      signerAddress: await signer.address.toString(),
+      signerAddress: signer.address.toString(),
     };
   } else {
     const signer = multiProvider.getSigner(chain);
@@ -301,6 +301,7 @@ async function getSignerAndSignerAddress(
   }
 }
 
+// TODO delete
 function fuelTxToEvmReceipt(
   fuelTx: TransactionResult<any>,
   from: string,
@@ -321,7 +322,7 @@ function fuelTxToEvmReceipt(
     transactionIndex: 0,
     gasUsed: gasUsed,
     logsBloom: '0x',
-    blockHash: fuelTx.blockId || '0x0',
+    blockHash: fuelTx.blockId!,
     transactionHash: fuelTx.id,
     logs: [],
     blockNumber: 0,
@@ -397,7 +398,6 @@ async function executeFuelDelivery({
     logRed(`No Warp Routes found from ${origin} to ${destination}`);
     throw new Error('Error finding warp route');
   } else if (tokensForRoute.length === 1) {
-    logBlue('tokensForRoute.length === 1');
     token = tokensForRoute[0];
   } else {
     logBlue(`Please select a token from the Warp config`);
@@ -405,7 +405,6 @@ async function executeFuelDelivery({
     token = warpCore.findToken(origin, routerAddress)!;
   }
 
-  const sender_wr = token.addressOrDenom;
   const errors = await warpCore.validateTransfer({
     originTokenAmount: token.amount(amount),
     destination,
@@ -417,62 +416,46 @@ async function executeFuelDelivery({
     throw new Error('Error validating transfer');
   }
 
-  const transferTxs = await warpCore.getTransferRemoteTxs({
+  const [transferTxn] = await warpCore.getTransferRemoteTxs({
     originTokenAmount: new TokenAmount(amount, token),
     destination,
     sender: signerAddress.toString(),
     recipient,
   });
 
-  const txReceipts = [];
-  for (const transferTx of transferTxs) {
-    if (transferTx.type !== ProviderType.Fuels) {
-      continue;
-    }
-    const request = new ScriptTransactionRequest(transferTx.transaction);
-    const txCost = await signer.getTransactionCost(request);
-    const { gasUsed, missingContractIds, outputVariables, maxFee } = txCost;
+  if (transferTxn.type !== ProviderType.Fuels)
+    throw new Error('Invalid transfer transaction');
 
-    missingContractIds.forEach((contractId: string) => {
-      request.addContractInputAndOutput(new Address(contractId));
-    });
+  const request = new ScriptTransactionRequest(transferTxn.transaction);
+  const txCost = await signer.getTransactionCost(request);
+  const { gasUsed, missingContractIds, outputVariables, maxFee } = txCost;
 
-    request.addVariableOutputs(outputVariables);
+  missingContractIds.forEach((contractId: string) => {
+    request.addContractInputAndOutput(new Address(contractId));
+  });
 
-    request.gasLimit = gasUsed;
-    request.maxFee = maxFee;
+  request.addVariableOutputs(outputVariables);
 
-    await signer.fund(request, txCost);
-    const tx = await signer.sendTransaction(request);
-    const result = await tx.waitForResult();
-    txReceipts.push(result);
-  }
+  request.gasLimit = gasUsed;
+  request.maxFee = maxFee;
 
-  const originChainId = (await multiProtocolProvider.getChainId(
-    origin,
-  )) as number;
-  const transferTxReceipt = txReceipts[txReceipts.length - 1];
-  const messageIndex: number = 0;
-  const message: DispatchedMessage =
-    HyperlaneCore.getDispatchedMessagesFromFuel(
-      transferTxReceipt,
-      originChainId,
-      sender_wr ?? signer.address.toString(),
-      recipient,
-      amount,
-    );
+  await signer.fund(request, txCost);
+  const txResult = await (
+    await signer.sendTransaction(request)
+  ).waitForResult();
 
-  const parsed = parseWarpRouteMessage(message.parsed.body);
+  const message = HyperlaneCore.getDispatchedMessagesFromFuel(txResult);
 
   logBlue(
     `Sent transfer from sender (${signerAddress}) on ${origin} to recipient (${recipient}) on ${destination}.`,
   );
   logBlue(`Message ID: ${message.id}`);
   log(`Message:\n${indentYamlOrJson(yamlStringify(message, null, 2), 4)}`);
+  const parsed = parseWarpRouteMessage(message.parsed.body);
   log(`Body:\n${indentYamlOrJson(yamlStringify(parsed, null, 2), 4)}`);
 
   const evmCompatibleReciept = fuelTxToEvmReceipt(
-    transferTxReceipt,
+    txResult,
     signer.address.toString(),
     token.addressOrDenom,
   );
@@ -492,7 +475,7 @@ async function executeFuelDelivery({
     log('Attempting self-relay of transfer...');
     await relayer.relayMessageFromFuel(
       evmCompatibleReciept,
-      messageIndex,
+      0,
       message,
       mailbox,
       multiProtocolProvider,
@@ -506,9 +489,9 @@ async function executeFuelDelivery({
   // Max wait 10 minutes
   await core.waitForMessageDispatchedFromFuelProcessed(
     [message],
-    evmCompatibleReciept,
-    10000,
-    60,
+    txResult.id,
+    5000,
+    100,
   );
   logGreen(`Transfer sent to ${destination} chain!`);
 }

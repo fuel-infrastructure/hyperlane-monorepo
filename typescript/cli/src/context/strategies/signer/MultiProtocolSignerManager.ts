@@ -1,4 +1,5 @@
 import { Signer } from 'ethers';
+import { Wallet as FuelWallet } from 'fuels';
 import { Logger } from 'pino';
 
 import {
@@ -24,7 +25,7 @@ export interface MultiProtocolSignerOptions {
  */
 export class MultiProtocolSignerManager {
   protected readonly signerStrategies: Map<ChainName, IMultiProtocolSigner>;
-  protected readonly signers: Map<ChainName, Signer>;
+  protected readonly signers: Map<ChainName, Signer | FuelWallet>;
   public readonly logger: Logger;
 
   constructor(
@@ -75,7 +76,9 @@ export class MultiProtocolSignerManager {
         continue;
       }
       const signer = await this.initSigner(chain);
-      this.multiProvider.setSigner(chain, signer);
+      if (signer instanceof Signer) {
+        this.multiProvider.setSigner(chain, signer);
+      }
     }
 
     return this.multiProvider;
@@ -84,7 +87,7 @@ export class MultiProtocolSignerManager {
   /**
    * @notice Creates signer for specific chain
    */
-  async initSigner(chain: ChainName): Promise<Signer> {
+  async initSigner(chain: ChainName): Promise<Signer | FuelWallet> {
     const { privateKey } = await this.resolveConfig(chain);
 
     const signerStrategy = this.signerStrategies.get(chain);
