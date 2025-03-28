@@ -69,17 +69,14 @@ export function useFuelAccount(
 
 export function useFuelWalletDetails(): WalletDetails {
   const { connectors } = useConnectors();
-  const fallbackLogoUrl =
-    'https://lh3.googleusercontent.com/ijHTW6G_oiJd7Dy4U_Lc4SLHQ_MaKj1XK2vbaqSMakuAVoOC1wCSRneovRrdxLxyfuN4lsPOYoNeMFL0RsUR_afivg=s120';
   const fallbackName = 'Fuel Wallet';
 
   return useMemo(() => {
     if (connectors && connectors.length > 0) {
       const connector = connectors[0];
-      // logger.warn(connector.metadata?.image);
 
-      const name = connector.metadata?.name || fallbackName;
-      const logoUrl = fallbackLogoUrl;
+      const name = connector.name || fallbackName;
+      const logoUrl = connector.metadata?.image || '';
 
       return {
         name,
@@ -87,10 +84,8 @@ export function useFuelWalletDetails(): WalletDetails {
       };
     }
 
-    // Default fallback
     return {
-      name: fallbackName,
-      logoUrl: fallbackLogoUrl,
+      fallbackName,
     };
   }, [connectors]);
 }
@@ -138,8 +133,6 @@ export function useFuelActiveChain(
   const { isConnected } = useIsConnected();
   const { chain } = useChain();
 
-  // logger.warn('Chain in useFuelActiveChain:', chain);
-  // logger.warn('Network in useFuelActiveChain:', network);
   return useMemo<ActiveChainInfo>(
     () => ({
       chainDisplayName: chain?.name,
@@ -197,10 +190,10 @@ export function useFuelTransactionFns(
       //   `Wallet not on chain ${chainName} (ChainMismatchError) - {activeChainName}`,
       // );
 
-      logger.warn(
+      logger.info(
         `Sending tx on chain ${activeChainName ?? 'activeChainName undefined'}`,
       );
-      logger.warn(`Sending tx on chain ${chainName}`);
+      logger.info(`Sending tx on chain ${chainName}`);
       const transactionRequest = await buildTransactionRequest(wallet, tx);
 
       return {
