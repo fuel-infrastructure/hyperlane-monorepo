@@ -18,10 +18,10 @@
     "@solana/wallet-adapter-react-ui": "^0.9.31",
     "@solana/web3.js": "^1.95.4",
     "clsx": "^2.1.1",
+    "fuels": "^0.100.1",
     "react-tooltip": "^5.28.0",
     "viem": "^2.21.45",
-    "wagmi": "^2.12.26",
-    "fuels": "^0.100.1"
+    "wagmi": "^2.12.26"
   },
   "devDependencies": {
     "@chakra-ui/react": "^2.8.2",
