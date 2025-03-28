@@ -41,7 +41,6 @@ export {
   shortenAddress,
   validProtocolAddressGuard,
   strip0x,
-  validProtocolAddressGuard,
 } from './addresses.js';
 export {
   addBufferToGasLimit,

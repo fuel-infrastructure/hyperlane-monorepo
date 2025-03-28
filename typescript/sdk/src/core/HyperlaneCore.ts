@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { TransactionReceipt } from '@ethersproject/providers';
 import { ethers } from 'ethers';
 import { TransactionResult } from 'fuels';

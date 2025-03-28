@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import chalk from 'chalk';
 import { addedDiff, deletedDiff, updatedDiff } from 'deep-object-diff';
 import stringify from 'json-stable-stringify';
@@ -150,8 +151,8 @@ function logDiff(expected: AnyObject, actual: AnyObject): void {
   const sortedExpectedJson = stringify(sortedExpected, { space: 2 });
   const sortedActualJson = stringify(sortedActual, { space: 2 });
 
-  const parsedSortedExpected = JSON.parse(sortedExpectedJson);
-  const parsedSortedActual = JSON.parse(sortedActualJson);
+  const parsedSortedExpected = JSON.parse(sortedExpectedJson!);
+  const parsedSortedActual = JSON.parse(sortedActualJson!);
 
   const added = addedDiff(parsedSortedActual, parsedSortedExpected);
   const deleted = deletedDiff(parsedSortedActual, parsedSortedExpected);

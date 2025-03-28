@@ -134,7 +134,6 @@ export const deploy: CommandModuleWithWriteContext<{
   describe: 'Deploy Warp Route contracts',
   builder: {
     config: warpDeploymentConfigCommandOption,
-    keys: warpDeploymentKeysCommandOption,
     'dry-run': dryRunCommandOption,
     'from-address': fromAddressCommandOption,
     keys: warpDeploymentKeysCommandOption,
@@ -210,7 +209,6 @@ export const read: CommandModuleWithContext<{
       false,
       'The path to output a Warp Config JSON or YAML file.',
     ),
-    keys: warpDeploymentKeysCommandOption,
   },
   handler: async ({
     context,
@@ -360,7 +358,6 @@ export const check: CommandModuleWithContext<{
       ...warpCoreConfigCommandOption,
       demandOption: false,
     },
-    keys: warpDeploymentKeysCommandOption,
     config: inputFileCommandOption({
       defaultPath: DEFAULT_WARP_ROUTE_DEPLOYMENT_CONFIG_PATH,
       description: 'The path to a warp route deployment configuration file',

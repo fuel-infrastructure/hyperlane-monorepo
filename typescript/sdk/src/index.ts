@@ -574,16 +574,6 @@ export {
   HypTokenConfigSchema,
   HypTokenRouterConfig,
   HypTokenRouterConfigSchema,
-<<<<<<< HEAD
-  isCollateralRebaseTokenConfig,
-  isCollateralTokenConfig,
-  isFuelTokenType,
-  isNativeTokenConfig,
-  isSyntheticRebaseTokenConfig,
-  isSyntheticTokenConfig,
-  isTokenMetadata,
-=======
->>>>>>> origin/feat/fuel-tooling
   NativeTokenConfig,
   NativeTokenConfigSchema,
   SyntheticRebaseTokenConfig,

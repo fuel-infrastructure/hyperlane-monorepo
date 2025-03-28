@@ -247,26 +247,6 @@ export async function estimateTransactionFeeCosmJsWasm({
   });
 }
 
-export async function estimateTransactionFeeFuel({
-  provider,
-  transaction,
-}: {
-  transaction: FuelsTransaction;
-  provider: FuelsProvider;
-}): Promise<TransactionFeeEstimate> {
-  const { gasPrice } = await (
-    await provider.provider
-  ).estimateTxGasAndFee({
-    transactionRequest: transaction.transaction,
-    gasPrice: new BN(0),
-  });
-  return {
-    gasUnits: gasPrice.toNumber(),
-    gasPrice: gasPrice.toNumber(),
-    fee: gasPrice.toNumber(),
-  };
-}
-
 export function estimateTransactionFee({
   transaction,
   provider,
@@ -308,11 +288,6 @@ export function estimateTransactionFee({
     provider.type === ProviderType.SolanaWeb3
   ) {
     return estimateTransactionFeeSolanaWeb3({ transaction, provider });
-  } else if (
-    transaction.type === ProviderType.Fuels &&
-    provider.type === ProviderType.Fuels
-  ) {
-    return estimateTransactionFeeFuel({ transaction, provider });
   } else if (
     transaction.type === ProviderType.CosmJs &&
     provider.type === ProviderType.CosmJs
