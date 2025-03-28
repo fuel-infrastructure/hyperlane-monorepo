@@ -462,7 +462,6 @@ export class FuelHypSyntheticAdapter extends BaseFuelHypTokenAdapter {
   }
 }
 
-// Helpers
 const convertTokenInfoToMetadata = (
   info: TokenMetadataOutput,
 ): TokenMetadata => {

@@ -149,10 +149,6 @@ export class Token implements IToken {
       return new CwTokenAdapter(chainName, multiProvider, {
         token: addressOrDenom,
       });
-    } else if (standard === TokenStandard.FuelNative) {
-      return new FuelNativeTokenAdapter(chainName, multiProvider, {
-        token: addressOrDenom,
-      });
     } else if (standard === TokenStandard.CWNative) {
       return new CwNativeTokenAdapter(
         chainName,
@@ -160,6 +156,10 @@ export class Token implements IToken {
         {},
         addressOrDenom,
       );
+    } else if (standard === TokenStandard.FuelNative) {
+      return new FuelNativeTokenAdapter(chainName, multiProvider, {
+        token: addressOrDenom,
+      });
     } else if (this.isHypToken()) {
       return this.getHypAdapter(multiProvider);
     } else if (this.isIbcToken()) {
@@ -299,6 +299,10 @@ export class Token implements IToken {
       });
     } else if (standard === TokenStandard.FuelHypNative) {
       assert(addressOrDenom, 'addressOrDenom required for FuelHypNative');
+      assert(
+        collateralAddressOrDenom,
+        'collateralAddressOrDenom required for FuelHypNative',
+      );
       return new FuelHypNativeAdapter(chainName as ChainName, multiProvider, {
         warpRouter: addressOrDenom,
         token: collateralAddressOrDenom,
@@ -318,6 +322,10 @@ export class Token implements IToken {
       );
     } else if (standard === TokenStandard.FuelHypSynthetic) {
       assert(addressOrDenom, 'addressOrDenom required for FuelHypSynthetic');
+      assert(
+        collateralAddressOrDenom,
+        'collateralAddressOrDenom required for FuelHypSynthetic',
+      );
       return new FuelHypSyntheticAdapter(
         chainName as ChainName,
         multiProvider,

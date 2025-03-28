@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@cosmos-kit/react": "^2.18.0",
+    "@fuel-wallet/react": "^0.16.1",
     "@headlessui/react": "^2.1.8",
     "@hyperlane-xyz/sdk": "8.6.1",
     "@hyperlane-xyz/utils": "8.6.1",

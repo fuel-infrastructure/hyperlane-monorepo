@@ -20,7 +20,11 @@ import { HookConfig } from '../hook/types.js';
 import { FuelIsmModule } from '../ism/FuelIsmModule.js';
 import { IsmConfig } from '../ism/types.js';
 import { MultiProtocolProvider } from '../providers/MultiProtocolProvider.js';
-import { DestinationGas, MailboxClientConfig } from '../router/types.js';
+import {
+  DestinationGas,
+  MailboxClientConfig,
+  RemoteRoutersSchema,
+} from '../router/types.js';
 
 import { TokenType } from './config.js';
 import {
@@ -361,17 +365,19 @@ export class FuelSRC20WarpModule {
   }
 
   static async getRouters(warpRoute: WarpRoute, domains: number[]) {
-    return Object.fromEntries(
-      await Promise.all(
-        domains.map(async (domain) => {
-          return [
-            domain,
-            {
-              address: (await warpRoute.functions.router(domain).simulate())
-                .value,
-            },
-          ];
-        }),
+    return RemoteRoutersSchema.parse(
+      Object.fromEntries(
+        await Promise.all(
+          domains.map(async (domain) => {
+            return [
+              domain,
+              {
+                address: (await warpRoute.functions.router(domain).simulate())
+                  .value,
+              },
+            ];
+          }),
+        ),
       ),
     );
   }
@@ -502,7 +508,7 @@ export class FuelSRC20WarpModule {
       ),
     );
 
-    const decimalsToSet = expectedConfig.decimals ?? 18;
+    const decimalsToSet = expectedConfig.decimals ?? 9;
 
     updateTransactions.push(
       ...(await this.enrollRemoteRouters(

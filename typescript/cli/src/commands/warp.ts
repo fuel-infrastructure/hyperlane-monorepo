@@ -137,6 +137,7 @@ export const deploy: CommandModuleWithWriteContext<{
     keys: warpDeploymentKeysCommandOption,
     'dry-run': dryRunCommandOption,
     'from-address': fromAddressCommandOption,
+    keys: warpDeploymentKeysCommandOption,
   },
   handler: async ({ context, config, dryRun }) => {
     logCommandHeader(
@@ -195,6 +196,7 @@ export const read: CommandModuleWithContext<{
       ...symbolCommandOption,
       demandOption: false,
     },
+    keys: warpDeploymentKeysCommandOption,
     chain: {
       ...chainCommandOption,
       demandOption: false,
@@ -353,6 +355,7 @@ export const check: CommandModuleWithContext<{
       ...symbolCommandOption,
       demandOption: false,
     },
+    keys: warpDeploymentKeysCommandOption,
     warp: {
       ...warpCoreConfigCommandOption,
       demandOption: false,

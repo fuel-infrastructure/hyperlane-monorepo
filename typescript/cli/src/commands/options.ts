@@ -68,6 +68,15 @@ export const keyCommandOption: Options = {
   defaultDescription: 'process.env.HYP_KEY',
 };
 
+export const warpDeploymentKeysCommandOption: Options = {
+  type: 'string',
+  description:
+    'A comma-separated list of keys with chain prefixes to deploy warp route contracts with, or use the HYP_KEYS env var.',
+  alias: 'wk',
+  default: ENV.HYP_KEYS,
+  defaultDescription: 'process.env.HYP_KEYS',
+};
+
 export const disableProxyCommandOption: Options = {
   type: 'boolean',
   description:

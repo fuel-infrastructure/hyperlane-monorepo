@@ -39,6 +39,7 @@ export {
   normalizeAddressSealevel,
   padBytesToLength,
   shortenAddress,
+  validProtocolAddressGuard,
   strip0x,
   validProtocolAddressGuard,
 } from './addresses.js';
