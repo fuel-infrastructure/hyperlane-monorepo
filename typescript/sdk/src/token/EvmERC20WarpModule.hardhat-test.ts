@@ -1,3 +1,16 @@
+import {
+  EvmIsmModule,
+  HookConfig,
+  HookType,
+  HyperlaneAddresses,
+  HyperlaneContractsMap,
+  IsmConfig,
+  IsmType,
+  RouterConfig,
+  TestChainName,
+  proxyAdmin,
+  serializeContracts,
+} from '@fuel-infrastructure/fuel-hyperlane-sdk';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers.js';
 import { expect } from 'chai';
 import hre from 'hardhat';
@@ -14,19 +27,6 @@ import {
   MailboxClient__factory,
   Mailbox__factory,
 } from '@hyperlane-xyz/core';
-import {
-  EvmIsmModule,
-  HookConfig,
-  HookType,
-  HyperlaneAddresses,
-  HyperlaneContractsMap,
-  IsmConfig,
-  IsmType,
-  RouterConfig,
-  TestChainName,
-  proxyAdmin,
-  serializeContracts,
-} from '@hyperlane-xyz/sdk';
 import { randomInt } from '@hyperlane-xyz/utils';
 
 import { TestCoreApp } from '../core/TestCoreApp.js';

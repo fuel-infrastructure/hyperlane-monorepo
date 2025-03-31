@@ -1,3 +1,10 @@
+import {
+  HyperlaneContractsMap,
+  RouterConfig,
+  TestChainName,
+  WarpRouteDeployConfig,
+  test3,
+} from '@fuel-infrastructure/fuel-hyperlane-sdk';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers.js';
 import { expect } from 'chai';
 import hre from 'hardhat';
@@ -10,13 +17,6 @@ import {
   Mailbox,
   Mailbox__factory,
 } from '@hyperlane-xyz/core';
-import {
-  HyperlaneContractsMap,
-  RouterConfig,
-  TestChainName,
-  WarpRouteDeployConfig,
-  test3,
-} from '@hyperlane-xyz/sdk';
 import { assert } from '@hyperlane-xyz/utils';
 
 import { TestCoreApp } from '../core/TestCoreApp.js';
