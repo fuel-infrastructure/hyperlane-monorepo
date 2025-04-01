@@ -1,6 +1,6 @@
 import { input } from '@inquirer/prompts';
 import { ethers, providers } from 'ethers';
-import { Wallet as FuelWallet, WalletUnlocked } from 'fuels';
+import { Wallet as FuelWallet, WalletLocked, WalletUnlocked } from 'fuels';
 
 import { impersonateAccount } from '@hyperlane-xyz/sdk';
 import {
@@ -43,7 +43,8 @@ export async function getSigners({
   });
   if (protocolKeys.length === 0) throw new Error('No keys provided');
 
-  const signers: ProtocolMap<ethers.Wallet | WalletUnlocked> = {};
+  const signers: ProtocolMap<ethers.Wallet | WalletUnlocked | WalletLocked> =
+    {};
   for (const { protocol, key } of protocolKeys) {
     switch (protocol) {
       case 'fuel':
@@ -89,10 +90,16 @@ export async function getImpersonatedSigner({
  * Verifies the specified signer is valid.
  * @param signer the signer to verify
  */
-export function assertSigner(signer: ethers.Signer | WalletUnlocked) {
+export function assertSigner(
+  signer: ethers.Signer | WalletUnlocked | WalletLocked,
+) {
   if (
     !signer ||
-    !(ethers.Signer.isSigner(signer) || signer instanceof WalletUnlocked)
+    !(
+      ethers.Signer.isSigner(signer) ||
+      signer instanceof WalletUnlocked ||
+      signer instanceof WalletLocked
+    )
   )
     throw new Error('Signer is invalid');
 }
@@ -136,7 +143,7 @@ function privateKeyToEvmSigner(key: string): ethers.Wallet {
  * @param key a Fuel private key
  * @returns a Fuel signer for the private key
  */
-function privateKeyToFuelSigner(key: string): WalletUnlocked {
+function privateKeyToFuelSigner(key: string): WalletUnlocked | WalletLocked {
   if (!key) throw new Error('No private key provided');
 
   const formattedKey = key.trim().toLowerCase();

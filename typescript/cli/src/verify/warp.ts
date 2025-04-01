@@ -129,7 +129,10 @@ async function getWarpRouteFactory(
   const warpRouteReader = new EvmERC20WarpRouteReader(multiProvider, chainName);
   const tokenType = (await warpRouteReader.deriveTokenType(
     warpRouteAddress,
-  )) as Exclude<TokenType, TokenType.syntheticUri | TokenType.collateralUri>;
+  )) as Exclude<
+    TokenType,
+    TokenType.syntheticUri | TokenType.collateralUri | TokenType.nativeScaled
+  >;
 
   const factory = objFilter(
     hypERC20factories,

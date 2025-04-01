@@ -10,8 +10,7 @@ import {
   HypERC4626Collateral__factory,
   HypERC4626OwnerCollateral__factory,
   HypERC4626__factory,
-  HypFiatToken__factory,
-  HypNativeScaled__factory,
+  HypFiatToken__factory, // HypNativeScaled__factory,
   HypNative__factory,
   HypXERC20Lockbox__factory,
   HypXERC20__factory,
@@ -47,7 +46,7 @@ export const hypERC20factories = {
   [TokenType.XERC20]: new HypXERC20__factory(),
   [TokenType.XERC20Lockbox]: new HypXERC20Lockbox__factory(),
   [TokenType.native]: new HypNative__factory(),
-  [TokenType.nativeScaled]: new HypNativeScaled__factory(),
+  // [TokenType.nativeScaled]: new HypNativeScaled__factory(),
 };
 export type HypERC20Factories = typeof hypERC20factories;
 

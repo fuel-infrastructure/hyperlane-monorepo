@@ -1,6 +1,6 @@
 import { confirm } from '@inquirer/prompts';
 import { Signer, ethers } from 'ethers';
-import { WalletUnlocked as FuelWallet } from 'fuels';
+import { WalletLocked, WalletUnlocked } from 'fuels';
 
 import {
   DEFAULT_GITHUB_REGISTRY,
@@ -129,7 +129,9 @@ export async function getContext({
   }
   const multiProvider = await getMultiProvider(registry);
 
-  let signers: ProtocolMap<ethers.Wallet | FuelWallet> | undefined;
+  let signers:
+    | ProtocolMap<ethers.Wallet | (WalletUnlocked | WalletLocked)>
+    | undefined;
   if (keys) signers = await getSigners({ keys, skipConfirmation });
   const chainMetadata = multiProvider.metadata;
   const multiProtocolProvider = new MultiProtocolProvider(chainMetadata, {

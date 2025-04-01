@@ -416,14 +416,19 @@ async function executeFuelDelivery({
     throw new Error('Error validating transfer');
   }
 
+  const originTokenAmount = new TokenAmount(amount, token);
   const [transferTxn] = await warpCore.getTransferRemoteTxs({
-    originTokenAmount: new TokenAmount(amount, token),
+    originTokenAmount,
     destination,
     sender: signerAddress.toString(),
     recipient,
   });
 
-  if (transferTxn.type !== ProviderType.Fuels)
+  const isAssetSendToContract = await warpCore.assetSendToContractFuel({
+    originTokenAmount,
+    destinationName: destination,
+  });
+  if (transferTxn.type !== ProviderType.Fuels || !isAssetSendToContract)
     throw new Error('Invalid transfer transaction');
 
   const request = new ScriptTransactionRequest(transferTxn.transaction);

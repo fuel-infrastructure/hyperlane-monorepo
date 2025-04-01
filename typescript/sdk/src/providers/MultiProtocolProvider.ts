@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { Provider as FuelProvider, WalletUnlocked as FuelWallet } from 'fuels';
+import { Provider as FuelProvider, WalletLocked, WalletUnlocked } from 'fuels';
 import { Logger } from 'pino';
 
 import {
@@ -44,7 +44,7 @@ import {
 export interface MultiProtocolProviderOptions {
   logger?: Logger;
   providers?: ChainMap<ProviderMap<TypedProvider>>;
-  signers?: ProtocolMap<ethers.Wallet | FuelWallet>;
+  signers?: ProtocolMap<ethers.Wallet | WalletUnlocked | WalletLocked>;
   providerBuilders?: Partial<ProviderBuilderMap>;
 }
 
@@ -64,7 +64,9 @@ export class MultiProtocolProvider<
   // Chain name -> provider type -> provider
   protected readonly providers: ChainMap<ProviderMap<TypedProvider>>;
   // Protocol  -> signer
-  protected readonly signers: ProtocolMap<ethers.Wallet | FuelWallet>;
+  protected readonly signers: ProtocolMap<
+    ethers.Wallet | WalletUnlocked | WalletLocked
+  >;
   protected readonly providerBuilders: Partial<ProviderBuilderMap>;
   public readonly logger: Logger;
 
@@ -135,7 +137,7 @@ export class MultiProtocolProvider<
   async getSigner(
     protocol: ProtocolType,
     chain: ChainNameOrId,
-  ): Promise<ethers.Wallet | FuelWallet> {
+  ): Promise<ethers.Wallet | WalletUnlocked | WalletLocked> {
     const signer = await this.tryGetSigner(protocol, chain);
     if (!signer) throw new Error(`No chain signer set for ${protocol}`);
     return signer;
@@ -148,7 +150,7 @@ export class MultiProtocolProvider<
   async tryGetSigner(
     protocol: ProtocolType,
     chainNameOrId: ChainNameOrId,
-  ): Promise<ethers.Wallet | FuelWallet | null> {
+  ): Promise<ethers.Wallet | WalletUnlocked | WalletLocked | null> {
     const signer = this.signers[protocol];
     if (!signer) return null;
 
@@ -160,7 +162,7 @@ export class MultiProtocolProvider<
         return provider ? signer.connect(provider) : signer;
       }
     }
-    if (signer instanceof FuelWallet) {
+    if (signer instanceof WalletLocked || signer instanceof WalletUnlocked) {
       const provider = await this.getFuelProvider(chainNameOrId);
       if (provider instanceof FuelProvider) {
         signer.connect(provider);
@@ -172,7 +174,7 @@ export class MultiProtocolProvider<
 
   async setFuelSigner(
     chainNameOrId: ChainNameOrId,
-    signer: FuelWallet,
+    signer: WalletUnlocked | WalletLocked,
   ): Promise<void> {
     const chainName = this.tryGetChainName(chainNameOrId);
     if (!chainName) {

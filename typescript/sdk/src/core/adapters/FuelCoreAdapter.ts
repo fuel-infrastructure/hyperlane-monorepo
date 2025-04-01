@@ -1,12 +1,26 @@
-import { Provider, TransactionRequest, WalletUnlocked } from 'fuels';
+import {
+  Provider,
+  TransactionRequest,
+  WalletLocked,
+  WalletUnlocked,
+} from 'fuels';
 
-import { Address, HexString, ProtocolType } from '@hyperlane-xyz/utils';
+import {
+  Address,
+  HexString,
+  ProtocolType,
+  parseMessage,
+  pollAsync,
+} from '@hyperlane-xyz/utils';
 
 import { BaseFuelAdapter } from '../../app/MultiProtocolApp.js';
 import { ContractIdInput, Mailbox } from '../../fuel-types/Mailbox.js';
 import { WarpRoute } from '../../fuel-types/WarpRoute.js';
 import { MultiProtocolProvider } from '../../providers/MultiProtocolProvider.js';
-import { TypedTransactionReceipt } from '../../providers/ProviderType.js';
+import {
+  ProviderType,
+  TypedTransactionReceipt,
+} from '../../providers/ProviderType.js';
 import { ChainName } from '../../types.js';
 import { DispatchedMessage } from '../types.js';
 
@@ -15,7 +29,7 @@ import { ICoreAdapter } from './types.js';
 export class FuelCoreAdapter extends BaseFuelAdapter implements ICoreAdapter {
   protected mailbox!: Mailbox;
   protected provider!: Provider;
-  protected signer!: WalletUnlocked;
+  protected signer!: WalletUnlocked | WalletLocked;
 
   constructor(
     public readonly chainName: ChainName,
@@ -30,7 +44,7 @@ export class FuelCoreAdapter extends BaseFuelAdapter implements ICoreAdapter {
     this.signer = (await this.multiProvider.tryGetSigner(
       ProtocolType.Fuel,
       this.chainName,
-    )) as WalletUnlocked;
+    )) as WalletUnlocked | WalletLocked;
 
     this.mailbox = new Mailbox(this.addresses.mailbox, this.signer);
   }
@@ -142,17 +156,73 @@ export class FuelCoreAdapter extends BaseFuelAdapter implements ICoreAdapter {
   }
 
   extractMessageIds(
-    _sourceTx: TypedTransactionReceipt,
+    sourceTx: TypedTransactionReceipt,
   ): Array<{ messageId: string; destination: ChainName }> {
-    throw new Error('Method not implemented.');
+    if (sourceTx.type !== ProviderType.Fuels) {
+      throw new Error(
+        `Unsupported provider type for EvmCoreAdapter ${sourceTx.type}`,
+      );
+    }
+
+    const logs = sourceTx.receipt[0].logs;
+    if (!logs) throw new Error('Failed to extract populated logs');
+
+    let messageId: string | undefined;
+    let messageBytes: string | undefined;
+
+    for (const log of [...logs].reverse()) {
+      const data = log.data;
+      if (!data || typeof data !== 'string') continue;
+
+      const hexLength = data.length;
+
+      if (!messageId && hexLength >= 66) {
+        messageId = data;
+        continue;
+      }
+
+      if (!messageBytes && hexLength >= 236) {
+        messageBytes = data;
+        break;
+      }
+    }
+
+    if (!messageId || !messageBytes)
+      throw new Error('Failed to extract message ID or bytes from logs');
+
+    let destination = '';
+    try {
+      const messageHexString = '0x' + Buffer.from(messageBytes).toString('hex');
+      const parsedMessage = parseMessage(messageHexString);
+      destination = this.multiProvider.getChainName(parsedMessage.destination);
+    } catch (e: any) {
+      this.logger.warn('Can not get destination from parsed message', e);
+    }
+
+    return [{ messageId, destination }];
   }
 
   async waitForMessageProcessed(
-    _messageId: HexString,
+    messageId: HexString,
     _destination: ChainName,
-    _delayMs?: number,
-    _maxAttempts?: number,
+    delayMs?: number,
+    maxAttempts?: number,
   ): Promise<boolean> {
-    throw new Error('Method not implemented.');
+    await pollAsync(
+      async () => {
+        this.logger.debug(`Checking if message ${messageId} was processed`);
+
+        const delivered = await this.delivered(messageId);
+        if (delivered) {
+          this.logger.info(`Message ${messageId} was processed`);
+          return true;
+        } else {
+          throw new Error(`Message ${messageId} not yet processed`);
+        }
+      },
+      delayMs,
+      maxAttempts,
+    );
+    return true;
   }
 }

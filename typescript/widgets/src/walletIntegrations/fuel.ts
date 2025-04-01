@@ -1,3 +1,4 @@
+import { TransactionReceipt } from '@ethersproject/providers';
 import {
   useAccount,
   useChain,
@@ -8,13 +9,13 @@ import {
   useNetwork,
   useWallet,
 } from '@fuel-wallet/react';
+import { BigNumber } from 'ethers';
 import {
   ScriptTransactionRequest,
   TransactionResult,
   WalletLocked,
 } from 'fuels';
 import { useCallback, useMemo } from 'react';
-import { TransactionReceipt } from 'viem';
 
 import {
   ChainName,
@@ -76,7 +77,7 @@ export function useFuelWalletDetails(): WalletDetails {
       const connector = connectors[0];
 
       const name = connector.name || fallbackName;
-      const logoUrl = connector.metadata?.image || '';
+      const logoUrl = FALLBACK_LOGO;
 
       return {
         name,
@@ -166,8 +167,8 @@ export function useFuelTransactionFns(
   const onSendTx = useCallback(
     async ({
       tx,
-      chainName,
-      activeChainName,
+      chainName: _chainName,
+      activeChainName: _activeChainName,
     }: {
       tx: WarpTypedTransaction;
       chainName: ChainName;
@@ -178,23 +179,8 @@ export function useFuelTransactionFns(
         throw new Error(`Invalid Fuel provider type ${tx.type}`);
       }
 
-      // if (activeChainName && activeChainName !== chainName) {
-      //   await onSwitchNetwork(chainName);
-      //   throw new Error(`Invalid activeChainName, not equal to ${chainName}`);
-      // }
-
-      // // Verify chain after switch
-      // const chainId = multiProvider.getChainMetadata(chainName).chainId;
-      // assert(
-      //   network?.chainId === chainId,
-      //   `Wallet not on chain ${chainName} (ChainMismatchError) - {activeChainName}`,
-      // );
-
-      logger.info(
-        `Sending tx on chain ${activeChainName ?? 'activeChainName undefined'}`,
-      );
-      logger.info(`Sending tx on chain ${chainName}`);
-      const transactionRequest = await buildTransactionRequest(wallet, tx);
+      const transactionRequest: ScriptTransactionRequest =
+        await buildTransactionRequest(wallet, tx);
 
       return {
         hash: transactionRequest.flag.transactionId ?? '',
@@ -206,8 +192,8 @@ export function useFuelTransactionFns(
             fuelReceipt,
             wallet.address.toString(),
             wallet.address.toString(),
+            fuelReceipt.receipts ?? [],
           );
-          logger.warn('evmCompatibleReciept: ', evmCompatibleReciept);
           receipt.push(evmCompatibleReciept);
           return {
             type: ProviderType.Fuels,
@@ -244,29 +230,34 @@ function fuelTxToEvmReceipt(
   fuelTx: TransactionResult<any>,
   from: string,
   to: string,
+  logs: any[],
 ): TransactionReceipt {
   const gasUsed = fuelTx.gasUsed
-    ? BigInt(fuelTx.gasUsed.toString().replace(/^0x/, ''))
-    : BigInt(0);
+    ? BigNumber.from(fuelTx.gasUsed.toString().replace(/^0x/, ''))
+    : BigNumber.from(0);
 
   const tip = fuelTx.tip
-    ? BigInt(fuelTx.tip.toString().replace(/^0x/, ''))
-    : BigInt(0);
+    ? BigNumber.from(fuelTx.tip.toString().replace(/^0x/, ''))
+    : BigNumber.from(0);
 
   return {
-    to: `0x${to}`,
-    from: `0x${from}`,
-    contractAddress: `0x${fuelTx.id}`,
+    to,
+    from,
+    contractAddress: fuelTx.id,
     transactionIndex: 0,
     gasUsed: gasUsed,
     logsBloom: '0x',
-    blockHash: `0x${fuelTx.blockId || '0'}`,
-    transactionHash: `0x${fuelTx.id || '0'}`,
-    logs: [],
-    blockNumber: BigInt(fuelTx.blockId?.toString() || 0),
+    blockHash: fuelTx.blockId!,
+    transactionHash: fuelTx.id,
+    logs,
+    blockNumber: 0,
+    confirmations: 0,
     cumulativeGasUsed: gasUsed,
     effectiveGasPrice: tip,
-    type: '0',
-    status: fuelTx.isStatusSuccess ? 'success' : 'reverted',
+    byzantium: true,
+    type: 0,
   };
 }
+
+const FALLBACK_LOGO =
+  'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzU0IiBoZWlnaHQ9IjM1NCIgdmlld0JveD0iMCAwIDM1NCAzNTQiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgY2xpcC1wYXRoPSJ1cmwoI2EpIj48cGF0aCBkPSJNMjMuNDg2IDBBMjMuNDggMjMuNDggMCAwIDAgMCAyMy40ODJ2MzI5LjY4NWgyOTIuMjY4YTM3LjMgMzcuMyAwIDAgMCAyNi4zODktMTAuOTIybDIzLjY4MS0yMy42NzFhMzcuMyAzNy4zIDAgMCAwIDEwLjkyMS0yNi4zNjZWMHoiIGZpbGw9IiMwMEY1OEMiLz48cGF0aCBkPSJNNTcuMjU1IDQ1LjQwN2gxNzMuMzc5TDExNS43NTkgMTYwLjI2YTE1LjIxIDE1LjIxIDAgMCAxLTI0LjQ5NS00LjI1TDQ2Ljc1OSA2MS45MzVhMTEuNTczIDExLjU3MyAwIDAgMSAxMC40OTYtMTYuNTI4TTQ1LjQxNyAzMDcuNzQxVjE5Ni4wMDVhMTAuNzk1IDEwLjc5NSAwIDAgMSAxMC43OTYtMTAuNzkyaDExMS43NzN6bTE1MS4wNi0xNTEuMDFhMjcuMjYgMjcuMjYgMCAwIDEtMTkuMjY5IDcuOTc3aC0zN0wyNTEuNTU1IDUzLjM4NGEyNy4yNyAyNy4yNyAwIDAgMSAxOS4yNjktNy45NzdoMzd6IiBmaWxsPSIjMDAwIi8+PC9nPjxkZWZzPjxjbGlwUGF0aCBpZD0iYSI+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTAgMGgzNTMuMjQxdjM1My4yNDFIMHoiLz48L2NsaXBQYXRoPjwvZGVmcz48L3N2Zz4=';

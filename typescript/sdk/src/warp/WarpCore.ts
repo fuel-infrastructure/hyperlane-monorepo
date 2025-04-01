@@ -1,4 +1,4 @@
-import { WalletUnlocked } from 'fuels';
+import { WalletLocked, WalletUnlocked } from 'fuels';
 import { Logger } from 'pino';
 
 import {
@@ -29,6 +29,11 @@ import {
   TokenStandard,
 } from '../token/TokenStandard.js';
 import { EVM_TRANSFER_REMOTE_GAS_ESTIMATE } from '../token/adapters/EvmTokenAdapter.js';
+import {
+  FuelHypCollateralAdapter,
+  FuelHypNativeAdapter,
+  FuelHypSyntheticAdapter,
+} from '../token/adapters/FuelTokenAdapter.js';
 import { IHypXERC20Adapter } from '../token/adapters/ITokenAdapter.js';
 import { ChainName, ChainNameOrId } from '../types.js';
 
@@ -869,11 +874,87 @@ export class WarpCore {
   static async FromConfigWithFuel(
     multiProvider: MultiProtocolProvider<{ mailbox?: Address }>,
     config: unknown,
-    fuelSigner: WalletUnlocked,
+    fuelSigner: WalletUnlocked | WalletLocked,
     fuelChain: ChainName,
   ): Promise<WarpCore> {
     const warpCore = WarpCore.FromConfig(multiProvider, config);
     await multiProvider.setFuelSigner(fuelChain, fuelSigner);
     return warpCore;
+  }
+
+  async assetSendToContractFuel({
+    originTokenAmount,
+    destinationName,
+  }: {
+    originTokenAmount: TokenAmount;
+    destinationName: ChainName;
+  }): Promise<boolean> {
+    const { token, amount } = originTokenAmount;
+    const hypAdapter = token.getHypAdapter(this.multiProvider, destinationName);
+
+    if (
+      hypAdapter instanceof FuelHypCollateralAdapter ||
+      hypAdapter instanceof FuelHypSyntheticAdapter ||
+      hypAdapter instanceof FuelHypNativeAdapter
+    ) {
+      return hypAdapter.sendAssetToContract(amount);
+    } else {
+      return false;
+    }
+  }
+
+  async isAmountCausingPrecisionLoss({
+    originTokenAmount,
+    destination,
+    fromFuel = true,
+  }: {
+    originTokenAmount: TokenAmount;
+    destination: ChainName;
+    fromFuel: boolean;
+  }): Promise<boolean> {
+    const { token, amount } = originTokenAmount;
+    const hypAdapter = token.getHypAdapter(this.multiProvider, destination);
+    const destinationDomain = this.multiProvider.getDomainId(destination);
+
+    if (
+      hypAdapter instanceof FuelHypCollateralAdapter ||
+      hypAdapter instanceof FuelHypSyntheticAdapter ||
+      hypAdapter instanceof FuelHypNativeAdapter
+    ) {
+      return hypAdapter.isAmountCausingPrecisionLoss(
+        amount,
+        destinationDomain,
+        fromFuel,
+      );
+    } else {
+      return false;
+    }
+  }
+
+  async isAmountConvertibleBetweenChains({
+    originTokenAmount,
+    destination,
+    fromFuel = true,
+  }: {
+    originTokenAmount: TokenAmount;
+    destination: ChainName;
+    fromFuel: boolean;
+  }): Promise<boolean> {
+    const { token, amount } = originTokenAmount;
+    const hypAdapter = token.getHypAdapter(this.multiProvider, destination);
+    const destinationDomain = this.multiProvider.getDomainId(destination);
+    if (
+      hypAdapter instanceof FuelHypCollateralAdapter ||
+      hypAdapter instanceof FuelHypSyntheticAdapter ||
+      hypAdapter instanceof FuelHypNativeAdapter
+    ) {
+      return hypAdapter.isAmountConvertibleBetweenChains(
+        destinationDomain,
+        amount,
+        fromFuel,
+      );
+    } else {
+      return false;
+    }
   }
 }
