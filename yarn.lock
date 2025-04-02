@@ -6750,7 +6750,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fuel-infrastructure/fuel-hyperlane-sdk@workspace:typescript/sdk, @hyperlane-xyz/sdk@npm:@fuel-infrastructure/fuel-hyperlane-sdk@0.0.2":
+"@fuel-infrastructure/fuel-hyperlane-sdk@workspace:typescript/sdk":
   version: 0.0.0-use.local
   resolution: "@fuel-infrastructure/fuel-hyperlane-sdk@workspace:typescript/sdk"
   dependencies:
@@ -6805,7 +6805,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@fuel-infrastructure/fuel-hyperlane-utils@workspace:typescript/utils, @hyperlane-xyz/utils@npm:@fuel-infrastructure/fuel-hyperlane-utils@0.0.2":
+"@fuel-infrastructure/fuel-hyperlane-utils@workspace:typescript/utils":
   version: 0.0.0-use.local
   resolution: "@fuel-infrastructure/fuel-hyperlane-utils@workspace:typescript/utils"
   dependencies:
@@ -7342,7 +7342,40 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@hyperlane-xyz/cli@npm:8.6.1, @hyperlane-xyz/cli@workspace:typescript/cli":
+"@hyperlane-xyz/cli@npm:8.6.1":
+  version: 8.6.1
+  resolution: "@hyperlane-xyz/cli@npm:8.6.1"
+  dependencies:
+    "@aws-sdk/client-kms": "npm:^3.577.0"
+    "@aws-sdk/client-s3": "npm:^3.577.0"
+    "@hyperlane-xyz/registry": "npm:9.1.0"
+    "@hyperlane-xyz/sdk": "npm:8.6.1"
+    "@hyperlane-xyz/utils": "npm:8.6.1"
+    "@inquirer/core": "npm:9.0.10"
+    "@inquirer/figures": "npm:1.0.5"
+    "@inquirer/prompts": "npm:3.3.2"
+    "@inquirer/search": "npm:^3.0.1"
+    ansi-escapes: "npm:^7.0.0"
+    asn1.js: "npm:^5.4.1"
+    bignumber.js: "npm:^9.1.1"
+    chalk: "npm:^5.3.0"
+    ethers: "npm:^5.7.2"
+    latest-version: "npm:^8.0.0"
+    terminal-link: "npm:^3.0.0"
+    tsx: "npm:^4.19.1"
+    yaml: "npm:2.4.5"
+    yargs: "npm:^17.7.2"
+    zksync-ethers: "npm:^5.10.0"
+    zod: "npm:^3.21.2"
+    zod-validation-error: "npm:^3.3.0"
+    zx: "npm:^8.1.4"
+  bin:
+    hyperlane: dist/cli.js
+  checksum: 10/50d52552e69edecd3c4390037deb21bd29ca3a8be22d2b2ce38daf939a1f800ba6d36d469f5c25bbd1f91e40709913fcb88340cf4d89a3ed6bf8e28fd41a60f9
+  languageName: node
+  linkType: hard
+
+"@hyperlane-xyz/cli@workspace:typescript/cli":
   version: 0.0.0-use.local
   resolution: "@hyperlane-xyz/cli@workspace:typescript/cli"
   dependencies:
@@ -7393,7 +7426,26 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@hyperlane-xyz/core@npm:5.11.3, @hyperlane-xyz/core@workspace:solidity":
+"@hyperlane-xyz/core@npm:5.11.3":
+  version: 5.11.3
+  resolution: "@hyperlane-xyz/core@npm:5.11.3"
+  dependencies:
+    "@arbitrum/nitro-contracts": "npm:^1.2.1"
+    "@eth-optimism/contracts": "npm:^0.6.0"
+    "@hyperlane-xyz/utils": "npm:8.6.1"
+    "@layerzerolabs/lz-evm-oapp-v2": "npm:2.0.2"
+    "@openzeppelin/contracts": "npm:^4.9.3"
+    "@openzeppelin/contracts-upgradeable": "npm:^4.9.3"
+    fx-portal: "npm:^1.0.3"
+  peerDependencies:
+    "@ethersproject/abi": "*"
+    "@ethersproject/providers": "*"
+    "@types/sinon-chai": "*"
+  checksum: 10/92765eb05b237d3ad6c41d02d48bbe8113dc8f57bd29f71a8003638547bde56059dbcec30b7a9a85ccc3175d63dee39323d91bc845d51b43116e6cff89b9a885
+  languageName: node
+  linkType: hard
+
+"@hyperlane-xyz/core@workspace:solidity":
   version: 0.0.0-use.local
   resolution: "@hyperlane-xyz/core@workspace:solidity"
   dependencies:
@@ -7451,7 +7503,25 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@hyperlane-xyz/helloworld@npm:8.6.1, @hyperlane-xyz/helloworld@workspace:typescript/helloworld":
+"@hyperlane-xyz/helloworld@npm:8.6.1":
+  version: 8.6.1
+  resolution: "@hyperlane-xyz/helloworld@npm:8.6.1"
+  dependencies:
+    "@hyperlane-xyz/core": "npm:5.11.3"
+    "@hyperlane-xyz/registry": "npm:9.1.0"
+    "@hyperlane-xyz/sdk": "npm:8.6.1"
+    "@openzeppelin/contracts-upgradeable": "npm:^4.9.3"
+    ethers: "npm:^5.7.2"
+  peerDependencies:
+    "@ethersproject/abi": "*"
+    "@ethersproject/providers": "*"
+    "@types/node": "*"
+    "@types/sinon-chai": "*"
+  checksum: 10/2e2d9eb4a7943dc66c583cf0bf26cc08870019925f2450b14fe2e7bf0ad8f7d171393648bfc856500020f2eef47e60232306316ca709f072c8abd95717ecb208
+  languageName: node
+  linkType: hard
+
+"@hyperlane-xyz/helloworld@workspace:typescript/helloworld":
   version: 0.0.0-use.local
   resolution: "@hyperlane-xyz/helloworld@workspace:typescript/helloworld"
   dependencies:
@@ -7579,6 +7649,53 @@ __metadata:
     yaml: "npm:2.4.5"
     zod: "npm:^3.21.2"
   checksum: 10/a304c2186879eb6ece3f3b1b3a767a5bd91f3f1b35f692bc1679e6b0a6c32df220dcee0af72538fbe58d48601b98f0afe1182336998dea7faacc34ef608bc01b
+  languageName: node
+  linkType: hard
+
+"@hyperlane-xyz/sdk@npm:@fuel-infrastructure/fuel-hyperlane-sdk@0.0.2":
+  version: 0.0.2
+  resolution: "@fuel-infrastructure/fuel-hyperlane-sdk@npm:0.0.2"
+  dependencies:
+    "@arbitrum/sdk": "npm:^4.0.0"
+    "@aws-sdk/client-s3": "npm:^3.577.0"
+    "@chain-registry/types": "npm:^0.50.14"
+    "@cosmjs/cosmwasm-stargate": "npm:^0.32.4"
+    "@cosmjs/stargate": "npm:^0.32.4"
+    "@hyperlane-xyz/core": "npm:5.11.3"
+    "@hyperlane-xyz/utils": "npm:8.6.1"
+    "@safe-global/api-kit": "npm:1.3.0"
+    "@safe-global/protocol-kit": "npm:1.3.0"
+    "@safe-global/safe-deployments": "npm:1.37.23"
+    "@solana/spl-token": "npm:^0.4.9"
+    "@solana/web3.js": "npm:^1.95.4"
+    bignumber.js: "npm:^9.1.1"
+    cosmjs-types: "npm:^0.9.0"
+    cross-fetch: "npm:^3.1.5"
+    ethers: "npm:^5.7.2"
+    fuels: "npm:^0.100.1"
+    pino: "npm:^8.19.0"
+    viem: "npm:^2.21.45"
+    zod: "npm:^3.21.2"
+  peerDependencies:
+    "@ethersproject/abi": "*"
+    "@ethersproject/providers": "*"
+  checksum: 10/b877d2b0d0f794e444a9349f5303d42be77ecb78128a377d41097394c9ba28e8ae3f252f4d155ca99caaf329b1323c693940c45918f83993beecc514a334af14
+  languageName: node
+  linkType: hard
+
+"@hyperlane-xyz/utils@npm:@fuel-infrastructure/fuel-hyperlane-utils@0.0.2":
+  version: 0.0.2
+  resolution: "@fuel-infrastructure/fuel-hyperlane-utils@npm:0.0.2"
+  dependencies:
+    "@cosmjs/encoding": "npm:^0.32.4"
+    "@solana/web3.js": "npm:^1.95.4"
+    bignumber.js: "npm:^9.1.1"
+    ethers: "npm:^5.7.2"
+    fuels: "npm:^0.100.1"
+    lodash-es: "npm:^4.17.21"
+    pino: "npm:^8.19.0"
+    yaml: "npm:2.4.5"
+  checksum: 10/dc6b362a7dd1928dc2764be61636daab07d18d5a5553fe6b96044047058aab604c1b2e5d9e6a497c4772fc504dac8cea7f1eb372e8b3c084564a0b0808195f68
   languageName: node
   linkType: hard
 

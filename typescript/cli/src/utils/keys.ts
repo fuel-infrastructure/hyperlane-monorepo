@@ -43,7 +43,7 @@ export async function getSigners({
   });
   if (protocolKeys.length === 0) throw new Error('No keys provided');
 
-  const signers: ProtocolMap<ethers.Wallet | WalletUnlocked | WalletLocked> =
+  const signers: ProtocolMap<ethers.Wallet | (WalletUnlocked | WalletLocked)> =
     {};
   for (const { protocol, key } of protocolKeys) {
     switch (protocol) {

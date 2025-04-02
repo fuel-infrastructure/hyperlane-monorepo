@@ -44,7 +44,7 @@ import {
 export interface MultiProtocolProviderOptions {
   logger?: Logger;
   providers?: ChainMap<ProviderMap<TypedProvider>>;
-  signers?: ProtocolMap<ethers.Wallet | WalletUnlocked | WalletLocked>;
+  signers?: ProtocolMap<ethers.Wallet | (WalletUnlocked | WalletLocked)>;
   providerBuilders?: Partial<ProviderBuilderMap>;
 }
 
@@ -65,7 +65,7 @@ export class MultiProtocolProvider<
   protected readonly providers: ChainMap<ProviderMap<TypedProvider>>;
   // Protocol  -> signer
   protected readonly signers: ProtocolMap<
-    ethers.Wallet | WalletUnlocked | WalletLocked
+    ethers.Wallet | (WalletUnlocked | WalletLocked)
   >;
   protected readonly providerBuilders: Partial<ProviderBuilderMap>;
   public readonly logger: Logger;
@@ -137,7 +137,7 @@ export class MultiProtocolProvider<
   async getSigner(
     protocol: ProtocolType,
     chain: ChainNameOrId,
-  ): Promise<ethers.Wallet | WalletUnlocked | WalletLocked> {
+  ): Promise<ethers.Wallet | (WalletUnlocked | WalletLocked)> {
     const signer = await this.tryGetSigner(protocol, chain);
     if (!signer) throw new Error(`No chain signer set for ${protocol}`);
     return signer;
@@ -150,7 +150,7 @@ export class MultiProtocolProvider<
   async tryGetSigner(
     protocol: ProtocolType,
     chainNameOrId: ChainNameOrId,
-  ): Promise<ethers.Wallet | WalletUnlocked | WalletLocked | null> {
+  ): Promise<ethers.Wallet | (WalletUnlocked | WalletLocked) | null> {
     const signer = this.signers[protocol];
     if (!signer) return null;
 

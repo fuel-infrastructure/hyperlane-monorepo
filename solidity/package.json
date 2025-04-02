@@ -89,5 +89,8 @@
     "@ethersproject/abi": "*",
     "@ethersproject/providers": "*",
     "@types/sinon-chai": "*"
+  },
+  "resolutions": {
+    "@hyperlane-xyz/utils": "npm:@fuel-infrastructure/fuel-hyperlane-utils@0.0.2"
   }
 }

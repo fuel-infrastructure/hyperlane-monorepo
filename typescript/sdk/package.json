@@ -53,14 +53,7 @@
   },
   "type": "module",
   "exports": {
-    ".": {
-      "default": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    },
-    "./fuel-types": {
-      "default": "./dist/fuel-types/index.js",
-      "types": "./dist/fuel-types/index.d.ts"
-    }
+    ".": "./dist/index.js"
   },
   "types": "./dist/index.d.ts",
   "files": [

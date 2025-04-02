@@ -1,6 +1,6 @@
 import { password } from '@inquirer/prompts';
 import { Signer, Wallet } from 'ethers';
-import { Wallet as FuelWallet } from 'fuels';
+import { WalletUnlocked } from 'fuels';
 import { Wallet as ZKSyncWallet } from 'zksync-ethers';
 
 import {
@@ -96,7 +96,7 @@ class FuelSignerStrategy extends BaseMultiProtocolSigner {
     return { privateKey };
   }
 
-  getSigner(config: SignerConfig): FuelWallet {
-    return new Wallet(config.privateKey);
+  getSigner(config: SignerConfig): WalletUnlocked {
+    return new WalletUnlocked(config.privateKey);
   }
 }

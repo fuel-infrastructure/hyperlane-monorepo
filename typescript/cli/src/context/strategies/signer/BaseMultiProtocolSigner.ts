@@ -1,5 +1,5 @@
 import { Signer } from 'ethers';
-import { Wallet as FuelWallet } from 'fuels';
+import { WalletLocked, WalletUnlocked } from 'fuels';
 
 import { ChainName, ChainSubmissionStrategy } from '@hyperlane-xyz/sdk';
 import { Address } from '@hyperlane-xyz/utils';
@@ -12,12 +12,14 @@ export interface SignerConfig {
 
 export interface IMultiProtocolSigner {
   getSignerConfig(chain: ChainName): Promise<SignerConfig> | SignerConfig;
-  getSigner(config: SignerConfig): Signer | FuelWallet;
+  getSigner(config: SignerConfig): Signer | WalletLocked | WalletUnlocked;
 }
 
 export abstract class BaseMultiProtocolSigner implements IMultiProtocolSigner {
   constructor(protected config: ChainSubmissionStrategy) {}
 
   abstract getSignerConfig(chain: ChainName): Promise<SignerConfig>;
-  abstract getSigner(config: SignerConfig): Signer | FuelWallet;
+  abstract getSigner(
+    config: SignerConfig,
+  ): Signer | WalletLocked | WalletUnlocked;
 }
