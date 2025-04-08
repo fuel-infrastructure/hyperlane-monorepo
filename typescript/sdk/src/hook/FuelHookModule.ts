@@ -11,6 +11,7 @@ import {
   rootLogger,
 } from '@hyperlane-xyz/utils';
 
+import { Aggregation } from '../fuel-types/Aggregation.js';
 import { AggregationFactory } from '../fuel-types/AggregationFactory.js';
 import { FallbackDomainRoutingHook } from '../fuel-types/FallbackDomainRoutingHook.js';
 import { FallbackDomainRoutingHookFactory } from '../fuel-types/FallbackDomainRoutingHookFactory.js';
@@ -59,9 +60,36 @@ import {
 export class FuelHookModule {
   static logger = rootLogger.child({ module: 'FuelHookModule' });
 
+  static async sleep(sec: number) {
+    return new Promise((resolve) => setTimeout(resolve, sec * 1000));
+  }
   // =================== Deploy ===================
 
-  public static async deploy(
+  public static async deployWithRetry(
+    multiProtocolProvider: MultiProtocolProvider,
+    chain: ChainNameOrId,
+    hookConfig: HookConfig,
+    mailboxId: string,
+    retries = 5,
+  ) {
+    for (let i = 0; i < retries; i++) {
+      try {
+        return await this.deploy(
+          multiProtocolProvider,
+          chain,
+          hookConfig,
+          mailboxId,
+        );
+      } catch (error) {
+        if (i === retries - 1) throw error;
+        this.logger.warn(`Attempt ${i + 1} failed: ${error}. Retrying...`);
+        await this.sleep(2);
+      }
+    }
+    throw new Error('Fuel deployment loop out of bounds');
+  }
+
+  static async deploy(
     multiProtocolProvider: MultiProtocolProvider,
     chain: ChainNameOrId,
     hookConfig: HookConfig,
@@ -114,47 +142,54 @@ export class FuelHookModule {
     signer: WalletUnlocked,
     mailboxId: string,
   ): Promise<string> {
-    const signerAddress = signer.address.toB256();
     const { contractId, waitForResult } = await MerkleTreeHookFactory.deploy(
       signer,
       {
         configurableConstants: {
-          EXPECTED_INITIALIZER: signerAddress,
+          EXPECTED_INITIALIZER: signer.address.b256Address,
         },
       },
     );
-    const { contract } = await waitForResult();
-    await (
-      await contract.functions.initialize({ bits: mailboxId }).call()
-    ).waitForResult();
+    const { contract } = await waitForResult().then(async (res) => {
+      await this.sleep(2);
+      return res;
+    });
+    await (await contract.functions.initialize({ bits: mailboxId }).call())
+      .waitForResult()
+      .then(async () => this.sleep(2));
 
     return contractId;
   }
 
   static async deployProtocolFeeHook(
-    config: ProtocolFeeHookConfig,
+    { protocolFee, beneficiary, owner, maxProtocolFee }: ProtocolFeeHookConfig,
     signer: WalletUnlocked,
   ): Promise<string> {
-    const signerAddress = signer.address.toB256();
     const { contractId, waitForResult } = await ProtocolFeeFactory.deploy(
       signer,
       {
         configurableConstants: {
-          EXPECTED_INITIALIZER: signerAddress,
+          EXPECTED_OWNER: signer.address.b256Address,
+          MAX_PROTOCOL_FEE: maxProtocolFee,
         },
       },
     );
 
-    const { contract } = await waitForResult();
+    const { contract } = await waitForResult().then(async (res) => {
+      await this.sleep(2);
+      return res;
+    });
     await (
       await contract.functions
         .initialize(
-          new BN(config.protocolFee),
-          { Address: { bits: config.beneficiary } },
-          { Address: { bits: config.owner } },
+          new BN(protocolFee),
+          { Address: { bits: beneficiary } },
+          { Address: { bits: owner } },
         )
         .call()
-    ).waitForResult();
+    )
+      .waitForResult()
+      .then(async () => this.sleep(2));
 
     return contractId;
   }
@@ -168,12 +203,15 @@ export class FuelHookModule {
       signer,
       {
         configurableConstants: {
-          EXPECTED_INITIALIZER: signerAddress,
+          EXPECTED_INITIALIZER: signer.address.b256Address,
         },
       },
     );
 
-    const { contract } = await waitForResult();
+    const { contract } = await waitForResult().then(async (res) => {
+      await this.sleep(2);
+      return res;
+    });
     const hookAddresses = config.hooks.map((hook) => ({
       bits: hook.toString(),
     }));
@@ -182,7 +220,9 @@ export class FuelHookModule {
       await contract.functions
         .initialize({ Address: { bits: signerAddress } }, hookAddresses)
         .call()
-    ).waitForResult();
+    )
+      .waitForResult()
+      .then(async () => this.sleep(2));
 
     return contractId;
   }
@@ -195,11 +235,14 @@ export class FuelHookModule {
     const { contractId, waitForResult } =
       await FallbackDomainRoutingHookFactory.deploy(signer, {
         configurableConstants: {
-          EXPECTED_INITIALIZER: signerAddress,
+          EXPECTED_OWNER: signerAddress,
         },
       });
 
-    const { contract } = await waitForResult();
+    const { contract } = await waitForResult().then(async (res) => {
+      await this.sleep(2);
+      return res;
+    });
     const fallbackStr =
       typeof config.fallback === 'string' ? config.fallback : ''; // TODO: check if this is correct
 
@@ -207,7 +250,9 @@ export class FuelHookModule {
       await contract.functions
         .initialize({ Address: { bits: signerAddress } }, fallbackStr)
         .call()
-    ).waitForResult();
+    )
+      .waitForResult()
+      .then(async () => this.sleep(2));
 
     return contractId;
   }
@@ -215,11 +260,11 @@ export class FuelHookModule {
   static async deployPausableHook(signer: WalletUnlocked) {
     const signerAddress = signer.address.toB256();
 
-    const { contractId } = await PausableHookFactory.deploy(signer, {
-      configurableConstants: {
-        EXPECTED_INITIALIZER: signerAddress,
-      },
-    });
+    const { contractId, waitForResult } = await PausableHookFactory.deploy(
+      signer,
+      { configurableConstants: { EXPECTED_OWNER: signerAddress } },
+    );
+    await waitForResult().then(async () => this.sleep(2));
 
     return contractId;
   }
@@ -251,17 +296,25 @@ export class FuelHookModule {
     config: IgpHookConfig,
     signer: WalletUnlocked,
   ) {
-    const { contractId, waitForResult } = await GasOracleFactory.deploy(signer);
-    const { contract } = await waitForResult();
+    const tempOwner = signer.address.toB256();
+    const { contractId, waitForResult } = await GasOracleFactory.deploy(
+      signer,
+      { configurableConstants: { EXPECTED_OWNER: tempOwner } },
+    );
+    const { contract } = await waitForResult().then(async (res) => {
+      await this.sleep(2);
+      return res;
+    });
 
     const owner = config.oracleKey;
-    const tempOwner = signer.address.toB256();
 
     await (
       await contract.functions
         .initialize_ownership({ Address: { bits: tempOwner } })
         .call()
-    ).waitForResult();
+    )
+      .waitForResult()
+      .then(async () => this.sleep(2));
 
     const configs: Array<StorageGasOracle.RemoteGasDataConfigStruct> = [];
     const igpSetupData: {
@@ -289,19 +342,23 @@ export class FuelHookModule {
 
     await (
       await contract.functions.set_remote_gas_data_configs(parsedConfigs).call()
-    ).waitForResult();
+    )
+      .waitForResult()
+      .then(async () => this.sleep(2));
 
     await (
       await contract.functions
         .transfer_ownership({ Address: { bits: owner } })
         .call()
-    ).waitForResult();
+    )
+      .waitForResult()
+      .then(async () => this.sleep(2));
 
     return { contractId, igpSetupData };
   }
 
   static async deployInterchainGasPaymaster(
-    { owner, beneficiary }: IgpConfig,
+    { owner, beneficiary, oracleConfig }: IgpConfig,
     signer: WalletUnlocked,
     gasOracleAddress: string,
     igpSetupData: {
@@ -310,11 +367,23 @@ export class FuelHookModule {
       overhead: number;
     }[],
   ) {
+    const tempOwner = signer.address.toB256();
+    const { gasPrice, tokenExchangeRate, tokenDecimals } = oracleConfig;
     const { contractId, waitForResult } = await GasPaymasterFactory.deploy(
       signer,
+      {
+        configurableConstants: {
+          EXPECTED_OWNER: tempOwner,
+          TOKEN_EXCHANGE_RATE_SCALE: tokenExchangeRate,
+          DEFAULT_GAS_AMOUNT: gasPrice,
+          BASE_ASSET_DECIMALS: tokenDecimals,
+        },
+      },
     );
-    const { contract } = await waitForResult();
-    const tempOwner = signer.address.toB256();
+    const { contract } = await waitForResult().then(async (res) => {
+      await this.sleep(2);
+      return res;
+    });
 
     await (
       await contract.functions
@@ -323,27 +392,35 @@ export class FuelHookModule {
           { Address: { bits: beneficiary } },
         )
         .call()
-    ).waitForResult();
+    )
+      .waitForResult()
+      .then(async () => this.sleep(2));
 
     for (const { domainId, overhead } of igpSetupData) {
       await (
         await contract.functions
           .set_gas_oracle(domainId.toString(), gasOracleAddress)
           .call()
-      ).waitForResult();
+      )
+        .waitForResult()
+        .then(async () => this.sleep(2));
 
       await (
         await contract.functions
           .set_gas_overhead(domainId.toString(), overhead)
           .call()
-      ).waitForResult();
+      )
+        .waitForResult()
+        .then(async () => this.sleep(2));
     }
 
     await (
       await contract.functions
         .transfer_ownership({ Address: { bits: owner } })
         .call()
-    ).waitForResult();
+    )
+      .waitForResult()
+      .then(async () => this.sleep(2));
 
     return contractId;
   }
@@ -354,6 +431,7 @@ export class FuelHookModule {
     multiProtocolProvider: MultiProtocolProvider,
     hookAddress: string,
     signer: WalletUnlocked,
+    chain: string,
   ): Promise<DerivedHookConfig> {
     const onChainHookType =
       // Could instantiate any Hook since they all have the `hook_type` function
@@ -373,18 +451,19 @@ export class FuelHookModule {
           hookAddress,
           signer,
           multiProtocolProvider,
+          chain,
         );
       case PostDispatchHookTypeOutput.AGGREGATION:
-        return this.deriveAggregationConfig(hookAddress);
+        return this.deriveAggregationConfig(
+          multiProtocolProvider,
+          hookAddress,
+          signer,
+          chain,
+        );
       case PostDispatchHookTypeOutput.PAUSABLE:
         return this.derivePausableConfig(hookAddress, signer);
       case PostDispatchHookTypeOutput.PROTOCOL_FEE:
         return this.deriveProtocolFeeConfig(hookAddress, signer);
-      case PostDispatchHookTypeOutput.UNUSED:
-        return {
-          address: hookAddress,
-          type: HookType.MERKLE_TREE, // TODO remove
-        };
       default:
         throw new Error(`Unsupported hook type: ${onChainHookType}`);
     }
@@ -393,43 +472,79 @@ export class FuelHookModule {
   static async deriveMerkleTreeConfig(
     hookAddress: string,
   ): Promise<WithAddress<MerkleTreeHookConfig>> {
-    return {
-      address: hookAddress,
-      type: HookType.MERKLE_TREE,
-    };
+    return { address: hookAddress, type: HookType.MERKLE_TREE };
+  }
+
+  static possibleDomainIds(
+    currentChain: ChainNameOrId,
+    multiProtocolProvider: MultiProtocolProvider,
+  ): number[] {
+    const isTestnet =
+      !!multiProtocolProvider.getChainMetadata(currentChain).isTestnet;
+
+    // filter to only domains that are the same testnet/mainnet
+    return multiProtocolProvider
+      .getKnownChainNames()
+      .filter(
+        (chainName) =>
+          !!multiProtocolProvider.getChainMetadata(chainName).isTestnet ===
+          isTestnet,
+      )
+      .map((chainName) => multiProtocolProvider.getDomainId(chainName));
   }
 
   static async deriveFallbackRoutingConfig(
     hookAddress: string,
     signer: WalletUnlocked,
     multiProtocolProvider: MultiProtocolProvider,
+    chain: string,
   ): Promise<WithAddress<FallbackRoutingHookConfig>> {
     const hook = new FallbackDomainRoutingHook(hookAddress, signer);
     const ownerResponse = (await hook.functions.owner().simulate()).value;
     const owner = this.getOwnerFromOwnerResponse(ownerResponse);
+    const fallback = (await hook.functions.fallback_hook().simulate()).value;
 
-    const domainIds = multiProtocolProvider.getKnownDomainIds();
+    const domainIds = this.possibleDomainIds(chain, multiProtocolProvider);
+    const domains: Record<string, any> = {};
+
+    for (const domainId of domainIds) {
+      const domainHookId = (await hook.functions.hooks(domainId).simulate())
+        .value;
+      if (domainHookId) {
+        const chainName = multiProtocolProvider.getChainName(domainId);
+        domains[chainName] = await this.deriveHookConfig(
+          multiProtocolProvider,
+          domainHookId,
+          signer,
+          chain,
+        );
+      }
+    }
 
     return {
       address: hookAddress,
       type: HookType.FALLBACK_ROUTING,
       owner,
-      fallback: '', // TODO: get fallback
-      domains: domainIds.reduce(
-        (acc, domainId) => ({ ...acc, [domainId]: '' }),
-        {},
-      ),
+      fallback,
+      domains,
     };
   }
 
   static async deriveAggregationConfig(
+    multiProtocolProvider: MultiProtocolProvider,
     hookAddress: string,
+    signer: WalletUnlocked,
+    chain: string,
   ): Promise<WithAddress<AggregationHookConfig>> {
-    return {
-      address: hookAddress,
-      type: HookType.AGGREGATION,
-      hooks: [], // TODO: get hooks
-    };
+    const hook = new Aggregation(hookAddress, signer);
+    const hooks = await Promise.all(
+      (
+        await hook.functions.get_hooks().simulate()
+      ).value.map((hook) =>
+        this.deriveHookConfig(multiProtocolProvider, hook.bits, signer, chain),
+      ),
+    );
+    return { address: hookAddress, type: HookType.AGGREGATION, hooks };
   }
 
   static async derivePausableConfig(
@@ -439,13 +554,13 @@ export class FuelHookModule {
     const hook = new PausableHook(hookAddress, signer);
     const ownerResponse = (await hook.functions.owner().simulate()).value;
     const owner = this.getOwnerFromOwnerResponse(ownerResponse);
+    const paused = (await hook.functions.is_paused().simulate()).value;
 
     return {
       address: hookAddress,
       type: HookType.PAUSABLE,
       owner,
-      paused: false,
-      ownerOverrides: {}, // TODO: get owner overrides
+      paused,
     };
   }
 
@@ -477,7 +592,6 @@ export class FuelHookModule {
       beneficiary,
       maxProtocolFee,
       protocolFee,
-      ownerOverrides: {}, // TODO: get owner overrides
     };
   }
 
@@ -592,7 +706,7 @@ export class FuelHookModule {
         targetConfig as Exclude<HookConfig, string>,
       )
     ) {
-      const newHookId = await this.deploy(
+      const newHookId = await this.deployWithRetry(
         multiProtocolProvider,
         chain,
         targetConfig,

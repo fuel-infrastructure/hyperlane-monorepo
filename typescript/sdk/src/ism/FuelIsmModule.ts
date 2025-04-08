@@ -3,6 +3,7 @@ import { B256AddressEvm, TransactionResponse, WalletUnlocked } from 'fuels';
 import {
   ProtocolType,
   WithAddress,
+  addressToBytes32,
   assert,
   concurrentMap,
   deepEquals,
@@ -19,9 +20,11 @@ import { DefaultFallbackDomainRoutingIsm } from '../fuel-types/DefaultFallbackDo
 import { DefaultFallbackDomainRoutingIsmFactory } from '../fuel-types/DefaultFallbackDomainRoutingIsmFactory.js';
 import { DomainRoutingIsm } from '../fuel-types/DomainRoutingIsm.js';
 import { DomainRoutingIsmFactory } from '../fuel-types/DomainRoutingIsmFactory.js';
+import { IsmTestFactory } from '../fuel-types/IsmTestFactory.js';
 import { MerkleRootMultisigIsm } from '../fuel-types/MerkleRootMultisigIsm.js';
 import { MerkleRootMultisigIsmFactory } from '../fuel-types/MerkleRootMultisigIsmFactory.js';
 import { MessageIdMultisigIsmFactory } from '../fuel-types/MessageIdMultisigIsmFactory.js';
+import { PausableIsm } from '../fuel-types/PausableIsm.js';
 import { PausableIsmFactory } from '../fuel-types/PausableIsmFactory.js';
 import { WarpRoute } from '../fuel-types/WarpRoute.js';
 import { MultiProtocolProvider } from '../providers/MultiProtocolProvider.js';
@@ -39,6 +42,7 @@ import {
   MUTABLE_ISM_TYPE,
   MultisigIsmConfig,
   MultisigIsmConfigSchema,
+  NullIsmConfig,
   RoutingIsmConfig,
   RoutingIsmConfigSchema,
 } from './types.js';
@@ -48,9 +52,41 @@ export class FuelIsmModule {
   private static logger = rootLogger.child({ module: 'FuelIsmModule' });
   private static concurrency = 1;
 
+  static async sleep(sec: number) {
+    return new Promise((resolve) => setTimeout(resolve, sec * 1000));
+  }
+
   // ============== Deploy ==============
 
-  public static async deploy(
+  public static async deployWithRetry(
+    multiProtocolProvider: MultiProtocolProvider,
+    chain: ChainNameOrId,
+    ismConfig: IsmConfig,
+    mailboxId: string,
+    retries = 5,
+  ) {
+    for (let i = 0; i < retries; i++) {
+      try {
+        const result = await this.deploy(
+          multiProtocolProvider,
+          chain,
+          ismConfig,
+          mailboxId,
+        );
+        return result;
+      } catch (error) {
+        if (i === retries - 1) {
+          this.logger.error(`All ${retries} attempts failed: ${error}`);
+          throw error;
+        }
+        this.logger.warn(`Attempt ${i + 1} failed: ${error}. Retrying...`);
+        await this.sleep(2);
+      }
+    }
+    throw new Error('Fuel deployment loop out of bounds');
+  }
+
+  static async deploy(
     multiProtocolProvider: MultiProtocolProvider,
     chain: ChainNameOrId,
     ismConfig: IsmConfig,
@@ -60,7 +96,7 @@ export class FuelIsmModule {
       ProtocolType.Fuel,
       chain,
     )) as WalletUnlocked;
-    const owner = signer.address.toString();
+    const owner = signer.address.b256Address;
 
     if (ismConfig instanceof Object) {
       switch (ismConfig.type) {
@@ -104,10 +140,22 @@ export class FuelIsmModule {
           );
           return this.deployPausableIsm(signer);
         }
+        case IsmType.TEST_ISM: {
+          this.logger.info(
+            `Deploying test ISM for mailbox ${mailboxId} on chain ${chain}`,
+          );
+          return this.deployTestIsm(signer);
+        }
         default:
           throw new Error('Invalid ismConfig');
       }
     } else throw new Error('Invalid ismConfig');
+  }
+
+  static async deployTestIsm(signer: WalletUnlocked) {
+    const { waitForResult } = await IsmTestFactory.deploy(signer);
+    await waitForResult().then(async () => this.sleep(2));
+    return signer.address.b256Address;
   }
 
   static async deployRoutingIsm(
@@ -121,29 +169,35 @@ export class FuelIsmModule {
     const routingConfig = RoutingIsmConfigSchema.parse(
       ismConfig,
     ) as DomainRoutingIsmConfig;
-
     const domains: number[] = [];
     const modules: string[] = [];
-    await Promise.all(
-      Object.entries(routingConfig.domains).map(async ([domain, config]) => {
-        const ismId = await this.deploy(
-          multiProtocolProvider,
-          chain,
-          config,
-          mailboxId,
-        );
-        domains.push(Number(domain));
-        modules.push(ismId);
-      }),
-    );
 
-    const { waitForResult, contractId } =
+    for (const [domain, config] of Object.entries(routingConfig.domains)) {
+      const ismId = await this.deployWithRetry(
+        multiProtocolProvider,
+        chain,
+        config,
+        mailboxId,
+      );
+      const domainId = multiProtocolProvider.getDomainId(domain);
+      domains.push(domainId);
+      modules.push(ismId);
+    }
+
+    const { waitForResult } =
       routingConfig.type === IsmType.ROUTING
-        ? await DomainRoutingIsmFactory.deploy(signer)
-        : await DefaultFallbackDomainRoutingIsmFactory.deploy(signer);
-    const { contract } = await waitForResult();
+        ? await DomainRoutingIsmFactory.deploy(signer, {
+            configurableConstants: { EXPECTED_OWNER: owner },
+          })
+        : await DefaultFallbackDomainRoutingIsmFactory.deploy(signer, {
+            configurableConstants: { EXPECTED_OWNER: owner },
+          });
+    const { contract } = await waitForResult().then(async (res) => {
+      await this.sleep(2);
+      return res;
+    });
 
-    const { waitForResult: wait } =
+    const initResult =
       routingConfig.type === IsmType.ROUTING
         ? await (contract as DomainRoutingIsm).functions
             .initialize_with_domains(
@@ -160,9 +214,9 @@ export class FuelIsmModule {
               modules,
             )
             .call();
-    await wait();
+    await initResult.waitForResult().then(async () => this.sleep(2));
 
-    return contractId;
+    return contract.id.b256Address;
   }
 
   static async deployAggregationIsm(
@@ -173,55 +227,92 @@ export class FuelIsmModule {
     signer: WalletUnlocked,
     owner: string,
   ) {
-    const aggregationConfig = AggregationIsmConfigSchema.parse(ismConfig);
+    const { modules, threshold } = AggregationIsmConfigSchema.parse(ismConfig);
+    const deployedModules: string[] = [];
 
-    const modules = await Promise.all(
-      aggregationConfig.modules.map(async (config) => {
-        return this.deploy(multiProtocolProvider, chain, config, mailboxId);
-      }),
-    );
-    const { threshold } = aggregationConfig;
+    for (const config of modules) {
+      const moduleId = await this.deployWithRetry(
+        multiProtocolProvider,
+        chain,
+        config,
+        mailboxId,
+      );
+      deployedModules.push(moduleId);
+    }
 
-    const { waitForResult, contractId } = await AggregationIsmFactory.deploy(
-      signer,
-    );
-    const { contract } = await waitForResult();
-    await (
-      await contract.functions
-        .initialize(
-          { Address: { bits: owner } },
-          modules.map((module) => ({ bits: module })),
-          threshold,
-        )
-        .call()
-    ).waitForResult();
+    const deploymentResult = await AggregationIsmFactory.deploy(signer, {
+      configurableConstants: { EXPECTED_INITIALIZER: owner },
+    });
+    const { contract } = await deploymentResult
+      .waitForResult()
+      .then(async (res) => {
+        await this.sleep(2);
+        return res;
+      });
 
-    return contractId;
+    const initResult = await contract.functions
+      .initialize(
+        { Address: { bits: signer.address.b256Address } },
+        deployedModules.map((module) => ({ bits: module })),
+        threshold,
+      )
+      .call();
+    await initResult.waitForResult().then(async () => this.sleep(2));
+
+    return contract.id.b256Address;
   }
 
   static async deployMultisigIsm(ismConfig: IsmConfig, signer: WalletUnlocked) {
-    const { type, validators } = MultisigIsmConfigSchema.parse(ismConfig);
+    const { type, validators, threshold } =
+      MultisigIsmConfigSchema.parse(ismConfig);
 
     const factory =
       type === IsmType.MERKLE_ROOT_MULTISIG
         ? MerkleRootMultisigIsmFactory
         : MessageIdMultisigIsmFactory;
-    const { waitForResult, contractId } = await factory.deploy(signer);
-    const { contract } = await waitForResult();
+    const { waitForResult } = await factory.deploy(signer, {
+      configurableConstants: {
+        EXPECTED_INITIALIZER: signer.address.b256Address,
+        THRESHOLD: threshold,
+      },
+    });
+    const { contract } = await waitForResult().then(async (res) => {
+      await this.sleep(2);
+      return res;
+    });
 
     await (
       await contract.functions
-        .initialize(validators.map((v) => ({ bits: v as B256AddressEvm })))
+        .initialize(
+          validators.map((v) => ({
+            bits: addressToBytes32(v) as B256AddressEvm,
+          })),
+        )
         .call()
-    ).waitForResult();
+    )
+      .waitForResult()
+      .then(async () => this.sleep(2));
 
-    return contractId;
+    return contract.id.b256Address;
   }
 
   static async deployPausableIsm(signer: WalletUnlocked) {
-    const { contractId } = await PausableIsmFactory.deploy(signer);
+    const { waitForResult } = await PausableIsmFactory.deploy(signer, {
+      configurableConstants: { EXPECTED_OWNER: signer.address.b256Address },
+    });
+    const { contract } = await waitForResult().then(async (res) => {
+      await this.sleep(2);
+      return res;
+    });
+    await (
+      await contract.functions
+        .initialize_ownership({ Address: { bits: signer.address.b256Address } })
+        .call()
+    )
+      .waitForResult()
+      .then(() => this.sleep(2));
 
-    return contractId;
+    return contract.id.b256Address;
   }
 
   // ============== Read ==============
@@ -256,10 +347,32 @@ export class FuelIsmModule {
       case ModuleTypeOutput.MESSAGE_ID_MULTISIG:
         return this.deriveMultisigConfig(ismAddress, signer, onChainIsmType);
       case ModuleTypeOutput.NULL:
-        return { address: ismAddress, type: IsmType.TEST_ISM };
+        return this.deriveNullConfig(ismAddress, signer);
       default:
         throw new Error('Unsupported Fuel ISM type' + onChainIsmType);
     }
+  }
+
+  static async deriveNullConfig(
+    ismAddress: string,
+    signer: WalletUnlocked,
+  ): Promise<WithAddress<NullIsmConfig>> {
+    const ism = new PausableIsm(ismAddress, signer);
+
+    try {
+      const paused = (await ism.functions.is_paused().simulate()).value;
+      const ownerOutput = (await ism.functions.owner().simulate()).value;
+      const owner = ownerOutput.Initialized
+        ? ownerOutput.Initialized.Address
+          ? ownerOutput.Initialized.Address.bits
+          : ownerOutput.Initialized.ContractId.bits
+        : '0x';
+      return { address: ismAddress, type: IsmType.PAUSABLE, paused, owner };
+    } catch {
+      this.logger.warn(`Null ISM is not pausable`);
+    }
+
+    return { address: ismAddress, type: IsmType.TEST_ISM };
   }
 
   static async deriveAggregationConfig(
@@ -304,40 +417,38 @@ export class FuelIsmModule {
           throw new Error('Owner not initialized');
         })();
 
-    const domains: DomainRoutingIsmConfig['domains'] = {};
     const domainIds = (await ism.functions.domains().simulate()).value;
+    const domains: Record<string, any> = {};
 
-    await concurrentMap(this.concurrency, domainIds, async (domainId) => {
-      const chainName = multiProtocolProvider.tryGetChainName(domainId);
-      if (!chainName) {
-        return;
+    for (const domainId of domainIds) {
+      try {
+        const domainIsmId = (await ism.functions.module(domainId).simulate())
+          .value;
+        const chainName = multiProtocolProvider.getChainName(domainId);
+        domains[chainName] = await this.deriveIsmConfig(
+          multiProtocolProvider,
+          domainIsmId,
+          signer,
+        );
+      } catch {
+        this.logger.warn(`Unable to derive ISM config for domain ${domainId}`);
       }
-
-      const module = (await ism.functions.module(domainId).simulate()).value;
-      domains[chainName] = await this.deriveIsmConfig(
-        multiProtocolProvider,
-        module,
-        signer,
-      );
-    });
+    }
 
     // Fallback routing ISM extends from MailboxClient, default routing
     let ismType = IsmType.FALLBACK_ROUTING;
     try {
-      // TODO add this function
-      await new DefaultFallbackDomainRoutingIsm(ismAddress, signer).functions
-        .mailbox()
-        .simulate();
+      const res = (
+        await new DefaultFallbackDomainRoutingIsm(ismAddress, signer).functions
+          .mailbox()
+          .simulate()
+      ).callResult.dryRunStatus?.type;
+      assert(res === 'DryRunSuccessStatus', 'Mailbox call failed');
     } catch {
       ismType = IsmType.ROUTING;
     }
 
-    return {
-      owner,
-      address: ismAddress,
-      type: ismType,
-      domains,
-    };
+    return { owner, address: ismAddress, type: ismType, domains };
   }
 
   static async deriveMultisigConfig(
@@ -351,7 +462,7 @@ export class FuelIsmModule {
         : IsmType.MESSAGE_ID_MULTISIG;
 
     const [validators, threshold] =
-      // Could instantiate any Multisih ISM since they all have the `validators_and_threshold` function
+      // Could instantiate any Multisig ISM since they all have the `validators_and_threshold` function
       (
         await new MerkleRootMultisigIsm(ismAddress, signer).functions
           .validators_and_threshold([])
@@ -411,7 +522,7 @@ export class FuelIsmModule {
       // if it is not a mutable ISM, do a new deploy
       !MUTABLE_ISM_TYPE.includes(targetConfig.type)
     ) {
-      const newIsmId = await this.deploy(
+      const newIsmId = await this.deployWithRetry(
         multiProtocolProvider,
         chain,
         targetConfig,
@@ -496,7 +607,7 @@ export class FuelIsmModule {
       this.logger.debug(
         `Reconfiguring preexisting routing ISM for origin ${origin}...`,
       );
-      const ism = await this.deploy(
+      const ism = await this.deployWithRetry(
         multiProtocolProvider,
         chain,
         targetConfig.domains[origin],

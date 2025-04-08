@@ -9,6 +9,7 @@ import {
   IsmType,
   MultisigIsmConfig,
   MultisigIsmConfigSchema,
+  PausableIsmConfig,
   TrustedRelayerIsmConfig,
 } from '@hyperlane-xyz/sdk';
 import { ProtocolType, isAddressEvm } from '@hyperlane-xyz/utils';
@@ -70,6 +71,8 @@ export function readIsmConfig(filePath: string) {
 const ISM_TYPE_DESCRIPTIONS: Record<string, string> = {
   [IsmType.AGGREGATION]:
     'You can aggregate multiple ISMs into one ISM via AggregationISM',
+  [IsmType.PAUSABLE]:
+    'Ism can be paused by the owner to fail validation for every incoming message',
   [IsmType.FALLBACK_ROUTING]:
     "You can specify ISM type for specific chains you like and fallback to mailbox's default ISM for other chains via DefaultFallbackRoutingISM",
   [IsmType.MERKLE_ROOT_MULTISIG]:
@@ -95,6 +98,7 @@ const FUEL_SUPPORTED_ISM_TYPES = Object.fromEntries(
       IsmType.MESSAGE_ID_MULTISIG,
       IsmType.ROUTING,
       IsmType.TEST_ISM,
+      IsmType.PAUSABLE,
     ].includes(type as IsmType),
   ),
 );
@@ -126,7 +130,7 @@ export async function createAdvancedIsmConfig(
     case IsmType.AGGREGATION:
       return createAggregationConfig(context, protocol);
     case IsmType.FALLBACK_ROUTING:
-      return createFallbackRoutingConfig(context);
+      return createFallbackRoutingConfig(context, protocol);
     case IsmType.MERKLE_ROOT_MULTISIG:
     case IsmType.MESSAGE_ID_MULTISIG:
     case IsmType.STORAGE_MERKLE_ROOT_MULTISIG:
@@ -138,6 +142,8 @@ export async function createAdvancedIsmConfig(
       return { type: IsmType.TEST_ISM };
     case IsmType.TRUSTED_RELAYER:
       return createTrustedRelayerConfig(context, true);
+    case IsmType.PAUSABLE:
+      return createPausableIsmConfig();
     default:
       throw new Error(`Unsupported ISM type: ${moduleType}.`);
   }
@@ -179,6 +185,16 @@ export const createMultisigConfig = async (
 
   return result.data;
 };
+
+export const createPausableIsmConfig = callWithConfigCreationLogs(
+  async (): Promise<PausableIsmConfig> => {
+    const owner = await input({
+      message: 'Enter owner address for pausable ISM',
+    });
+    return { owner, paused: false, type: IsmType.PAUSABLE };
+  },
+  IsmType.PAUSABLE,
+);
 
 export const createTrustedRelayerConfig = callWithConfigCreationLogs(
   async (
@@ -254,7 +270,10 @@ export const createRoutingConfig = callWithConfigCreationLogs(
 );
 
 export const createFallbackRoutingConfig = callWithConfigCreationLogs(
-  async (context: CommandContext): Promise<IsmConfig> => {
+  async (
+    context: CommandContext,
+    protocol?: ProtocolType,
+  ): Promise<IsmConfig> => {
     const chains = await runMultiChainSelectionStep({
       chainMetadata: context.chainMetadata,
       message: 'Select chains to configure fallback routing ISM for',
@@ -274,7 +293,7 @@ export const createFallbackRoutingConfig = callWithConfigCreationLogs(
         `You are about to configure fallback routing ISM from source chain ${chain}.`,
       );
 
-      const config = await createAdvancedIsmConfig(context);
+      const config = await createAdvancedIsmConfig(context, protocol);
       domainsMap[chain] = config;
     }
     return { type: IsmType.FALLBACK_ROUTING, owner, domains: domainsMap };

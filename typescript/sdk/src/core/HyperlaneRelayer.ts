@@ -398,6 +398,7 @@ export class HyperlaneRelayer {
       multiProtocolProvider,
       hookAddress,
       signer,
+      fuel_origin,
     );
 
     // parallelizable because configs are on different chains

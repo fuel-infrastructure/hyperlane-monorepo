@@ -1,4 +1,5 @@
 import { confirm } from '@inquirer/prompts';
+import { ethers } from 'ethers';
 import { TransactionResponse } from 'fuels';
 import { groupBy } from 'lodash-es';
 import { stringify as yamlStringify } from 'yaml';
@@ -62,6 +63,7 @@ import {
 import {
   Address,
   ProtocolType,
+  addressToBytes32,
   assert,
   objFilter,
   objKeys,
@@ -145,20 +147,32 @@ export async function runWarpRouteDeploy({
   await runDeployPlanStep(deploymentParams);
 
   // Only Ethereum and Fuel chains are supported for now
-  // Some of the steps below throw if the chain is not supported
-  // Only a single protocol deployment at a time is supported
   const protocols = new Set(
-    chains.map((chain) => chainMetadata[chain].protocol),
-  );
-  if (protocols.size > 1)
-    throw new Error('Only single protocol deployments are supported for now');
+    chains.map((chain) => {
+      const protocol = chainMetadata[chain].protocol;
+      if (protocol !== ProtocolType.Ethereum && protocol !== ProtocolType.Fuel)
+        throw new Error(`Unsupported protocol ${protocol} `);
 
-  const singleProtocol = protocols.values().next().value;
-  if (
-    singleProtocol !== ProtocolType.Ethereum &&
-    singleProtocol !== ProtocolType.Fuel
-  )
-    throw new Error('Only Ethereum and Fuel chains are supported for now');
+      return protocol;
+    }),
+  );
+
+  const evmParams: {
+    context: WriteCommandContext;
+    warpDeployConfig: WarpRouteDeployConfig;
+  } = { context, warpDeployConfig: {} };
+  const fuelParams: {
+    context: WriteCommandContext;
+    warpDeployConfig: WarpRouteDeployConfig;
+  } = { context, warpDeployConfig: {} };
+
+  for (const [chain, config] of Object.entries(warpRouteConfig)) {
+    if (chainMetadata[chain].protocol === ProtocolType.Ethereum) {
+      evmParams.warpDeployConfig[chain] = config;
+    } else if (chainMetadata[chain].protocol === ProtocolType.Fuel) {
+      fuelParams.warpDeployConfig[chain] = config;
+    }
+  }
 
   await runPreflightChecksForChains({
     context,
@@ -167,24 +181,125 @@ export async function runWarpRouteDeploy({
   });
 
   const initialBalances = await prepareDeploy(context, null, chains);
-  let warpCoreConfig: WarpCoreConfig;
-  if (singleProtocol === ProtocolType.Ethereum) {
-    const deployedContracts = await executeDeploy(deploymentParams, apiKeys);
-    warpCoreConfig = await getWarpCoreConfig(
-      deploymentParams,
-      deployedContracts,
+
+  const [evmDeployments, fuelDeployments] = await Promise.all([
+    protocols.has(ProtocolType.Ethereum)
+      ? executeDeploy(evmParams, apiKeys)
+      : undefined,
+    protocols.has(ProtocolType.Fuel)
+      ? executeFuelDeploy(fuelParams)
+      : undefined,
+  ]);
+
+  const [evmConfig, fuelConfig] = await Promise.all([
+    evmDeployments ? getWarpCoreConfig(evmParams, evmDeployments) : undefined,
+    fuelDeployments
+      ? getFuelWarpCoreConfig(fuelParams, fuelDeployments)
+      : undefined,
+  ]);
+
+  if (evmConfig && fuelConfig) {
+    await connectInterProtocolDeployments(evmConfig, fuelConfig, context);
+  }
+
+  // Merge the configs
+  const warpCoreConfig: WarpCoreConfig = { tokens: [] };
+  if (evmConfig && fuelConfig) {
+    warpCoreConfig.options = evmConfig.options;
+    for (const token of evmConfig.tokens.concat(fuelConfig.tokens)) {
+      warpCoreConfig.tokens.push(token);
+    }
+  } else if (evmConfig) {
+    warpCoreConfig.options = evmConfig.options;
+    for (const token of evmConfig.tokens) {
+      warpCoreConfig.tokens.push(token);
+    }
+  } else if (fuelConfig) {
+    for (const token of fuelConfig.tokens) {
+      warpCoreConfig.tokens.push(token);
+    }
+  }
+
+  fullyConnectTokens(warpCoreConfig);
+
+  await writeDeploymentArtifacts(warpCoreConfig, context);
+
+  if (protocols.has(ProtocolType.Ethereum))
+    await completeDeploy(context, 'warp', initialBalances, null, chains!);
+}
+
+async function connectInterProtocolDeployments(
+  evmConfig: WarpCoreConfig,
+  fuelConfig: WarpCoreConfig,
+  context: WriteCommandContext,
+) {
+  logGreen('Connecting inter-protocol deployments...');
+  await Promise.all([
+    connectRoutersToFuel(fuelConfig, evmConfig, context),
+    connectRoutersToEVM(evmConfig, fuelConfig, context),
+  ]);
+}
+
+async function connectRoutersToEVM(
+  evmConfig: WarpCoreConfig,
+  fuelConfig: WarpCoreConfig,
+  context: WriteCommandContext,
+) {
+  const { multiProvider } = context;
+  const abi = ['function enrollRemoteRouter(uint32,bytes32)'];
+
+  for (const token of evmConfig.tokens) {
+    const { chainName, addressOrDenom } = token;
+    const evmSigner = multiProvider.getSigner(chainName);
+    const warpRoute = new ethers.Contract(addressOrDenom!, abi, evmSigner);
+
+    for (const fuelToken of fuelConfig.tokens) {
+      const { chainName: fuelChainName, addressOrDenom: fuelAddress } =
+        fuelToken;
+      logGreen(`Connecting ${chainName} to ${fuelChainName}...`);
+
+      const chainId = multiProvider.getChainId(fuelChainName);
+      const gasEstimate = await warpRoute.estimateGas.enrollRemoteRouter(
+        chainId,
+        fuelAddress,
+      );
+
+      const tx = await warpRoute.enrollRemoteRouter(chainId, fuelAddress, {
+        gasLimit: gasEstimate.mul(12).div(10), // Adding 20% buffer to estimated gas
+      });
+      await tx.wait();
+    }
+  }
+}
+
+async function connectRoutersToFuel(
+  fuelConfig: WarpCoreConfig,
+  evmConfig: WarpCoreConfig,
+  context: WriteCommandContext,
+) {
+  const { multiProtocolProvider, chainMetadata } = context;
+
+  const routerData = evmConfig.tokens.map((token) => ({
+    chainName: token.chainName,
+    protocol: chainMetadata[token.chainName].protocol,
+    address: addressToBytes32(token.addressOrDenom!),
+    decimals: token.decimals,
+  }));
+
+  for (const { addressOrDenom, chainName } of fuelConfig.tokens) {
+    logGreen(
+      `Connecting ${chainName} to ${routerData.reduce(
+        (acc, { chainName }) => acc + `${chainName} `,
+        '',
+      )}...`,
     );
-  } else {
-    const warpRouteDeployment = await executeFuelDeploy(deploymentParams);
-    warpCoreConfig = await getFuelWarpCoreConfig(
-      deploymentParams,
-      warpRouteDeployment,
+    await FuelSRC20WarpModule.connectRouterFromData(
+      addressOrDenom!,
+      chainName,
+      multiProtocolProvider,
+      routerData,
     );
   }
-  await writeDeploymentArtifacts(warpCoreConfig, context);
-  // TODO for fuel
-  if (singleProtocol === ProtocolType.Ethereum)
-    await completeDeploy(context, 'warp', initialBalances, null, chains!);
 }
 
 async function runDeployPlanStep({ context, warpDeployConfig }: DeployParams) {
@@ -206,8 +321,16 @@ async function executeFuelDeploy(params: DeployParams) {
   const { warpDeployConfig, context } = params;
   const { multiProtocolProvider } = context;
 
-  const modifiedConfig = await resolveWarpIsmAndHook(warpDeployConfig, context);
-  return FuelSRC20WarpModule.deploy(multiProtocolProvider, modifiedConfig);
+  const modifiedConfig = await resolveWarpIsmAndHookFuel(
+    warpDeployConfig,
+    context,
+  );
+  const res = FuelSRC20WarpModule.deployWithRetry(
+    multiProtocolProvider,
+    modifiedConfig,
+  );
+  logGreen('✅ FuelVM Warp contract deployments complete');
+  return res;
 }
 
 async function executeDeploy(
@@ -253,7 +376,7 @@ async function executeDeploy(
 
   const deployedContracts = await deployer.deploy(modifiedConfig);
 
-  logGreen('✅ Warp contract deployments complete');
+  logGreen('✅ EVM Warp contract deployments complete');
   return deployedContracts;
 }
 
@@ -266,6 +389,46 @@ async function writeDeploymentArtifacts(
     await context.registry.addWarpRoute(warpCoreConfig);
   }
   log(indentYamlOrJson(yamlStringify(warpCoreConfig, null, 2), 4));
+}
+
+async function resolveWarpIsmAndHookFuel(
+  warpConfig: WarpRouteDeployConfig,
+  context: WriteCommandContext,
+  ismFactoryDeployer?: HyperlaneProxyFactoryDeployer,
+  contractVerifier?: ContractVerifier,
+): Promise<WarpRouteDeployConfig> {
+  const entries = Object.entries(warpConfig);
+  const result: Record<string, any> = {};
+
+  for (const [chain, config] of entries) {
+    const chainAddresses = await context.registry.getChainAddresses(chain);
+
+    if (!chainAddresses) {
+      throw `Registry factory addresses not found for ${chain}.`;
+    }
+
+    config.interchainSecurityModule = await createWarpIsm({
+      chain,
+      chainAddresses,
+      context,
+      contractVerifier,
+      ismFactoryDeployer,
+      warpConfig: config,
+    });
+
+    config.hook = await createWarpHook({
+      chain,
+      chainAddresses,
+      context,
+      contractVerifier,
+      ismFactoryDeployer,
+      warpConfig: config,
+    });
+
+    result[chain] = config;
+  }
+
+  return result;
 }
 
 async function resolveWarpIsmAndHook(
@@ -369,7 +532,7 @@ async function createFuelWarpIsm(
   interchainSecurityModule: IsmConfig,
   mailbox: string,
 ) {
-  return FuelIsmModule.deploy(
+  return FuelIsmModule.deployWithRetry(
     multiProtocolProvider,
     chain,
     interchainSecurityModule,
@@ -515,7 +678,12 @@ async function createFuelWarpHook(
   hook: HookConfig,
   mailbox: string,
 ) {
-  return FuelHookModule.deploy(multiProtocolProvider, chain, hook, mailbox);
+  return FuelHookModule.deployWithRetry(
+    multiProtocolProvider,
+    chain,
+    hook,
+    mailbox,
+  );
 }
 
 async function getFuelWarpCoreConfig(
@@ -548,8 +716,6 @@ async function getFuelWarpCoreConfig(
     decimals,
   );
 
-  fullyConnectTokens(warpCoreConfig, ProtocolType.Fuel);
-
   return warpCoreConfig;
 }
 
@@ -579,8 +745,6 @@ async function getWarpCoreConfig(
     name,
     decimals,
   );
-
-  fullyConnectTokens(warpCoreConfig);
 
   return warpCoreConfig;
 }
@@ -650,13 +814,10 @@ function generateTokenConfigs(
 /**
  * Adds connections between tokens.
  *
- * Assumes full interconnectivity between all tokens for now b.c. that's
- * what the deployers do by default.
+ * Creates full interconnectivity between all tokens across different protocols
+ * while avoiding duplicate connections.
  */
-function fullyConnectTokens(
-  warpCoreConfig: WarpCoreConfig,
-  protocol?: ProtocolType,
-): void {
+function fullyConnectTokens(warpCoreConfig: WarpCoreConfig): void {
   for (const token1 of warpCoreConfig.tokens) {
     for (const token2 of warpCoreConfig.tokens) {
       if (
@@ -664,14 +825,24 @@ function fullyConnectTokens(
         token1.addressOrDenom === token2.addressOrDenom
       )
         continue;
+
       token1.connections ||= [];
-      token1.connections.push({
-        token: getTokenConnectionId(
-          protocol ? protocol : ProtocolType.Ethereum,
-          token2.chainName,
-          token2.addressOrDenom!,
-        ),
-      });
+
+      const protocol: ProtocolType = token2.standard?.startsWith('Fuel')
+        ? ProtocolType.Fuel
+        : ProtocolType.Ethereum;
+
+      const connectionId = getTokenConnectionId(
+        protocol,
+        token2.chainName,
+        token2.addressOrDenom!,
+      );
+
+      const connectionExists = token1.connections.some(
+        (connection) => connection.token === connectionId,
+      );
+
+      if (!connectionExists) token1.connections.push({ token: connectionId });
     }
   }
 }

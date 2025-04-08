@@ -207,6 +207,7 @@ export async function completeDeploy(
   const { multiProvider, isDryRun } = context;
   if (chains.length > 0) logPink(`⛽️ Gas Usage Statistics`);
   for (const chain of chains) {
+    if (context.chainMetadata[chain].protocol == ProtocolType.Fuel) continue;
     const provider = isDryRun
       ? getLocalProvider(ENV.ANVIL_IP_ADDR, ENV.ANVIL_PORT)
       : multiProvider.getProvider(chain);

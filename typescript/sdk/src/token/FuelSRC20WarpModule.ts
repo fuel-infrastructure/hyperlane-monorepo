@@ -39,9 +39,30 @@ import {
 
 export class FuelSRC20WarpModule {
   static logger = rootLogger.child({ module: 'FuelSRC20WarpModule' });
+
+  static async sleep(sec: number) {
+    return new Promise((resolve) => setTimeout(resolve, sec * 1000));
+  }
   // ======== Deployment ========
 
-  public static async deploy(
+  public static async deployWithRetry(
+    multiProtocolProvider: MultiProtocolProvider,
+    warpConfig: WarpRouteDeployConfig,
+    retries = 5,
+  ) {
+    for (let i = 0; i < retries; i++) {
+      try {
+        return await this.deploy(multiProtocolProvider, warpConfig);
+      } catch (error) {
+        if (i === retries - 1) throw error;
+        this.logger.warn(`Attempt ${i + 1} failed: ${error}. Retrying...`);
+        await this.sleep(2);
+      }
+    }
+    throw new Error('Fuel deployment loop out of bounds');
+  }
+
+  static async deploy(
     multiProtocolProvider: MultiProtocolProvider,
     warpConfig: WarpRouteDeployConfig,
   ): Promise<
@@ -58,7 +79,10 @@ export class FuelSRC20WarpModule {
           const { waitForResult, contractId } = await WarpRouteFactory.deploy(
             signer,
           );
-          const { contract } = await waitForResult();
+          const { contract } = await waitForResult().then(async (res) => {
+            await this.sleep(2);
+            return res;
+          });
 
           // If the hook is not provided, use the zero address
           const hook =
@@ -118,7 +142,9 @@ export class FuelSRC20WarpModule {
           ism,
         )
         .call()
-    ).waitForResult();
+    )
+      .waitForResult()
+      .then(async () => this.sleep(2));
   }
 
   static async initCollateralToken(
@@ -145,7 +171,9 @@ export class FuelSRC20WarpModule {
           config.token,
         )
         .call()
-    ).waitForResult();
+    )
+      .waitForResult()
+      .then(async () => this.sleep(2));
   }
 
   static async initSyntheticToken(
@@ -168,7 +196,47 @@ export class FuelSRC20WarpModule {
           config.totalSupply,
         )
         .call()
-    ).waitForResult();
+    )
+      .waitForResult()
+      .then(async () => this.sleep(2));
+  }
+
+  static async connectRouterFromData(
+    fuelWrAddress: string,
+    chainName: string,
+    multiProtocolProvider: MultiProtocolProvider,
+    data: {
+      chainName: string;
+      protocol: ProtocolType;
+      address: string;
+      decimals: number;
+    }[],
+  ) {
+    const signer = (await multiProtocolProvider.getSigner(
+      ProtocolType.Fuel,
+      multiProtocolProvider.getChainId(chainName),
+    )) as WalletUnlocked;
+    const warpRoute = new WarpRoute(fuelWrAddress, signer);
+
+    const chainIds = data.map((d) =>
+      Number(multiProtocolProvider.getChainId(d.chainName)),
+    );
+    const routers = data.map((d) => d.address);
+    await (
+      await warpRoute.functions.enroll_remote_routers(chainIds, routers).call()
+    )
+      .waitForResult()
+      .then(async () => this.sleep(4));
+
+    for (const { address, decimals } of data) {
+      await (
+        await warpRoute.functions
+          .set_remote_router_decimals(address, decimals)
+          .call()
+      )
+        .waitForResult()
+        .then(async () => this.sleep(4));
+    }
   }
 
   // ======== Reading ========
@@ -235,6 +303,7 @@ export class FuelSRC20WarpModule {
       multiProtocolProvider,
       warpRoute,
       signer,
+      chain,
     );
     const domains = (await warpRoute.functions.all_domains().simulate()).value;
     const { tokenConfig, type } = await this.getTokenConfig(
@@ -258,6 +327,7 @@ export class FuelSRC20WarpModule {
     multiProtocolProvider: MultiProtocolProvider,
     warpRoute: WarpRoute,
     signer: WalletUnlocked,
+    chain: string,
   ): Promise<MailboxClientConfig> {
     const mailbox = (await warpRoute.functions.get_mailbox().simulate()).value
       .bits;
@@ -282,6 +352,7 @@ export class FuelSRC20WarpModule {
           multiProtocolProvider,
           hook,
           signer,
+          chain,
         );
 
     return {
@@ -308,16 +379,15 @@ export class FuelSRC20WarpModule {
 
     const parsedType = tokenTypeFromFuelType[tokenType];
 
-    const { asset_id, decimals, name, symbol, total_supply } = (
+    const { decimals, name, symbol, total_supply } = (
       await warpRoute.functions.get_token_info().simulate()
     ).value;
-    const token = warpRoute.id.toB256();
 
     let tokenConfig: HypTokenConfig;
-    if (
-      parsedType === TokenType.collateral ||
-      parsedType === TokenType.synthetic
-    ) {
+    if (parsedType === TokenType.collateral) {
+      const token = (await warpRoute.functions.wrapped_token().simulate()).value
+        .bits;
+
       tokenConfig = {
         type: parsedType,
         decimals,
@@ -325,7 +395,14 @@ export class FuelSRC20WarpModule {
         symbol,
         totalSupply: total_supply.toString(),
         token,
-        asset_id: asset_id.bits,
+      } as HypTokenConfig;
+    } else if (parsedType === TokenType.synthetic) {
+      tokenConfig = {
+        type: parsedType,
+        decimals,
+        name,
+        symbol,
+        totalSupply: total_supply.toString(),
       } as HypTokenConfig;
     } else {
       const nativeToken =
@@ -353,10 +430,16 @@ export class FuelSRC20WarpModule {
     return Object.fromEntries(
       await Promise.all(
         domains.map(async (domain) => {
+          const mailbox = (await warpRoute.functions.get_mailbox().simulate())
+            .value.bits;
+
           return [
             domain,
             (
-              await warpRoute.functions.quote_gas_payment(domain).simulate()
+              await warpRoute.functions
+                .quote_gas_payment(domain)
+                .addContracts([mailbox])
+                .simulate()
             ).value.toString(),
           ];
         }),
@@ -543,6 +626,7 @@ export class FuelSRC20WarpModule {
     return [transactionResponse];
   }
 
+  // TODO broken
   static async setRemoteRoutersDecimals(
     warpRoute: WarpRoute,
     domains: string[],
