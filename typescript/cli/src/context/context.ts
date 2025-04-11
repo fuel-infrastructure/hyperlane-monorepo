@@ -137,6 +137,13 @@ export async function getContext({
   const multiProtocolProvider = new MultiProtocolProvider(chainMetadata, {
     signers,
   });
+  const fuelSignerAddress = (
+    signers?.fuel as WalletUnlocked | WalletLocked | undefined
+  )?.address.b256Address;
+  const evmSignerAddress = await (
+    signers?.ethereum as ethers.Wallet | undefined
+  )?.getAddress();
+  if (evmSignerAddress) signerAddress = evmSignerAddress;
 
   return {
     registry,
@@ -146,6 +153,7 @@ export async function getContext({
     multiProvider,
     key,
     skipConfirmation: !!skipConfirmation,
+    fuelSignerAddress,
     signerAddress,
     strategyPath,
   } as CommandContext;

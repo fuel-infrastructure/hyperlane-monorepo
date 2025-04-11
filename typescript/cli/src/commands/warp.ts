@@ -163,6 +163,7 @@ export const init: CommandModuleWithContext<{
   command: 'init',
   describe: 'Create a warp route configuration.',
   builder: {
+    keys: warpDeploymentKeysCommandOption,
     advanced: {
       type: 'boolean',
       describe: 'Create an advanced ISM',

@@ -10,12 +10,8 @@ import {
   CHAIN_NAME_2,
   CORE_CONFIG_PATH,
   DEFAULT_E2E_TEST_TIMEOUT,
-  FUEL_CHAIN_NAME,
-  FUEL_EXAMPLE_CONFIG_PATH,
-  FUEL_KEY,
   TEMP_PATH,
   deployOrUseExistingCore,
-  deployOrUseExistingCoreFuel,
 } from '../commands/helpers.js';
 import { hyperlaneWarpDeployFuel } from '../commands/warp-fuel.js';
 
@@ -33,11 +29,7 @@ describe('hyperlane warp deploy e2e tests', async function () {
 
   before(async function () {
     [fuelAddresses, chain2Addresses] = await Promise.all([
-      deployOrUseExistingCoreFuel(
-        FUEL_CHAIN_NAME,
-        FUEL_EXAMPLE_CONFIG_PATH,
-        FUEL_KEY,
-      ),
+      deployOrUseExistingCore(CHAIN_NAME_2, CORE_CONFIG_PATH, ANVIL_KEY),
       deployOrUseExistingCore(CHAIN_NAME_2, CORE_CONFIG_PATH, ANVIL_KEY),
     ]);
     throw new Error(JSON.stringify(fuelAddresses));

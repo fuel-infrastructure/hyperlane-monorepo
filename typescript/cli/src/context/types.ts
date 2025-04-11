@@ -29,6 +29,7 @@ export interface CommandContext {
   skipConfirmation: boolean;
   keys?: string;
   key?: string;
+  fuelSignerAddress?: string;
   // just for evm chains backward compatibility
   signerAddress?: string;
   warpCoreConfig?: WarpCoreConfig;

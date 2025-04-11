@@ -11,20 +11,42 @@ import { Address } from '@hyperlane-xyz/utils';
 
 import { readYamlOrJson } from '../../utils/files.js';
 
-import { ANVIL_KEY, REGISTRY_PATH, getDeployedWarpAddress } from './helpers.js';
+import {
+  ANVIL_KEY,
+  FUEL_KEY,
+  REGISTRY_PATH,
+  getDeployedWarpAddress,
+} from './helpers.js';
 
 $.verbose = true;
 
 /**
  * Deploys the Warp route to the specified chain using the provided config.
+ * If the init is a multi protocol route, we will not pass the --key flag.
+ * Instead the owner needs to be specified for each chain.
  */
-export function hyperlaneWarpInit(warpCorePath: string): ProcessPromise {
-  return $`yarn workspace @hyperlane-xyz/cli run hyperlane warp init \
-        --registry ${REGISTRY_PATH} \
-        --out ${warpCorePath} \
-        --key ${ANVIL_KEY} \
-        --verbosity debug \
-        --yes`;
+export function hyperlaneWarpInit(
+  warpCorePath: string,
+  includesNonEvm?: boolean,
+): ProcessPromise {
+  // Two dimensional array for readability
+  const args = [
+    ['workspace', '@hyperlane-xyz/cli'],
+    ['run', 'hyperlane', 'warp', 'init'],
+    ['--registry', REGISTRY_PATH],
+    ['--out', warpCorePath],
+    ['--verbosity', 'debug'],
+    ['--yes'],
+  ];
+
+  if (includesNonEvm) {
+    const keys = `fuel:${FUEL_KEY},ethereum:${ANVIL_KEY}`;
+    args.push(['--keys', keys]);
+  } else {
+    args.push(['--key', ANVIL_KEY]);
+  }
+
+  return $`yarn ${args.flat()}`;
 }
 
 /**
@@ -33,33 +55,51 @@ export function hyperlaneWarpInit(warpCorePath: string): ProcessPromise {
 export function hyperlaneWarpDeployRaw({
   warpCorePath,
   hypKey,
-  skipConfirmationPrompts,
+  skipConfirmationPrompts = false,
   privateKey,
+  keys,
 }: {
   warpCorePath?: string;
   hypKey?: string;
   skipConfirmationPrompts?: boolean;
   privateKey?: string;
+  keys?: string;
 }): ProcessPromise {
-  return $`${
-    hypKey ? ['HYP_KEY=' + hypKey] : ''
-  } yarn workspace @hyperlane-xyz/cli run hyperlane warp deploy \
-        --registry ${REGISTRY_PATH} \
-        ${warpCorePath ? ['--config', warpCorePath] : ''} \
-        ${privateKey ? ['--key', privateKey] : ''} \
-        --verbosity debug \
-        ${skipConfirmationPrompts ? ['--yes'] : ''}`;
+  // Two dimensional array for readability
+  const args = [
+    ['workspace', '@hyperlane-xyz/cli'],
+    ['run', 'hyperlane', 'warp', 'deploy'],
+    ['--registry', REGISTRY_PATH],
+    ['--verbosity', 'debug'],
+  ];
+
+  // Conditionally add optional arguments
+  if (warpCorePath) args.push(['--config', warpCorePath]);
+  if (privateKey) args.push(['--key', privateKey]);
+  if (skipConfirmationPrompts) args.push(['--yes']);
+  if (keys) args.push(['--keys', keys]);
+
+  return $`${hypKey ? `HYP_KEY=${hypKey} ` : ''}yarn ${args.flat()}`;
 }
 
 /**
  * Deploys the Warp route to the specified chain using the provided config.
  */
-export function hyperlaneWarpDeploy(warpCorePath: string): ProcessPromise {
-  return hyperlaneWarpDeployRaw({
-    privateKey: ANVIL_KEY,
-    warpCorePath: warpCorePath,
-    skipConfirmationPrompts: true,
-  });
+export function hyperlaneWarpDeploy(
+  warpCorePath: string,
+  includesNonEvm: boolean = false,
+): ProcessPromise {
+  return includesNonEvm
+    ? hyperlaneWarpDeployRaw({
+        keys: `fuel:${FUEL_KEY},ethereum:${ANVIL_KEY}`,
+        warpCorePath: warpCorePath,
+        skipConfirmationPrompts: true,
+      })
+    : hyperlaneWarpDeployRaw({
+        privateKey: ANVIL_KEY,
+        warpCorePath: warpCorePath,
+        skipConfirmationPrompts: true,
+      });
 }
 
 /**

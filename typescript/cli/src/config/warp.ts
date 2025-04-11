@@ -141,17 +141,27 @@ export async function createWarpRouteDeployConfig({
 
   const result: WarpRouteDeployConfig = {};
   let typeChoices = TYPE_CHOICES;
+  const protocols: Set<ProtocolType> = new Set();
+  for (const chain of warpChains) {
+    const chainProtocol = context.chainMetadata[chain].protocol;
+    protocols.add(chainProtocol);
+  }
   for (const chain of warpChains) {
     logBlue(`${chain}: Configuring warp route...`);
+    const chainProtocol = context.chainMetadata[chain].protocol;
+
+    const detectedSigner =
+      chainProtocol === ProtocolType.Fuel
+        ? context.fuelSignerAddress
+        : context.signerAddress;
 
     const owner = await detectAndConfirmOrPrompt(
-      async () => context.signerAddress,
+      async () => detectedSigner,
       'Enter the desired',
       'owner address',
       'signer',
     );
 
-    const chainProtocol = context.chainMetadata[chain].protocol;
     validProtocolAddressGuard(owner, chainProtocol);
 
     // default to the mailbox from the registry and if not found ask to the user to submit one
@@ -242,22 +252,28 @@ export async function createWarpRouteDeployConfig({
         break;
       }
       case TokenType.synthetic: {
-        const name = await input({
-          message: `Enter the name of the token on chain ${chain}`,
-        });
-        const symbol = await input({
-          message: `Enter the symbol of the token on chain ${chain}`,
-        });
-        const decimals = Number(
-          await input({
-            message: `Enter the decimals of the token on chain ${chain}`,
-          }),
-        );
-        const totalSupply = Number(
-          await input({
-            message: `Enter the total supply of the token on chain ${chain}`,
-          }),
-        );
+        let name: string | undefined;
+        let symbol: string | undefined;
+        let decimals: number | undefined;
+        let totalSupply: number | undefined;
+        if (chainProtocol === ProtocolType.Fuel || protocols.size > 1) {
+          name = await input({
+            message: `Enter the name of the token on chain ${chain}`,
+          });
+          symbol = await input({
+            message: `Enter the symbol of the token on chain ${chain}`,
+          });
+          decimals = Number(
+            await input({
+              message: `Enter the decimals of the token on chain ${chain}`,
+            }),
+          );
+          totalSupply = Number(
+            await input({
+              message: `Enter the total supply of the token on chain ${chain}`,
+            }),
+          );
+        }
         result[chain] = {
           mailbox,
           type,
