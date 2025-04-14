@@ -15,13 +15,12 @@ import { readYamlOrJson, writeYamlOrJson } from '../../utils/files.js';
 import {
   ANVIL_KEY,
   CHAIN_NAME_2,
+  CHAIN_NAME_FUEL_1,
+  CHAIN_NAME_FUEL_2,
   CORE_CONFIG_PATH,
   DEFAULT_E2E_TEST_TIMEOUT,
   E2E_TEST_BURN_ADDRESS,
   FUEL_1_CONFIG_PATH,
-  FUEL_CHAIN_NAME_1,
-  FUEL_CHAIN_NAME_2,
-  FUEL_CORE_CONFIG_PATH,
   FUEL_WARP_CONFIG_PATH_EXAMPLE,
   TEMP_PATH,
   WARP_DEPLOY_OUTPUT_PATH_FUEL,
@@ -40,7 +39,7 @@ import {
 
 describe('hyperlane warp apply fuel e2e tests', async function () {
   this.timeout(2 * DEFAULT_E2E_TEST_TIMEOUT);
-
+  const FUEL_CORE_CONFIG_PATH = 'temp';
   let anvilAddresses: ChainAddresses = {};
 
   before(async function () {
@@ -72,36 +71,36 @@ describe('hyperlane warp apply fuel e2e tests', async function () {
     // Update the owner using the helper function
     await updateOwnerFuel(
       burnAddress,
-      FUEL_CHAIN_NAME_1,
+      CHAIN_NAME_FUEL_1,
       WARP_DEPLOY_OUTPUT_PATH_FUEL,
       FUEL_CORE_CONFIG_PATH,
     );
 
     // Read back the config to verify changes
     const updatedConfig = await readWarpConfigFuel(
-      FUEL_CHAIN_NAME_1,
+      CHAIN_NAME_FUEL_1,
       FUEL_CORE_CONFIG_PATH,
       `${TEMP_PATH}/warp-route-deployment-2.yaml`,
     );
 
-    expect(updatedConfig[FUEL_CHAIN_NAME_1].owner).to.equal(burnAddress);
+    expect(updatedConfig[CHAIN_NAME_FUEL_1].owner).to.equal(burnAddress);
   });
 
   it('should not update the same owner', async function () {
     // First read the existing config
     const warpConfig = await readWarpConfigFuel(
-      FUEL_CHAIN_NAME_1,
+      CHAIN_NAME_FUEL_1,
       FUEL_CORE_CONFIG_PATH,
       `${TEMP_PATH}/warp-route-deployment-2.yaml`,
     );
 
     // Get the current owner
-    const currentOwner = warpConfig[FUEL_CHAIN_NAME_1].owner;
+    const currentOwner = warpConfig[CHAIN_NAME_FUEL_1].owner;
 
     // Update with the same owner
     const output = await updateOwnerFuel(
       currentOwner,
-      FUEL_CHAIN_NAME_1,
+      CHAIN_NAME_FUEL_1,
       WARP_DEPLOY_OUTPUT_PATH_FUEL,
       FUEL_CORE_CONFIG_PATH,
     );
@@ -117,12 +116,12 @@ describe('hyperlane warp apply fuel e2e tests', async function () {
 
     // First read the existing config
     const warpDeployConfig = await readWarpConfigFuel(
-      FUEL_CHAIN_NAME_1,
+      CHAIN_NAME_FUEL_1,
       FUEL_CORE_CONFIG_PATH,
       warpDeployPath,
     );
 
-    warpDeployConfig[FUEL_CHAIN_NAME_1].hook = {
+    warpDeployConfig[CHAIN_NAME_FUEL_1].hook = {
       type: HookType.MERKLE_TREE,
     };
 
@@ -134,15 +133,15 @@ describe('hyperlane warp apply fuel e2e tests', async function () {
 
     // Read back the config to verify changes
     const updatedConfig = await readWarpConfigFuel(
-      FUEL_CHAIN_NAME_1,
+      CHAIN_NAME_FUEL_1,
       FUEL_CORE_CONFIG_PATH,
       warpDeployPath,
     );
 
     // Verify the hook was updated with all properties
     expect(
-      normalizeConfig(updatedConfig[FUEL_CHAIN_NAME_1].hook),
-    ).to.deep.equal(normalizeConfig(warpDeployConfig[FUEL_CHAIN_NAME_1].hook));
+      normalizeConfig(updatedConfig[CHAIN_NAME_FUEL_1].hook),
+    ).to.deep.equal(normalizeConfig(warpDeployConfig[CHAIN_NAME_FUEL_1].hook));
   });
 
   it('should extend an existing warp route to include Anvil', async function () {
@@ -151,7 +150,7 @@ describe('hyperlane warp apply fuel e2e tests', async function () {
 
     // First, read the existing Fuel config
     const warpConfig = await readWarpConfigFuel(
-      FUEL_CHAIN_NAME_1,
+      CHAIN_NAME_FUEL_1,
       FUEL_CORE_CONFIG_PATH,
       warpConfigPath,
     );
@@ -180,19 +179,19 @@ describe('hyperlane warp apply fuel e2e tests', async function () {
       // Get the combined path for verification
       const COMBINED_WARP_CORE_CONFIG_PATH = getCombinedWarpRoutePath(
         FUEL_TEST_SRC20_SYMBOL,
-        [FUEL_CHAIN_NAME_1, CHAIN_NAME_2],
+        [CHAIN_NAME_FUEL_1, CHAIN_NAME_2],
       );
 
       // Check that Anvil is enrolled in Fuel
       const updatedFuelConfig = await readWarpConfigFuel(
-        FUEL_CHAIN_NAME_1,
+        CHAIN_NAME_FUEL_1,
         COMBINED_WARP_CORE_CONFIG_PATH,
         warpConfigPath,
       );
 
       const anvilId = await getDomainId(CHAIN_NAME_2, ANVIL_KEY);
       const fuelRemoteRouters = Object.keys(
-        updatedFuelConfig[FUEL_CHAIN_NAME_1].remoteRouters || {},
+        updatedFuelConfig[CHAIN_NAME_FUEL_1].remoteRouters || {},
       );
       expect(fuelRemoteRouters).to.include(anvilId);
     } catch (error) {
@@ -213,7 +212,7 @@ describe('hyperlane warp apply fuel e2e tests', async function () {
 
     // First, read the existing Fuel config
     const initialConfig = await readWarpConfigFuel(
-      FUEL_CHAIN_NAME_1,
+      CHAIN_NAME_FUEL_1,
       FUEL_CORE_CONFIG_PATH,
       warpConfigPath,
     );
@@ -234,21 +233,21 @@ describe('hyperlane warp apply fuel e2e tests', async function () {
     };
 
     // Add fueltestnet2 to the config manually
-    initialConfig[FUEL_CHAIN_NAME_2] = config;
+    initialConfig[CHAIN_NAME_FUEL_2] = config;
 
     // Add remote router connections manually
-    if (!initialConfig[FUEL_CHAIN_NAME_1].remoteRouters) {
-      initialConfig[FUEL_CHAIN_NAME_1].remoteRouters = {};
+    if (!initialConfig[CHAIN_NAME_FUEL_1].remoteRouters) {
+      initialConfig[CHAIN_NAME_FUEL_1].remoteRouters = {};
     }
 
-    if (!initialConfig[FUEL_CHAIN_NAME_2].remoteRouters) {
-      initialConfig[FUEL_CHAIN_NAME_2].remoteRouters = {};
+    if (!initialConfig[CHAIN_NAME_FUEL_2].remoteRouters) {
+      initialConfig[CHAIN_NAME_FUEL_2].remoteRouters = {};
     }
 
     const fueltestnet2Id = '1717982313'; // Domain ID for fueltestnet2
     const fuelId = '1699455630'; // Domain ID for fueltestnet
 
-    initialConfig[FUEL_CHAIN_NAME_1].remoteRouters[fueltestnet2Id] = {
+    initialConfig[CHAIN_NAME_FUEL_1].remoteRouters[fueltestnet2Id] = {
       address:
         '0x445ae47eb54f2bd0644297fbceca261be68c0998d1a417106034aa34b721ca6c',
     };
@@ -266,30 +265,30 @@ describe('hyperlane warp apply fuel e2e tests', async function () {
 
     const COMBINED_WARP_CORE_CONFIG_PATH = getCombinedWarpRoutePathFuel(
       FUEL_TEST_SRC20_SYMBOL,
-      [FUEL_CHAIN_NAME_1, FUEL_CHAIN_NAME_2],
+      [CHAIN_NAME_FUEL_1, CHAIN_NAME_FUEL_2],
     );
 
     // Check that fueltestnet2 is enrolled in fueltestnet
     const updatedWarpDeployConfig1 = await readWarpConfigFuel(
-      FUEL_CHAIN_NAME_1,
+      CHAIN_NAME_FUEL_1,
       COMBINED_WARP_CORE_CONFIG_PATH,
       warpConfigPath,
     );
 
     const remoteRouterKeys1 = Object.keys(
-      updatedWarpDeployConfig1[FUEL_CHAIN_NAME_1].remoteRouters || {},
+      updatedWarpDeployConfig1[CHAIN_NAME_FUEL_1].remoteRouters || {},
     );
     expect(remoteRouterKeys1).to.include(fueltestnet2Id);
 
     // Check that fueltestnet is enrolled in fueltestnet2
     const updatedWarpDeployConfig2 = await readWarpConfigFuel(
-      FUEL_CHAIN_NAME_2,
+      CHAIN_NAME_FUEL_2,
       COMBINED_WARP_CORE_CONFIG_PATH,
       warpConfigPath,
     );
 
     const remoteRouterKeys2 = Object.keys(
-      updatedWarpDeployConfig2[FUEL_CHAIN_NAME_2].remoteRouters || {},
+      updatedWarpDeployConfig2[CHAIN_NAME_FUEL_2].remoteRouters || {},
     );
     expect(remoteRouterKeys2).to.include(fuelId);
   });

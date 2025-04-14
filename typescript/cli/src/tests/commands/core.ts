@@ -1,9 +1,11 @@
+import { WalletUnlocked } from 'fuels';
 import { $, ProcessPromise } from 'zx';
 
 import { DerivedCoreConfig } from '@hyperlane-xyz/sdk';
 import { Address } from '@hyperlane-xyz/utils';
 
-import { readYamlOrJson } from '../../utils/files.js';
+import { readYamlOrJson, writeYamlOrJson } from '../../utils/files.js';
+import { MailboxFactory } from '../fuel-core-abis/MailboxFactory.js';
 
 import {
   ANVIL_KEY,
@@ -59,6 +61,26 @@ export async function hyperlaneCoreDeploy(
         --key ${ANVIL_KEY} \
         --verbosity debug \
         --yes`;
+}
+
+/**
+ * Since `core deploy` does not support FuelVM, deploy the core contracts we need ourselves.
+ * We also imitate the yaml writing functionality of `core deploy`.
+ */
+export async function mockFuelCoreDeploy(
+  chain: string,
+  wallet: WalletUnlocked,
+) {
+  const { contractId, waitForResult } = await MailboxFactory.deploy(wallet);
+  await waitForResult();
+
+  const addressMap = { mailbox: contractId };
+
+  writeYamlOrJson(
+    `${REGISTRY_PATH}/chains/${chain}/addresses.yaml`,
+    addressMap,
+    'yaml',
+  );
 }
 
 /**

@@ -1,4 +1,5 @@
 import { ethers } from 'ethers';
+import { WalletUnlocked } from 'fuels';
 import {
   DeployContractConfig,
   LaunchTestNodeReturn,
@@ -26,7 +27,7 @@ import { Address, sleep } from '@hyperlane-xyz/utils';
 import { getContext } from '../../context/context.js';
 import { readYamlOrJson, writeYamlOrJson } from '../../utils/files.js';
 
-import { hyperlaneCoreDeploy } from './core.js';
+import { hyperlaneCoreDeploy, mockFuelCoreDeploy } from './core.js';
 import { hyperlaneWarpApplyFuel, readWarpConfigFuel } from './warp-fuel.js';
 import {
   hyperlaneWarpApply,
@@ -48,20 +49,23 @@ export const E2E_TEST_BURN_ADDRESS =
 
 export const CHAIN_NAME_2 = 'anvil2';
 export const CHAIN_NAME_3 = 'anvil3';
-export const FUEL_CHAIN_NAME_1 = 'fueltest1';
-export const FUEL_CHAIN_NAME_2 = 'fueltest2';
+export const CHAIN_NAME_FUEL_1 = 'fueltest1';
+export const CHAIN_NAME_FUEL_2 = 'fueltest2';
 
 export const EXAMPLES_PATH = './examples';
 export const CORE_CONFIG_PATH = `${EXAMPLES_PATH}/core-config.yaml`;
 export const CORE_CONFIG_PATH_2 = `${TEMP_PATH}/${CHAIN_NAME_2}/core-config.yaml`;
+export const CORE_CONFIG_PATH_FUEL = `${EXAMPLES_PATH}/fuel/core-config.yaml`;
+
 export const CORE_READ_CONFIG_PATH_2 = `${TEMP_PATH}/${CHAIN_NAME_2}/core-config-read.yaml`;
+
 export const CHAIN_2_METADATA_PATH = `${REGISTRY_PATH}/chains/${CHAIN_NAME_2}/metadata.yaml`;
 export const CHAIN_3_METADATA_PATH = `${REGISTRY_PATH}/chains/${CHAIN_NAME_3}/metadata.yaml`;
+export const CHAIN_FUEL_1_METADATA_PATH = `${FUEL_REGISTRY_PATH}/chains/${CHAIN_NAME_FUEL_1}/metadata.yaml`;
+export const CHAIN_FUEL_2_METADATA_PATH = `${FUEL_REGISTRY_PATH}/chains/${CHAIN_NAME_FUEL_2}/metadata.yaml`;
 
 export const FUEL_LOCAL_REGISTRY_PATH = `${E2E_TEST_CONFIGS_PATH}/fuel`;
-export const FUEL_EXAMPLE_CONFIG_PATH = `${EXAMPLES_PATH}/fuel/core-config.yaml`;
-export const FUEL_1_CONFIG_PATH = `${TEMP_PATH}/${FUEL_CHAIN_NAME_1}/warp-route-deployment-fueltest1.yaml`;
-export const FUEL_CORE_CONFIG_PATH = `${FUEL_LOCAL_REGISTRY_PATH}/deployments/warp_routes/ETH/fueltest1-config.yaml`;
+export const FUEL_1_CONFIG_PATH = `${TEMP_PATH}/${CHAIN_NAME_FUEL_1}/warp-route-deployment-fueltest1.yaml`;
 
 export const FUEL_WARP_CONFIG_PATH_EXAMPLE = `${EXAMPLES_PATH}/fuel/warp-route-deployment.yaml`;
 export const WARP_DEPLOY_OUTPUT_PATH_FUEL = `${TEMP_PATH}/fueltest1/warp-route-deployment-fueltest1.yaml`;
@@ -70,19 +74,21 @@ export const FUEL_CHAIN_METADATA_PATH = `${FUEL_LOCAL_REGISTRY_PATH}/chains/fuel
 
 export const WARP_CONFIG_PATH_EXAMPLE = `${EXAMPLES_PATH}/warp-route-deployment.yaml`;
 export const WARP_CONFIG_PATH_2 = `${TEMP_PATH}/${CHAIN_NAME_2}/warp-route-deployment-anvil2.yaml`;
-export const WARP_CONFIG_PATH_FUEL_1 = `${TEMP_PATH}/${FUEL_CHAIN_NAME_1}/warp-route-deployment-fueltest1.yaml`;
+export const WARP_CONFIG_PATH_FUEL_1 = `${TEMP_PATH}/${CHAIN_NAME_FUEL_1}/warp-route-deployment-fueltest1.yaml`;
 export const WARP_DEPLOY_OUTPUT_PATH = `${TEMP_PATH}/warp-route-deployment.yaml`;
 export const WARP_CORE_CONFIG_PATH_2 = `${REGISTRY_PATH}/deployments/warp_routes/ETH/anvil2-config.yaml`;
 
-export const launchFuelNodes = async () => {
+export const launchFuelNodes = async (): Promise<
+  Record<string, LaunchTestNodeReturn<DeployContractConfig[]>>
+> => {
   const walletsConfig: WalletsConfigOptions = {
     assets: 1,
     amountPerCoin: 10000000000000,
     coinsPerAsset: 1,
-    count: 2,
+    count: 1,
     messages: [],
   };
-  const networks = [FUEL_CHAIN_NAME_1, FUEL_CHAIN_NAME_2];
+  const networks = [CHAIN_NAME_FUEL_1, CHAIN_NAME_FUEL_2];
 
   const nodes: Record<
     string,
@@ -399,12 +405,18 @@ export async function deployOrUseExistingCore(
   chain: string,
   coreInputPath: string,
   key: string,
+  fuelWallet?: WalletUnlocked,
 ) {
   const { registry } = await getContext({
     registryUris: [REGISTRY_PATH],
     key,
   });
   const addresses = (await registry.getChainAddresses(chain)) as ChainAddresses;
+
+  if (!addresses && fuelWallet) {
+    await mockFuelCoreDeploy(chain, fuelWallet);
+    return deployOrUseExistingCore(chain, coreInputPath, key);
+  }
 
   if (!addresses) {
     await hyperlaneCoreDeploy(chain, coreInputPath);

@@ -11,9 +11,9 @@ import {
   ANVIL_KEY,
   CHAIN_NAME_2,
   CHAIN_NAME_3,
+  CHAIN_NAME_FUEL_1,
   CORE_CONFIG_PATH,
   DEFAULT_E2E_TEST_TIMEOUT,
-  FUEL_CHAIN_NAME_1,
   FUEL_KEY,
   FUEL_WARP_CONFIG_PATH_EXAMPLE,
   KeyBoardKeys,
@@ -50,7 +50,7 @@ describe('hyperlane warp read e2e tests', async function () {
       deployOrUseExistingCore(CHAIN_NAME_2, CORE_CONFIG_PATH, ANVIL_KEY),
       deployOrUseExistingCore(CHAIN_NAME_3, CORE_CONFIG_PATH, ANVIL_KEY),
       // Pulls preset fake data since we don't need core contract functionality
-      deployOrUseExistingCore(FUEL_CHAIN_NAME_1, '', ''),
+      deployOrUseExistingCore(CHAIN_NAME_FUEL_1, '', ''),
     ]);
 
     evmOwnerAddress = new Wallet(ANVIL_KEY).address;
@@ -71,7 +71,7 @@ describe('hyperlane warp read e2e tests', async function () {
     );
     anvil2Config = { [CHAIN_NAME_2]: { ...exampleEvmWarpConfig.anvil1 } };
     fuel1Config = {
-      [FUEL_CHAIN_NAME_1]: { ...exampleFuelWarpConfig.fueltestnet },
+      [CHAIN_NAME_FUEL_1]: { ...exampleFuelWarpConfig.fueltestnet },
     };
     writeYamlOrJson(WARP_CONFIG_PATH_2, anvil2Config);
     writeYamlOrJson(WARP_CONFIG_PATH_FUEL_1, fuel1Config);

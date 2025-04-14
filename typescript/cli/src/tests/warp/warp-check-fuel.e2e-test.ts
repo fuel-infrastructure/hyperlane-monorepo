@@ -5,10 +5,9 @@ import { WarpRouteDeployConfig } from '@hyperlane-xyz/sdk';
 import { writeYamlOrJson } from '../../utils/files.js';
 import {
   ANVIL_KEY,
+  CHAIN_NAME_FUEL_1,
   DEFAULT_E2E_TEST_TIMEOUT,
   FUEL_1_CONFIG_PATH,
-  FUEL_CHAIN_NAME_1,
-  FUEL_CORE_CONFIG_PATH,
   FUEL_KEY,
   WARP_DEPLOY_OUTPUT_PATH_FUEL,
 } from '../commands/helpers.js';
@@ -22,6 +21,8 @@ describe('hyperlane warp check fuel e2e tests', async function () {
   // Set a longer timeout for all tests in this suite
   this.timeout(DEFAULT_E2E_TEST_TIMEOUT);
 
+  const FUEL_CORE_CONFIG_PATH = 'temp';
+
   // Setup variables to be used across tests
   let warpConfig: WarpRouteDeployConfig;
   let originalOwner: string;
@@ -29,13 +30,13 @@ describe('hyperlane warp check fuel e2e tests', async function () {
   before(async function () {
     // Read the current config before running any tests
     warpConfig = await readWarpConfigFuel(
-      FUEL_CHAIN_NAME_1,
+      CHAIN_NAME_FUEL_1,
       FUEL_CORE_CONFIG_PATH,
       FUEL_1_CONFIG_PATH,
     );
 
     // Store the original owner for later use
-    originalOwner = warpConfig[FUEL_CHAIN_NAME_1].owner;
+    originalOwner = warpConfig[CHAIN_NAME_FUEL_1].owner;
   });
 
   describe('detecting configuration differences', () => {
@@ -43,7 +44,7 @@ describe('hyperlane warp check fuel e2e tests', async function () {
       // Modify the config with a new owner - use a Fuel-style address (64 hex chars)
       const newOwner = '0x' + 'a'.repeat(64);
       const modifiedConfig = { ...warpConfig };
-      modifiedConfig[FUEL_CHAIN_NAME_1].owner = newOwner;
+      modifiedConfig[CHAIN_NAME_FUEL_1].owner = newOwner;
       writeYamlOrJson(FUEL_1_CONFIG_PATH, modifiedConfig);
 
       // Expected text in the output - match the actual format from logs
@@ -66,7 +67,7 @@ describe('hyperlane warp check fuel e2e tests', async function () {
     it('should successfully check the config when it matches', async function () {
       // Read the current config
       const currentConfig = await readWarpConfigFuel(
-        FUEL_CHAIN_NAME_1,
+        CHAIN_NAME_FUEL_1,
         FUEL_CORE_CONFIG_PATH,
         FUEL_1_CONFIG_PATH,
       );
@@ -105,7 +106,7 @@ describe('hyperlane warp check fuel e2e tests', async function () {
     it('should not find any differences between the on chain config and the local one', async function () {
       // Read the current config
       const currentConfig = await readWarpConfigFuel(
-        FUEL_CHAIN_NAME_1,
+        CHAIN_NAME_FUEL_1,
         FUEL_CORE_CONFIG_PATH,
         FUEL_1_CONFIG_PATH,
       );
@@ -129,7 +130,7 @@ describe('hyperlane warp check fuel e2e tests', async function () {
       // Modify the config with a new owner - use a Fuel-style address (64 hex chars)
       const newOwner = '0x' + 'b'.repeat(64);
       const modifiedConfig = { ...warpConfig };
-      modifiedConfig[FUEL_CHAIN_NAME_1].owner = newOwner;
+      modifiedConfig[CHAIN_NAME_FUEL_1].owner = newOwner;
       writeYamlOrJson(FUEL_1_CONFIG_PATH, modifiedConfig);
 
       // Expected text in the output
@@ -152,11 +153,11 @@ describe('hyperlane warp check fuel e2e tests', async function () {
   after(async function () {
     if (originalOwner) {
       const currentConfig = await readWarpConfigFuel(
-        FUEL_CHAIN_NAME_1,
+        CHAIN_NAME_FUEL_1,
         FUEL_CORE_CONFIG_PATH,
         FUEL_1_CONFIG_PATH,
       );
-      currentConfig[FUEL_CHAIN_NAME_1].owner = originalOwner;
+      currentConfig[CHAIN_NAME_FUEL_1].owner = originalOwner;
       writeYamlOrJson(FUEL_1_CONFIG_PATH, currentConfig);
     }
   });

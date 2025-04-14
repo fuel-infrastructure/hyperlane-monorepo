@@ -21,9 +21,9 @@ import {
   ANVIL_KEY,
   CHAIN_2_METADATA_PATH,
   CHAIN_NAME_2,
+  CHAIN_NAME_FUEL_1,
   DEFAULT_E2E_TEST_TIMEOUT,
   FUEL_CHAIN_METADATA_PATH,
-  FUEL_CHAIN_NAME_1,
   FUEL_KEY,
   deployToken,
   getCombinedWarpRoutePath,
@@ -62,12 +62,12 @@ describe('hyperlane warp deploy e2e tests', async function () {
 
     const WARP_CORE_CONFIG_PATH_2_3 = getCombinedWarpRoutePath(tokenSymbol, [
       CHAIN_NAME_2,
-      FUEL_CHAIN_NAME_1,
+      CHAIN_NAME_FUEL_1,
     ]);
 
     // Get domain IDs for both chains
     const chain2Id = await getDomainId(CHAIN_NAME_2, ANVIL_KEY);
-    const fuelChainId = await getDomainId(FUEL_CHAIN_NAME_1, FUEL_KEY);
+    const fuelChainId = await getDomainId(CHAIN_NAME_FUEL_1, FUEL_KEY);
 
     // Read the deployed config to get router addresses
     const config: ChainMap<Token> = (
@@ -82,7 +82,7 @@ describe('hyperlane warp deploy e2e tests', async function () {
     );
 
     // Get the router address on Fuel chain
-    const fuelRouterAddress = config[FUEL_CHAIN_NAME_1].addressOrDenom;
+    const fuelRouterAddress = config[CHAIN_NAME_FUEL_1].addressOrDenom;
 
     // Explicitly enroll remote routers
     const enrollTx1 = await chain2Router.enrollRemoteRouter(
@@ -134,7 +134,7 @@ describe('hyperlane warp deploy e2e tests', async function () {
     const { stdout: stdout2, exitCode: exitCode2 } =
       await hyperlaneWarpSendRelayFuel(
         CHAIN_NAME_2,
-        FUEL_CHAIN_NAME_1,
+        CHAIN_NAME_FUEL_1,
         WARP_CORE_CONFIG_PATH_2_3,
         true,
         1000,
@@ -168,7 +168,7 @@ describe('hyperlane warp deploy e2e tests', async function () {
       ]);
 
     const { stdout, exitCode } = await hyperlaneWarpSendRelayFuel(
-      FUEL_CHAIN_NAME_1,
+      CHAIN_NAME_FUEL_1,
       CHAIN_NAME_2,
       WARP_CORE_CONFIG_PATH_2_3,
     );

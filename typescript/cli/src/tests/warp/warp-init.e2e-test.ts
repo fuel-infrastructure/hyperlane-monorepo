@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import { Wallet } from 'ethers';
 import { WalletUnlocked } from 'fuels';
+import { DeployContractConfig, LaunchTestNodeReturn } from 'fuels/test-utils';
 
 import { ChainAddresses } from '@hyperlane-xyz/registry';
 import {
@@ -16,12 +17,12 @@ import {
   ANVIL_KEY,
   CHAIN_NAME_2,
   CHAIN_NAME_3,
+  CHAIN_NAME_FUEL_1,
   CONFIRM_DETECTED_OWNER_STEP,
   CORE_CONFIG_PATH,
+  CORE_CONFIG_PATH_FUEL,
   DEFAULT_E2E_TEST_TIMEOUT,
   FUEL_1_CONFIG_PATH,
-  FUEL_CHAIN_NAME_1,
-  FUEL_KEY,
   KeyBoardKeys,
   SELECT_ANVIL_2_AND_ANVIL_3_STEPS,
   SELECT_ANVIL_2_AND_FUEL_1_STEPS,
@@ -33,6 +34,7 @@ import {
   deployOrUseExistingCore,
   deployToken,
   handlePrompts,
+  launchFuelNodes,
 } from '../commands/helpers.js';
 import { hyperlaneWarpInit } from '../commands/warp.js';
 
@@ -45,25 +47,44 @@ describe('hyperlane warp init e2e tests', async function () {
   let initialEVMOwnerAddress: Address;
   let initialFuelOwnerAddress: Address;
   let chainMapAddresses: ChainMap<ChainAddresses> = {};
+  let fuelNodes: Record<string, LaunchTestNodeReturn<DeployContractConfig[]>>;
 
   before(async function () {
+    fuelNodes = await launchFuelNodes();
+    const fuelNode = fuelNodes[CHAIN_NAME_FUEL_1];
+    const fuelWallet = fuelNode.wallets[0];
+    const fuel_pk = fuelWallet.privateKey;
+
     [chain2Addresses, chain3Addresses, fuelChain1Addresses] = await Promise.all(
       [
         deployOrUseExistingCore(CHAIN_NAME_2, CORE_CONFIG_PATH, ANVIL_KEY),
         deployOrUseExistingCore(CHAIN_NAME_3, CORE_CONFIG_PATH, ANVIL_KEY),
-        // Pulls preset fake data since we don't need core contract functionality
-        deployOrUseExistingCore(FUEL_CHAIN_NAME_1, '', ''),
+        deployOrUseExistingCore(
+          CHAIN_NAME_FUEL_1,
+          CORE_CONFIG_PATH_FUEL,
+          fuel_pk,
+          fuelWallet,
+        ),
       ],
     );
 
     chainMapAddresses = {
       [CHAIN_NAME_2]: chain2Addresses,
       [CHAIN_NAME_3]: chain3Addresses,
-      [FUEL_CHAIN_NAME_1]: fuelChain1Addresses,
+      [CHAIN_NAME_FUEL_1]: fuelChain1Addresses,
     };
 
     initialEVMOwnerAddress = new Wallet(ANVIL_KEY).address;
-    initialFuelOwnerAddress = new WalletUnlocked(FUEL_KEY).address.b256Address;
+    initialFuelOwnerAddress = new WalletUnlocked(fuel_pk).address.b256Address;
+  });
+
+  after(function () {
+    // Clean up fuel nodes
+    for (const node of Object.values(fuelNodes)) {
+      node.cleanup();
+    }
+    console.log('Fuel nodes cleaned up ✅');
+    process.exit(0);
   });
 
   describe('hyperlane warp init --yes', () => {
@@ -143,7 +164,7 @@ describe('hyperlane warp init e2e tests', async function () {
       assertWarpConfig(
         warpConfig,
         chainMapAddresses,
-        FUEL_CHAIN_NAME_1,
+        CHAIN_NAME_FUEL_1,
         ProtocolType.Fuel,
       );
     });
@@ -203,7 +224,7 @@ describe('hyperlane warp init e2e tests', async function () {
       const warpConfig: WarpRouteDeployConfig =
         readYamlOrJson(WARP_CONFIG_PATH_2);
 
-      [CHAIN_NAME_2, FUEL_CHAIN_NAME_1].map((chainName, index) =>
+      [CHAIN_NAME_2, CHAIN_NAME_FUEL_1].map((chainName, index) =>
         assertWarpConfig(
           warpConfig,
           chainMapAddresses,
@@ -335,9 +356,9 @@ describe('hyperlane warp init e2e tests', async function () {
       expect(chain2TokenConfig.type).equal(TokenType.collateral);
       expect((chain2TokenConfig as any).token).equal(erc20Token.address);
 
-      expect(warpConfig[FUEL_CHAIN_NAME_1]).not.to.be.undefined;
+      expect(warpConfig[CHAIN_NAME_FUEL_1]).not.to.be.undefined;
 
-      const fuel1TokenConfig = warpConfig[FUEL_CHAIN_NAME_1];
+      const fuel1TokenConfig = warpConfig[CHAIN_NAME_FUEL_1];
       expect(fuel1TokenConfig.mailbox).equal(fuelChain1Addresses.mailbox);
       expect(fuel1TokenConfig.owner).equal(initialFuelOwnerAddress);
       expect(fuel1TokenConfig.type).equal(TokenType.synthetic);
@@ -421,9 +442,9 @@ describe('hyperlane warp init e2e tests', async function () {
       expect(chain2TokenConfig.owner).equal(initialEVMOwnerAddress);
       expect(chain2TokenConfig.type).equal(TokenType.synthetic);
 
-      expect(warpConfig[FUEL_CHAIN_NAME_1]).not.to.be.undefined;
+      expect(warpConfig[CHAIN_NAME_FUEL_1]).not.to.be.undefined;
 
-      const fuel1TokenConfig = warpConfig[FUEL_CHAIN_NAME_1];
+      const fuel1TokenConfig = warpConfig[CHAIN_NAME_FUEL_1];
       expect((fuel1TokenConfig as any).token).equal(mockFuelAddress);
       expect((fuel1TokenConfig as any).assetId).equal(mockFuelAddress);
       expect(fuel1TokenConfig.mailbox).equal(fuelChain1Addresses.mailbox);
