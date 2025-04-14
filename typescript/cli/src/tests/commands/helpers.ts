@@ -25,7 +25,11 @@ import {
 import { Address, sleep } from '@hyperlane-xyz/utils';
 
 import { getContext } from '../../context/context.js';
-import { readYamlOrJson, writeYamlOrJson } from '../../utils/files.js';
+import {
+  readYamlOrJson,
+  removeFile,
+  writeYamlOrJson,
+} from '../../utils/files.js';
 
 import { hyperlaneCoreDeploy, mockFuelCoreDeploy } from './core.js';
 import { hyperlaneWarpApplyFuel, readWarpConfigFuel } from './warp-fuel.js';
@@ -99,6 +103,20 @@ export const launchFuelNodes = async (): Promise<
   }
 
   return nodes;
+};
+
+export const cleanupFuelNodes = async (
+  nodes: Record<string, LaunchTestNodeReturn<DeployContractConfig[]>>,
+) => {
+  for (const node of Object.values(nodes)) {
+    node.cleanup();
+  }
+  console.log('Fuel nodes cleaned up ✅');
+
+  removeFile(`${REGISTRY_PATH}/chains/${CHAIN_NAME_FUEL_1}/addresses.yaml`);
+  removeFile(`${REGISTRY_PATH}/chains/${CHAIN_NAME_FUEL_2}/addresses.yaml`);
+
+  console.log('Fuel metadata files cleaned up ✅');
 };
 
 export function getCombinedWarpRoutePath(

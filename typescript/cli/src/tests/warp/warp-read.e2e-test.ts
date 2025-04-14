@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import { Wallet } from 'ethers';
 import { WalletUnlocked } from 'fuels';
+import { DeployContractConfig, LaunchTestNodeReturn } from 'fuels/test-utils';
 
 import { ChainAddresses } from '@hyperlane-xyz/registry';
 import { TokenType, WarpRouteDeployConfig } from '@hyperlane-xyz/sdk';
@@ -13,6 +14,7 @@ import {
   CHAIN_NAME_3,
   CHAIN_NAME_FUEL_1,
   CORE_CONFIG_PATH,
+  CORE_CONFIG_PATH_FUEL,
   DEFAULT_E2E_TEST_TIMEOUT,
   FUEL_KEY,
   FUEL_WARP_CONFIG_PATH_EXAMPLE,
@@ -23,8 +25,10 @@ import {
   WARP_CONFIG_PATH_FUEL_1,
   WARP_CORE_CONFIG_PATH_2,
   WARP_DEPLOY_OUTPUT_PATH,
+  cleanupFuelNodes,
   deployOrUseExistingCore,
   handlePrompts,
+  launchFuelNodes,
 } from '../commands/helpers.js';
 import {
   hyperlaneWarpDeploy,
@@ -45,16 +49,27 @@ describe('hyperlane warp read e2e tests', async function () {
   let evmOwnerAddress: Address;
   let fuelOwnerAddress: Address;
 
+  let fuelNodes: Record<string, LaunchTestNodeReturn<DeployContractConfig[]>>;
+
   before(async function () {
+    fuelNodes = await launchFuelNodes();
+    const fuelWallet = fuelNodes[CHAIN_NAME_FUEL_1].wallets[0];
+    const fuel_pk = fuelWallet.privateKey;
+
     [chain2Addresses, chain3Addresses, fuel1Addresses] = await Promise.all([
       deployOrUseExistingCore(CHAIN_NAME_2, CORE_CONFIG_PATH, ANVIL_KEY),
       deployOrUseExistingCore(CHAIN_NAME_3, CORE_CONFIG_PATH, ANVIL_KEY),
       // Pulls preset fake data since we don't need core contract functionality
-      deployOrUseExistingCore(CHAIN_NAME_FUEL_1, '', ''),
+      deployOrUseExistingCore(
+        CHAIN_NAME_FUEL_1,
+        CORE_CONFIG_PATH_FUEL,
+        fuel_pk,
+        fuelWallet,
+      ),
     ]);
 
     evmOwnerAddress = new Wallet(ANVIL_KEY).address;
-    fuelOwnerAddress = new WalletUnlocked(FUEL_KEY).address.b256Address;
+    fuelOwnerAddress = new WalletUnlocked(fuel_pk).address.b256Address;
     fuelOwnerAddress = fuelOwnerAddress.toLowerCase();
     fuel1Addresses.mailbox = fuel1Addresses.mailbox.toLowerCase();
   });
@@ -75,6 +90,10 @@ describe('hyperlane warp read e2e tests', async function () {
     };
     writeYamlOrJson(WARP_CONFIG_PATH_2, anvil2Config);
     writeYamlOrJson(WARP_CONFIG_PATH_FUEL_1, fuel1Config);
+  });
+
+  after(async function () {
+    await cleanupFuelNodes(fuelNodes);
   });
 
   describe('hyperlane warp read --key ... --config ...', () => {

@@ -11,4 +11,5 @@
 
 # Test artifacts
 /test-configs/**/addresses.yaml
+/test-configs/**/logo.svg
 /test-configs/*/deployments

@@ -27,7 +27,7 @@ $.verbose = true;
  */
 export function hyperlaneWarpInit(
   warpCorePath: string,
-  includesNonEvm?: boolean,
+  fuelKey?: string,
 ): ProcessPromise {
   // Two dimensional array for readability
   const args = [
@@ -39,8 +39,8 @@ export function hyperlaneWarpInit(
     ['--yes'],
   ];
 
-  if (includesNonEvm) {
-    const keys = `fuel:${FUEL_KEY},ethereum:${ANVIL_KEY}`;
+  if (fuelKey) {
+    const keys = `fuel:${fuelKey},ethereum:${ANVIL_KEY}`;
     args.push(['--keys', keys]);
   } else {
     args.push(['--key', ANVIL_KEY]);

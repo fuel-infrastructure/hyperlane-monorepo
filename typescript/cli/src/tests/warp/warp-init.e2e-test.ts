@@ -31,6 +31,7 @@ import {
   SELECT_MAINNET_CHAIN_TYPE_STEP,
   TestPromptAction,
   WARP_CONFIG_PATH_2,
+  cleanupFuelNodes,
   deployOrUseExistingCore,
   deployToken,
   handlePrompts,
@@ -46,14 +47,15 @@ describe('hyperlane warp init e2e tests', async function () {
   let fuelChain1Addresses: ChainAddresses = {};
   let initialEVMOwnerAddress: Address;
   let initialFuelOwnerAddress: Address;
+  let initialFuelOwnerPk: string;
   let chainMapAddresses: ChainMap<ChainAddresses> = {};
   let fuelNodes: Record<string, LaunchTestNodeReturn<DeployContractConfig[]>>;
 
   before(async function () {
     fuelNodes = await launchFuelNodes();
-    const fuelNode = fuelNodes[CHAIN_NAME_FUEL_1];
-    const fuelWallet = fuelNode.wallets[0];
+    const fuelWallet = fuelNodes[CHAIN_NAME_FUEL_1].wallets[0];
     const fuel_pk = fuelWallet.privateKey;
+    initialFuelOwnerPk = fuel_pk;
 
     [chain2Addresses, chain3Addresses, fuelChain1Addresses] = await Promise.all(
       [
@@ -78,13 +80,8 @@ describe('hyperlane warp init e2e tests', async function () {
     initialFuelOwnerAddress = new WalletUnlocked(fuel_pk).address.b256Address;
   });
 
-  after(function () {
-    // Clean up fuel nodes
-    for (const node of Object.values(fuelNodes)) {
-      node.cleanup();
-    }
-    console.log('Fuel nodes cleaned up ✅');
-    process.exit(0);
+  after(async function () {
+    await cleanupFuelNodes(fuelNodes);
   });
 
   describe('hyperlane warp init --yes', () => {
@@ -154,7 +151,10 @@ describe('hyperlane warp init e2e tests', async function () {
         },
       ];
 
-      const output = hyperlaneWarpInit(FUEL_1_CONFIG_PATH, true).stdio('pipe');
+      const output = hyperlaneWarpInit(
+        FUEL_1_CONFIG_PATH,
+        initialFuelOwnerPk,
+      ).stdio('pipe');
 
       await handlePrompts(output, steps);
 
@@ -217,7 +217,10 @@ describe('hyperlane warp init e2e tests', async function () {
         },
       ];
 
-      const output = hyperlaneWarpInit(WARP_CONFIG_PATH_2, true).stdio('pipe');
+      const output = hyperlaneWarpInit(
+        WARP_CONFIG_PATH_2,
+        initialFuelOwnerPk,
+      ).stdio('pipe');
 
       await handlePrompts(output, steps);
 
@@ -341,7 +344,10 @@ describe('hyperlane warp init e2e tests', async function () {
         },
       ];
 
-      const output = hyperlaneWarpInit(WARP_CONFIG_PATH_2, true).stdio('pipe');
+      const output = hyperlaneWarpInit(
+        WARP_CONFIG_PATH_2,
+        initialFuelOwnerPk,
+      ).stdio('pipe');
 
       await handlePrompts(output, steps);
 
@@ -428,7 +434,10 @@ describe('hyperlane warp init e2e tests', async function () {
         },
       ];
 
-      const output = hyperlaneWarpInit(WARP_CONFIG_PATH_2, true).stdio('pipe');
+      const output = hyperlaneWarpInit(
+        WARP_CONFIG_PATH_2,
+        initialFuelOwnerPk,
+      ).stdio('pipe');
 
       await handlePrompts(output, steps);
 

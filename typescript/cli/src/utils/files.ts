@@ -264,3 +264,17 @@ export function logYamlIfUnderMaxLines(
 
   log(lineCounter.lineStarts.length < maxLines ? asYamlString : '');
 }
+
+export function removeFile(path: string) {
+  if (!fs.existsSync(path)) {
+    console.info(`File does not exist at ${path}`);
+    return;
+  }
+
+  try {
+    fs.unlinkSync(path);
+    console.log(`File ${path} removed successfully`);
+  } catch (err) {
+    console.error('Error removing file:', err);
+  }
+}
