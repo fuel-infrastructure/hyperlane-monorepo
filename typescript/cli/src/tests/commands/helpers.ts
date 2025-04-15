@@ -26,13 +26,13 @@ import { Address, sleep } from '@hyperlane-xyz/utils';
 
 import { getContext } from '../../context/context.js';
 import {
+  mergeYaml,
   readYamlOrJson,
   removeFile,
   writeYamlOrJson,
 } from '../../utils/files.js';
 
 import { hyperlaneCoreDeploy, mockFuelCoreDeploy } from './core.js';
-import { hyperlaneWarpApplyFuel, readWarpConfigFuel } from './warp-fuel.js';
 import {
   hyperlaneWarpApply,
   hyperlaneWarpSendRelay,
@@ -46,8 +46,6 @@ export const TEMP_PATH = '/tmp'; // /temp gets removed at the end of all-test.sh
 
 export const ANVIL_KEY =
   '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';
-export const FUEL_KEY =
-  '0x560651e6d8824272b34a229a492293091d0f8f735c4534cdf76addc57774b711';
 export const E2E_TEST_BURN_ADDRESS =
   '0x0000000000000000000000000000000000000001';
 
@@ -58,8 +56,8 @@ export const CHAIN_NAME_FUEL_2 = 'fueltest2';
 
 export const EXAMPLES_PATH = './examples';
 export const CORE_CONFIG_PATH = `${EXAMPLES_PATH}/core-config.yaml`;
-export const CORE_CONFIG_PATH_2 = `${TEMP_PATH}/${CHAIN_NAME_2}/core-config.yaml`;
 export const CORE_CONFIG_PATH_FUEL = `${EXAMPLES_PATH}/fuel/core-config.yaml`;
+export const CORE_CONFIG_PATH_2 = `${TEMP_PATH}/${CHAIN_NAME_2}/core-config.yaml`;
 
 export const CORE_READ_CONFIG_PATH_2 = `${TEMP_PATH}/${CHAIN_NAME_2}/core-config-read.yaml`;
 
@@ -87,7 +85,7 @@ export const launchFuelNodes = async (): Promise<
 > => {
   const walletsConfig: WalletsConfigOptions = {
     assets: 1,
-    amountPerCoin: 10000000000000,
+    amountPerCoin: 100000000,
     coinsPerAsset: 1,
     count: 1,
     messages: [],
@@ -98,8 +96,13 @@ export const launchFuelNodes = async (): Promise<
     string,
     LaunchTestNodeReturn<DeployContractConfig[]>
   > = {};
-  for (let i = 0; i < 2; i++) {
-    nodes[networks[i]] = await launchTestNode({ walletsConfig });
+  for (const network of networks) {
+    const node = await launchTestNode({ walletsConfig });
+
+    const path = `${REGISTRY_PATH}/chains/${network}/metadata.yaml`;
+    mergeYaml(path, { rpcUrls: [{ http: node.provider.url }] });
+
+    nodes[network] = node;
   }
 
   return nodes;
@@ -304,22 +307,22 @@ export async function updateWarpOwnerConfig(
 /**
  * Updates the owner of the Warp route deployment config, and then output to a file
  */
-export async function updateWarpOwnerConfigFuel(
-  chain: string,
-  owner: Address,
-  warpCorePath: string,
-  warpDeployPath: string,
-): Promise<string> {
-  const warpDeployConfig = await readWarpConfigFuel(
-    chain,
-    warpCorePath,
-    warpDeployPath,
-  );
-  warpDeployConfig[chain].owner = owner;
-  await writeYamlOrJson(warpDeployPath, warpDeployConfig);
+// export async function updateWarpOwnerConfigFuel(
+//   chain: string,
+//   owner: Address,
+//   warpCorePath: string,
+//   warpDeployPath: string,
+// ): Promise<string> {
+//   const warpDeployConfig = await readWarpConfigFuel(
+//     chain,
+//     warpCorePath,
+//     warpDeployPath,
+//   );
+//   warpDeployConfig[chain].owner = owner;
+//   await writeYamlOrJson(warpDeployPath, warpDeployConfig);
 
-  return warpDeployPath;
-}
+//   return warpDeployPath;
+// }
 
 /**
  * Updates the Warp route deployment configuration with a new owner, and then applies the changes.
@@ -337,20 +340,20 @@ export async function updateOwner(
 /**
  * Updates the Warp route deployment configuration with a new owner, and then applies the changes.
  */
-export async function updateOwnerFuel(
-  owner: Address,
-  chain: string,
-  warpConfigPath: string,
-  warpCoreConfigPath: string,
-) {
-  await updateWarpOwnerConfigFuel(
-    chain,
-    owner,
-    warpCoreConfigPath,
-    warpConfigPath,
-  );
-  return hyperlaneWarpApplyFuel(warpConfigPath, warpCoreConfigPath);
-}
+// export async function updateOwnerFuel(
+//   owner: Address,
+//   chain: string,
+//   warpConfigPath: string,
+//   warpCoreConfigPath: string,
+// ) {
+//   await updateWarpOwnerConfigFuel(
+//     chain,
+//     owner,
+//     warpCoreConfigPath,
+//     warpConfigPath,
+//   );
+//   return hyperlaneWarpApplyFuel(warpConfigPath, warpCoreConfigPath);
+// }
 
 /**
 /**
@@ -388,33 +391,33 @@ export async function extendWarpConfig(params: {
 /**
  * Extends the Warp route deployment with a new warp config
  */
-export async function extendWarpConfigFuel(params: {
-  chain: string;
-  chainToExtend: string;
-  extendedConfig: HypTokenRouterConfig;
-  warpCorePath: string;
-  warpDeployPath: string;
-  strategyUrl?: string;
-}): Promise<string> {
-  const {
-    chain,
-    chainToExtend,
-    extendedConfig,
-    warpCorePath,
-    warpDeployPath,
-    strategyUrl,
-  } = params;
-  const warpDeployConfig = await readWarpConfigFuel(
-    chain,
-    warpCorePath,
-    warpDeployPath,
-  );
-  warpDeployConfig[chainToExtend] = extendedConfig;
-  writeYamlOrJson(warpDeployPath, warpDeployConfig);
-  await hyperlaneWarpApplyFuel(warpDeployPath, warpCorePath, strategyUrl);
+// export async function extendWarpConfigFuel(params: {
+//   chain: string;
+//   chainToExtend: string;
+//   extendedConfig: HypTokenRouterConfig;
+//   warpCorePath: string;
+//   warpDeployPath: string;
+//   strategyUrl?: string;
+// }): Promise<string> {
+//   const {
+//     chain,
+//     chainToExtend,
+//     extendedConfig,
+//     warpCorePath,
+//     warpDeployPath,
+//     strategyUrl,
+//   } = params;
+//   const warpDeployConfig = await readWarpConfigFuel(
+//     chain,
+//     warpCorePath,
+//     warpDeployPath,
+//   );
+//   warpDeployConfig[chainToExtend] = extendedConfig;
+//   writeYamlOrJson(warpDeployPath, warpDeployConfig);
+//   await hyperlaneWarpApplyFuel(warpDeployPath, warpCorePath, strategyUrl);
 
-  return warpDeployPath;
-}
+//   return warpDeployPath;
+// }
 
 /**
  * Deploys new core contracts on the specified chain if it doesn't already exist, and returns the chain addresses.

@@ -11,12 +11,7 @@ import { Address } from '@hyperlane-xyz/utils';
 
 import { readYamlOrJson } from '../../utils/files.js';
 
-import {
-  ANVIL_KEY,
-  FUEL_KEY,
-  REGISTRY_PATH,
-  getDeployedWarpAddress,
-} from './helpers.js';
+import { ANVIL_KEY, REGISTRY_PATH, getDeployedWarpAddress } from './helpers.js';
 
 $.verbose = true;
 
@@ -87,11 +82,12 @@ export function hyperlaneWarpDeployRaw({
  */
 export function hyperlaneWarpDeploy(
   warpCorePath: string,
-  includesNonEvm: boolean = false,
+  fuelKey?: string,
 ): ProcessPromise {
-  return includesNonEvm
+  return fuelKey
     ? hyperlaneWarpDeployRaw({
-        keys: `fuel:${FUEL_KEY},ethereum:${ANVIL_KEY}`,
+        keys: `fuel:${fuelKey},ethereum:${ANVIL_KEY}`,
+        privateKey: ANVIL_KEY,
         warpCorePath: warpCorePath,
         skipConfirmationPrompts: true,
       })
@@ -126,33 +122,49 @@ export function hyperlaneWarpReadRaw({
   outputPath,
   privateKey,
   symbol,
+  fuelKey,
 }: {
   chain?: string;
   symbol?: string;
   privateKey?: string;
   warpAddress?: string;
   outputPath?: string;
+  fuelKey?: string;
 }): ProcessPromise {
-  return $`yarn workspace @hyperlane-xyz/cli run hyperlane warp read \
-        --registry ${REGISTRY_PATH} \
-        ${warpAddress ? ['--address', warpAddress] : ''} \
-        ${chain ? ['--chain', chain] : ''} \
-        ${symbol ? ['--symbol', symbol] : ''} \
-        ${privateKey ? ['--key', privateKey] : ''} \
-        --verbosity debug \
-        ${outputPath ? ['--config', outputPath] : ''}`;
+  // Two dimensional array for readability
+  const args = [
+    ['workspace', '@hyperlane-xyz/cli'],
+    ['run', 'hyperlane', 'warp', 'read'],
+    ['--registry', REGISTRY_PATH],
+    ['--verbosity', 'debug'],
+  ];
+
+  // Conditionally add optional arguments
+  if (warpAddress) args.push(['--address', warpAddress]);
+  if (chain) args.push(['--chain', chain]);
+  if (symbol) args.push(['--symbol', symbol]);
+  if (fuelKey && privateKey) {
+    args.push(['--keys', `fuel:${fuelKey},ethereum:${privateKey}`]);
+    args.push(['--key', privateKey]);
+  } else if (privateKey) args.push(['--key', privateKey]);
+  else if (fuelKey) args.push(['--keys', `fuel:${fuelKey}`]);
+  if (outputPath) args.push(['--config', outputPath]);
+
+  return $`yarn ${args.flat()}`;
 }
 
 export function hyperlaneWarpRead(
   chain: string,
   warpAddress: string,
   warpDeployPath: string,
+  fuelKey?: string,
 ): ProcessPromise {
   return hyperlaneWarpReadRaw({
     chain,
     warpAddress,
     outputPath: warpDeployPath,
     privateKey: ANVIL_KEY,
+    fuelKey,
   });
 }
 

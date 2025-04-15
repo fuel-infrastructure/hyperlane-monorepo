@@ -16,7 +16,6 @@ import {
   CORE_CONFIG_PATH,
   CORE_CONFIG_PATH_FUEL,
   DEFAULT_E2E_TEST_TIMEOUT,
-  FUEL_KEY,
   FUEL_WARP_CONFIG_PATH_EXAMPLE,
   KeyBoardKeys,
   TestPromptAction,
@@ -48,34 +47,39 @@ describe('hyperlane warp read e2e tests', async function () {
 
   let evmOwnerAddress: Address;
   let fuelOwnerAddress: Address;
+  let initialFuelOwnerPk: string;
 
   let fuelNodes: Record<string, LaunchTestNodeReturn<DeployContractConfig[]>>;
 
   before(async function () {
     fuelNodes = await launchFuelNodes();
     const fuelWallet = fuelNodes[CHAIN_NAME_FUEL_1].wallets[0];
-    const fuel_pk = fuelWallet.privateKey;
+    const fuelPk = fuelWallet.privateKey;
+    initialFuelOwnerPk = fuelPk;
 
     [chain2Addresses, chain3Addresses, fuel1Addresses] = await Promise.all([
       deployOrUseExistingCore(CHAIN_NAME_2, CORE_CONFIG_PATH, ANVIL_KEY),
       deployOrUseExistingCore(CHAIN_NAME_3, CORE_CONFIG_PATH, ANVIL_KEY),
-      // Pulls preset fake data since we don't need core contract functionality
       deployOrUseExistingCore(
         CHAIN_NAME_FUEL_1,
         CORE_CONFIG_PATH_FUEL,
-        fuel_pk,
+        fuelPk,
         fuelWallet,
       ),
     ]);
 
     evmOwnerAddress = new Wallet(ANVIL_KEY).address;
-    fuelOwnerAddress = new WalletUnlocked(fuel_pk).address.b256Address;
-    fuelOwnerAddress = fuelOwnerAddress.toLowerCase();
-    fuel1Addresses.mailbox = fuel1Addresses.mailbox.toLowerCase();
+    fuelOwnerAddress = new WalletUnlocked(fuelPk).address.b256Address;
   });
 
   before(async function () {
     await deployOrUseExistingCore(CHAIN_NAME_2, CORE_CONFIG_PATH, ANVIL_KEY);
+    await deployOrUseExistingCore(
+      CHAIN_NAME_FUEL_1,
+      CORE_CONFIG_PATH_FUEL,
+      initialFuelOwnerPk,
+      fuelNodes[CHAIN_NAME_FUEL_1].wallets[0],
+    );
 
     // Create a new warp config using the example
     const exampleEvmWarpConfig: WarpRouteDeployConfig = readYamlOrJson(
@@ -86,7 +90,7 @@ describe('hyperlane warp read e2e tests', async function () {
     );
     anvil2Config = { [CHAIN_NAME_2]: { ...exampleEvmWarpConfig.anvil1 } };
     fuel1Config = {
-      [CHAIN_NAME_FUEL_1]: { ...exampleFuelWarpConfig.fueltestnet },
+      [CHAIN_NAME_FUEL_1]: { ...exampleFuelWarpConfig.fueltest1 },
     };
     writeYamlOrJson(WARP_CONFIG_PATH_2, anvil2Config);
     writeYamlOrJson(WARP_CONFIG_PATH_FUEL_1, fuel1Config);
@@ -114,38 +118,32 @@ describe('hyperlane warp read e2e tests', async function () {
   });
 
   describe('hyperlane warp read --config ... --symbol ...', () => {
-    // eslint-disable-next-line jest/no-focused-tests
-    it.only('should successfully read the complete warp route config from all the chains', async () => {
+    // eslint-disable-next-line jest/no-disabled-tests
+    it.skip('should successfully read the complete warp route config from all the chains', async () => {
       await hyperlaneWarpDeploy(WARP_CONFIG_PATH_2);
-      // TODO this is mocking, we should use that if possible
-      // await hyperlaneWarpDeploy(WARP_CONFIG_PATH_FUEL_1);
-
-      // const steps: TestPromptAction[] = [
-      //   {
-      //     check: (currentOutput) =>
-      //       currentOutput.includes('Please enter the private key for chain'),
-      //     input: `${ANVIL_KEY}${KeyBoardKeys.ENTER}`,
-      //   },
-      // ];
+      await hyperlaneWarpDeploy(WARP_CONFIG_PATH_FUEL_1, initialFuelOwnerPk);
 
       const steps = (protocol: ProtocolType): TestPromptAction[] => {
         return [
           {
             check: (currentOutput) =>
+              currentOutput.includes('Select from matching warp routes'),
+            input:
+              protocol === ProtocolType.Ethereum
+                ? `${KeyBoardKeys.ENTER}`
+                : `${KeyBoardKeys.ARROW_DOWN.repeat(1)}${KeyBoardKeys.ENTER}`,
+          },
+          {
+            check: (currentOutput) =>
               currentOutput.includes('Please enter the private key for chain'),
             input: `${
-              protocol === ProtocolType.Ethereum ? ANVIL_KEY : FUEL_KEY
+              protocol === ProtocolType.Ethereum
+                ? ANVIL_KEY
+                : initialFuelOwnerPk
             }${KeyBoardKeys.ENTER}`,
           },
         ];
       };
-
-      // const output = hyperlaneWarpReadRaw({
-      //   symbol: 'ETH',
-      //   outputPath: WARP_CONFIG_PATH_2,
-      // })
-      //   .stdio('pipe')
-      //   .nothrow();
 
       const output = (protocol: ProtocolType) => {
         return hyperlaneWarpReadRaw({
@@ -154,6 +152,9 @@ describe('hyperlane warp read e2e tests', async function () {
             protocol === ProtocolType.Ethereum
               ? WARP_CONFIG_PATH_2
               : WARP_CONFIG_PATH_FUEL_1,
+          ...(protocol === ProtocolType.Fuel
+            ? { fuelKey: initialFuelOwnerPk }
+            : {}),
         })
           .stdio('pipe')
           .nothrow();
@@ -163,19 +164,32 @@ describe('hyperlane warp read e2e tests', async function () {
         output(ProtocolType.Ethereum),
         steps(ProtocolType.Ethereum),
       );
+      const fuelFinalOutput = await handlePrompts(
+        output(ProtocolType.Fuel),
+        steps(ProtocolType.Fuel),
+      );
 
       expect(evmFinalOutput.exitCode).to.equal(0);
+      expect(fuelFinalOutput.exitCode).to.equal(0);
 
-      const warpReadResult: WarpRouteDeployConfig =
+      const evmWarpReadResult: WarpRouteDeployConfig =
         readYamlOrJson(WARP_CONFIG_PATH_2);
-      expect(warpReadResult[CHAIN_NAME_2]).not.to.be.undefined;
-      expect(warpReadResult[CHAIN_NAME_2].type).to.equal(TokenType.native);
+      expect(evmWarpReadResult[CHAIN_NAME_2]).not.to.be.undefined;
+      expect(evmWarpReadResult[CHAIN_NAME_2].type).to.equal(TokenType.native);
+
+      const fuelWarpReadResult: WarpRouteDeployConfig = readYamlOrJson(
+        WARP_CONFIG_PATH_FUEL_1,
+      );
+      expect(fuelWarpReadResult[CHAIN_NAME_FUEL_1]).not.to.be.undefined;
+      expect(fuelWarpReadResult[CHAIN_NAME_FUEL_1].type).to.equal(
+        TokenType.native,
+      );
     });
   });
 
   describe('hyperlane warp read --key ... --symbol ...', () => {
-    // eslint-disable-next-line jest/no-disabled-tests
-    it.skip('should successfully read the complete warp route config from all the chains', async () => {
+    // eslint-disable-next-line jest/no-focused-tests
+    it.only('should successfully read the complete warp route config from all the chains', async () => {
       const warpConfig: WarpRouteDeployConfig = {
         [CHAIN_NAME_2]: {
           type: TokenType.native,
@@ -187,10 +201,15 @@ describe('hyperlane warp read e2e tests', async function () {
           mailbox: chain3Addresses.mailbox,
           owner: evmOwnerAddress,
         },
+        [CHAIN_NAME_FUEL_1]: {
+          type: TokenType.native,
+          mailbox: fuel1Addresses.mailbox,
+          owner: fuelOwnerAddress,
+        },
       };
 
       writeYamlOrJson(WARP_DEPLOY_OUTPUT_PATH, warpConfig);
-      await hyperlaneWarpDeploy(WARP_DEPLOY_OUTPUT_PATH);
+      await hyperlaneWarpDeploy(WARP_DEPLOY_OUTPUT_PATH, initialFuelOwnerPk);
 
       const steps: TestPromptAction[] = [
         // Select the anvil2-anvil3 ETH route from the selection prompt
@@ -199,10 +218,16 @@ describe('hyperlane warp read e2e tests', async function () {
             currentOutput.includes('Select from matching warp routes'),
           input: KeyBoardKeys.ENTER,
         },
+        // {
+        //   check: (currentOutput) =>
+        //     currentOutput.includes('Please enter the private key for chain'),
+        //   input: `${ANVIL_KEY}${KeyBoardKeys.ENTER}`,
+        // },
       ];
 
       const output = hyperlaneWarpReadRaw({
         privateKey: ANVIL_KEY,
+        fuelKey: initialFuelOwnerPk,
         symbol: 'ETH',
         outputPath: WARP_DEPLOY_OUTPUT_PATH,
       })
@@ -221,6 +246,9 @@ describe('hyperlane warp read e2e tests', async function () {
 
       expect(warpReadResult[CHAIN_NAME_3]).not.to.be.undefined;
       expect(warpReadResult[CHAIN_NAME_3].type).to.equal(TokenType.synthetic);
+
+      expect(warpReadResult[CHAIN_NAME_FUEL_1]).not.to.be.undefined;
+      expect(warpReadResult[CHAIN_NAME_FUEL_1].type).to.equal(TokenType.native);
     });
   });
 

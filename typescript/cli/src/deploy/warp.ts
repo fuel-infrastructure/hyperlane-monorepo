@@ -325,7 +325,7 @@ async function executeFuelDeploy(params: DeployParams) {
     warpDeployConfig,
     context,
   );
-  const res = FuelSRC20WarpModule.deployWithRetry(
+  const res = await FuelSRC20WarpModule.deployWithRetry(
     multiProtocolProvider,
     modifiedConfig,
   );

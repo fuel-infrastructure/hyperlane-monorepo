@@ -9,11 +9,11 @@
 # see comprehensive [list](https://github.com/hyperlane-xyz/hyperlane-monorepo/blob/main/typescript/sdk/src/token/config.ts#L8)
 ---
 fueltest1:
-  type: native
-  interchainSecurityModule: '0x3fd77c573f148ee525a55e4172991ac6203f7626e7246d5821caa71853cb3bb7'
-  mailbox: '0x26dce42ec5348cfaae7f0fc582afc3f71e81ba75d527460397faf2226a45ffce'
+  type: 'native'
   owner: '0x3cd71d5638d4bacf43f26a5b43028bf6581a18d262d88da0912f32ad3d25b963'
-  isNft: false
+  # interchainSecurityModule: '0x3fd77c573f148ee525a55e4172991ac6203f7626e7246d5821caa71853cb3bb7'
+  # mailbox: '0x26dce42ec5348cfaae7f0fc582afc3f71e81ba75d527460397faf2226a45ffce'
+  # isNft: false
   # You can optionally set the token metadata
   # name: "MyCollateralToken"
   # symbol: "MCT"

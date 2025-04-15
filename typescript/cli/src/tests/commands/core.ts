@@ -7,12 +7,7 @@ import { Address } from '@hyperlane-xyz/utils';
 import { readYamlOrJson, writeYamlOrJson } from '../../utils/files.js';
 import { MailboxFactory } from '../fuel-core-abis/MailboxFactory.js';
 
-import {
-  ANVIL_KEY,
-  FUEL_KEY,
-  FUEL_REGISTRY_PATH,
-  REGISTRY_PATH,
-} from './helpers.js';
+import { ANVIL_KEY, REGISTRY_PATH } from './helpers.js';
 
 /**
  * Deploys the Hyperlane core contracts to the specified chain using the provided config.
@@ -81,23 +76,6 @@ export async function mockFuelCoreDeploy(
     addressMap,
     'yaml',
   );
-}
-
-/**
- * Deploys the Hyperlane core contracts to the specified chain using the provided config.
- */
-export async function hyperlaneCoreDeployFuel(
-  chain: string,
-  coreInputPath: string,
-) {
-  return $`yarn workspace @hyperlane-xyz/cli run hyperlane core deploy \
-        --registry ${FUEL_REGISTRY_PATH} \
-        --config ${coreInputPath} \
-        --chain ${chain} \
-        --key ${ANVIL_KEY} \
-        --keys ${FUEL_KEY} \
-        --verbosity debug \
-        --yes`;
 }
 
 /**

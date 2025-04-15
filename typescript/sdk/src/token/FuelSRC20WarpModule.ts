@@ -71,7 +71,7 @@ export class FuelSRC20WarpModule {
     return Object.fromEntries(
       await Promise.all(
         Object.entries(warpConfig).map(async ([chain, config]) => {
-          const signer = (await multiProtocolProvider.tryGetSigner(
+          const signer = (await multiProtocolProvider.getSigner(
             ProtocolType.Fuel,
             chain,
           )) as WalletUnlocked;
