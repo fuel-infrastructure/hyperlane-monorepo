@@ -23,6 +23,7 @@ import {
   WARP_CONFIG_PATH_EXAMPLE,
   WARP_CONFIG_PATH_FUEL_1,
   WARP_CORE_CONFIG_PATH_2,
+  WARP_CORE_CONFIG_PATH_FUEL,
   WARP_DEPLOY_OUTPUT_PATH,
   cleanupFuelNodes,
   deployOrUseExistingCore,
@@ -36,7 +37,7 @@ import {
 } from '../commands/warp.js';
 
 describe('hyperlane warp read e2e tests', async function () {
-  this.timeout(DEFAULT_E2E_TEST_TIMEOUT);
+  this.timeout(DEFAULT_E2E_TEST_TIMEOUT * 1.5);
 
   let anvil2Config: WarpRouteDeployConfig;
   let fuel1Config: WarpRouteDeployConfig;
@@ -101,8 +102,7 @@ describe('hyperlane warp read e2e tests', async function () {
   });
 
   describe('hyperlane warp read --key ... --config ...', () => {
-    // eslint-disable-next-line jest/no-disabled-tests
-    it.skip('should exit early if no symbol, chain or warp file have been provided', async () => {
+    it('should exit early if no symbol, chain or warp file have been provided', async () => {
       await hyperlaneWarpDeploy(WARP_CONFIG_PATH_2);
 
       const output = await hyperlaneWarpReadRaw({
@@ -118,8 +118,7 @@ describe('hyperlane warp read e2e tests', async function () {
   });
 
   describe('hyperlane warp read --config ... --symbol ...', () => {
-    // eslint-disable-next-line jest/no-disabled-tests
-    it.skip('should successfully read the complete warp route config from all the chains', async () => {
+    it('should successfully read the complete warp route config from all the chains', async () => {
       await hyperlaneWarpDeploy(WARP_CONFIG_PATH_2);
       await hyperlaneWarpDeploy(WARP_CONFIG_PATH_FUEL_1, initialFuelOwnerPk);
 
@@ -188,8 +187,7 @@ describe('hyperlane warp read e2e tests', async function () {
   });
 
   describe('hyperlane warp read --key ... --symbol ...', () => {
-    // eslint-disable-next-line jest/no-focused-tests
-    it.only('should successfully read the complete warp route config from all the chains', async () => {
+    it('should successfully read the complete warp route config from all the chains', async () => {
       const warpConfig: WarpRouteDeployConfig = {
         [CHAIN_NAME_2]: {
           type: TokenType.native,
@@ -212,17 +210,12 @@ describe('hyperlane warp read e2e tests', async function () {
       await hyperlaneWarpDeploy(WARP_DEPLOY_OUTPUT_PATH, initialFuelOwnerPk);
 
       const steps: TestPromptAction[] = [
-        // Select the anvil2-anvil3 ETH route from the selection prompt
+        // Select the anvil2-anvil3-fueltest1 ETH route from the selection prompt
         {
           check: (currentOutput: string) =>
             currentOutput.includes('Select from matching warp routes'),
           input: KeyBoardKeys.ENTER,
         },
-        // {
-        //   check: (currentOutput) =>
-        //     currentOutput.includes('Please enter the private key for chain'),
-        //   input: `${ANVIL_KEY}${KeyBoardKeys.ENTER}`,
-        // },
       ];
 
       const output = hyperlaneWarpReadRaw({
@@ -253,18 +246,30 @@ describe('hyperlane warp read e2e tests', async function () {
   });
 
   describe('hyperlane warp read --key ... --chain ... --config ...', () => {
-    // eslint-disable-next-line jest/no-disabled-tests
-    it.skip('should be able to read a warp route', async function () {
+    it('should be able to read a warp route', async function () {
       await hyperlaneWarpDeploy(WARP_CONFIG_PATH_2);
 
-      const warpReadResult: WarpRouteDeployConfig = await readWarpConfig(
+      const evmWarpReadResult: WarpRouteDeployConfig = await readWarpConfig(
         CHAIN_NAME_2,
         WARP_CORE_CONFIG_PATH_2,
         WARP_DEPLOY_OUTPUT_PATH,
       );
 
-      expect(warpReadResult[CHAIN_NAME_2].type).to.be.equal(
+      expect(evmWarpReadResult[CHAIN_NAME_2].type).to.be.equal(
         anvil2Config[CHAIN_NAME_2].type,
+      );
+
+      await hyperlaneWarpDeploy(WARP_CONFIG_PATH_FUEL_1, initialFuelOwnerPk);
+
+      const fuelWarpReadResult: WarpRouteDeployConfig = await readWarpConfig(
+        CHAIN_NAME_FUEL_1,
+        WARP_CORE_CONFIG_PATH_FUEL,
+        WARP_DEPLOY_OUTPUT_PATH,
+        initialFuelOwnerPk,
+      );
+
+      expect(fuelWarpReadResult[CHAIN_NAME_FUEL_1].type).to.be.equal(
+        fuel1Config[CHAIN_NAME_FUEL_1].type,
       );
     });
   });

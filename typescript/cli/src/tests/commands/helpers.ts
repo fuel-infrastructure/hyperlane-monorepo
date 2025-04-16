@@ -79,6 +79,7 @@ export const WARP_CONFIG_PATH_2 = `${TEMP_PATH}/${CHAIN_NAME_2}/warp-route-deplo
 export const WARP_CONFIG_PATH_FUEL_1 = `${TEMP_PATH}/${CHAIN_NAME_FUEL_1}/warp-route-deployment-fueltest1.yaml`;
 export const WARP_DEPLOY_OUTPUT_PATH = `${TEMP_PATH}/warp-route-deployment.yaml`;
 export const WARP_CORE_CONFIG_PATH_2 = `${REGISTRY_PATH}/deployments/warp_routes/ETH/anvil2-config.yaml`;
+export const WARP_CORE_CONFIG_PATH_FUEL = `${REGISTRY_PATH}/deployments/warp_routes/ETH/fueltest1-config.yaml`;
 
 export const launchFuelNodes = async (): Promise<
   Record<string, LaunchTestNodeReturn<DeployContractConfig[]>>

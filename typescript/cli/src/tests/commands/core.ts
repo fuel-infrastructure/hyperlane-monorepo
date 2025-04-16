@@ -1,4 +1,4 @@
-import { WalletUnlocked } from 'fuels';
+import { WalletUnlocked, getRandomB256 } from 'fuels';
 import { $, ProcessPromise } from 'zx';
 
 import { DerivedCoreConfig } from '@hyperlane-xyz/sdk';
@@ -6,6 +6,7 @@ import { Address } from '@hyperlane-xyz/utils';
 
 import { readYamlOrJson, writeYamlOrJson } from '../../utils/files.js';
 import { MailboxFactory } from '../fuel-core-abis/MailboxFactory.js';
+import { MockPostDispatchFactory } from '../fuel-core-abis/MockPostDispatchFactory.js';
 
 import { ANVIL_KEY, REGISTRY_PATH } from './helpers.js';
 
@@ -66,10 +67,29 @@ export async function mockFuelCoreDeploy(
   chain: string,
   wallet: WalletUnlocked,
 ) {
-  const { contractId, waitForResult } = await MailboxFactory.deploy(wallet);
-  await waitForResult();
+  const { contractId: mailboxId, waitForResult } = await MailboxFactory.deploy(
+    wallet,
+  );
+  const mailbox = (await waitForResult()).contract;
 
-  const addressMap = { mailbox: contractId };
+  const deployHook = async () => {
+    const { contractId, waitForResult } = await MockPostDispatchFactory.deploy(
+      wallet,
+    );
+    await waitForResult();
+    return contractId;
+  };
+
+  await mailbox.functions
+    .initialize(
+      { Address: { bits: wallet.address.b256Address } },
+      getRandomB256(), // ISM
+      await deployHook(),
+      await deployHook(),
+    )
+    .call();
+
+  const addressMap = { mailbox: mailboxId };
 
   writeYamlOrJson(
     `${REGISTRY_PATH}/chains/${chain}/addresses.yaml`,

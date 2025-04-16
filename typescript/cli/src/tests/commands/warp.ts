@@ -223,15 +223,17 @@ export function hyperlaneWarpSendRelay(
  * Reads the Warp route deployment config to specified output path.
  * @param warpCorePath path to warp core
  * @param warpDeployPath path to output the resulting read
+ * @param fuelKey optional fuel key when reading a fuel route
  * @returns The Warp route deployment config.
  */
 export async function readWarpConfig(
   chain: string,
   warpCorePath: string,
   warpDeployPath: string,
+  fuelKey?: string,
 ): Promise<WarpRouteDeployConfig> {
   const warpAddress = getDeployedWarpAddress(chain, warpCorePath);
-  await hyperlaneWarpRead(chain, warpAddress!, warpDeployPath);
+  await hyperlaneWarpRead(chain, warpAddress!, warpDeployPath, fuelKey);
   return readYamlOrJson(warpDeployPath);
 }
 
