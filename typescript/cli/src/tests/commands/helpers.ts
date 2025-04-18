@@ -70,7 +70,6 @@ export const FUEL_LOCAL_REGISTRY_PATH = `${E2E_TEST_CONFIGS_PATH}/fuel`;
 export const FUEL_1_CONFIG_PATH = `${TEMP_PATH}/${CHAIN_NAME_FUEL_1}/warp-route-deployment-fueltest1.yaml`;
 
 export const FUEL_WARP_CONFIG_PATH_EXAMPLE = `${EXAMPLES_PATH}/fuel/warp-route-deployment.yaml`;
-export const WARP_DEPLOY_OUTPUT_PATH_FUEL = `${TEMP_PATH}/fueltest1/warp-route-deployment-fueltest1.yaml`;
 export const WARP_DEPLOY_OUTPUT_PATH_FUEL_2 = `${TEMP_PATH}/fueltest2/warp-route-deployment-fueltest2.yaml`;
 export const FUEL_CHAIN_METADATA_PATH = `${FUEL_LOCAL_REGISTRY_PATH}/chains/fueltest1/metadata.yaml`;
 
@@ -78,6 +77,7 @@ export const WARP_CONFIG_PATH_EXAMPLE = `${EXAMPLES_PATH}/warp-route-deployment.
 export const WARP_CONFIG_PATH_2 = `${TEMP_PATH}/${CHAIN_NAME_2}/warp-route-deployment-anvil2.yaml`;
 export const WARP_CONFIG_PATH_FUEL_1 = `${TEMP_PATH}/${CHAIN_NAME_FUEL_1}/warp-route-deployment-fueltest1.yaml`;
 export const WARP_DEPLOY_OUTPUT_PATH = `${TEMP_PATH}/warp-route-deployment.yaml`;
+export const WARP_DEPLOY_OUTPUT_PATH_FUEL = `${TEMP_PATH}/fueltest1/warp-route-deployment.yaml`;
 export const WARP_CORE_CONFIG_PATH_2 = `${REGISTRY_PATH}/deployments/warp_routes/ETH/anvil2-config.yaml`;
 export const WARP_CORE_CONFIG_PATH_FUEL = `${REGISTRY_PATH}/deployments/warp_routes/ETH/fueltest1-config.yaml`;
 
@@ -435,13 +435,10 @@ export async function deployOrUseExistingCore(
   });
   const addresses = (await registry.getChainAddresses(chain)) as ChainAddresses;
 
-  if (!addresses && fuelWallet) {
-    await mockFuelCoreDeploy(chain, fuelWallet);
-    return deployOrUseExistingCore(chain, coreInputPath, key);
-  }
-
   if (!addresses) {
-    await hyperlaneCoreDeploy(chain, coreInputPath);
+    fuelWallet
+      ? await mockFuelCoreDeploy(chain, fuelWallet)
+      : await hyperlaneCoreDeploy(chain, coreInputPath);
     return deployOrUseExistingCore(chain, coreInputPath, key);
   }
 

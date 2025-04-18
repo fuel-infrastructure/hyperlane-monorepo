@@ -3,6 +3,8 @@ import * as chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { Wallet } from 'ethers';
 import { parseUnits } from 'ethers/lib/utils.js';
+import { WalletUnlocked } from 'fuels';
+import { DeployContractConfig, LaunchTestNodeReturn } from 'fuels/test-utils';
 
 import { ERC20Test, ERC4626Test } from '@hyperlane-xyz/core';
 import { ChainAddresses } from '@hyperlane-xyz/registry';
@@ -29,16 +31,21 @@ import {
   CHAIN_3_METADATA_PATH,
   CHAIN_NAME_2,
   CHAIN_NAME_3,
+  CHAIN_NAME_FUEL_1,
   CORE_CONFIG_PATH,
+  CORE_CONFIG_PATH_FUEL,
   DEFAULT_E2E_TEST_TIMEOUT,
   KeyBoardKeys,
   TestPromptAction,
   WARP_DEPLOY_OUTPUT_PATH,
+  WARP_DEPLOY_OUTPUT_PATH_FUEL,
+  cleanupFuelNodes,
   deploy4626Vault,
   deployOrUseExistingCore,
   deployToken,
   getCombinedWarpRoutePath,
   handlePrompts,
+  launchFuelNodes,
   sendWarpRouteMessageRoundTrip,
 } from '../commands/helpers.js';
 import {
@@ -48,6 +55,7 @@ import {
   hyperlaneWarpSendRelay,
   readWarpConfig,
 } from '../commands/warp.js';
+import { Src20TestFactory } from '../fuel-core-abis/Src20TestFactory.js';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -63,12 +71,20 @@ describe('hyperlane warp deploy e2e tests', async function () {
 
   let chain2Addresses: ChainAddresses = {};
   let chain3Addresses: ChainAddresses = {};
+  let chainFuel1Addresses: ChainAddresses = {};
 
-  let ownerAddress: Address;
+  let evmOwnerAddress: Address;
+  let fuelOwnerAddress: Address;
+
   let walletChain2: Wallet;
   let walletChain3: Wallet;
+  let walletChainFuel1: WalletUnlocked;
+
+  let fuelNodes: Record<string, LaunchTestNodeReturn<DeployContractConfig[]>>;
 
   before(async function () {
+    fuelNodes = await launchFuelNodes();
+
     const chain2Metadata: ChainMetadata = readYamlOrJson(CHAIN_2_METADATA_PATH);
     const chain3Metadata: ChainMetadata = readYamlOrJson(CHAIN_3_METADATA_PATH);
 
@@ -77,13 +93,27 @@ describe('hyperlane warp deploy e2e tests', async function () {
 
     walletChain2 = new Wallet(ANVIL_KEY).connect(providerChain2);
     walletChain3 = new Wallet(ANVIL_KEY).connect(providerChain3);
+    walletChainFuel1 = fuelNodes[CHAIN_NAME_FUEL_1].wallets[0];
 
-    ownerAddress = walletChain2.address;
+    evmOwnerAddress = walletChain2.address;
+    fuelOwnerAddress = walletChainFuel1.address.b256Address;
 
-    [chain2Addresses, chain3Addresses] = await Promise.all([
-      deployOrUseExistingCore(CHAIN_NAME_2, CORE_CONFIG_PATH, ANVIL_KEY),
-      deployOrUseExistingCore(CHAIN_NAME_3, CORE_CONFIG_PATH, ANVIL_KEY),
-    ]);
+    [chain2Addresses, chain3Addresses, chainFuel1Addresses] = await Promise.all(
+      [
+        deployOrUseExistingCore(CHAIN_NAME_2, CORE_CONFIG_PATH, ANVIL_KEY),
+        deployOrUseExistingCore(CHAIN_NAME_3, CORE_CONFIG_PATH, ANVIL_KEY),
+        deployOrUseExistingCore(
+          CHAIN_NAME_FUEL_1,
+          CORE_CONFIG_PATH_FUEL,
+          walletChainFuel1.privateKey,
+          walletChainFuel1,
+        ),
+      ],
+    );
+  });
+
+  after(async function () {
+    await cleanupFuelNodes(fuelNodes);
   });
 
   async function assertWarpRouteConfig(
@@ -91,12 +121,29 @@ describe('hyperlane warp deploy e2e tests', async function () {
     warpCoreConfigPath: string,
     chainName: ChainName,
     expectedMetadata: { decimals: number; symbol: string },
+    fuelKey?: string,
   ): Promise<void> {
     const currentWarpDeployConfig = await readWarpConfig(
       chainName,
       warpCoreConfigPath,
-      WARP_DEPLOY_OUTPUT_PATH,
+      fuelKey ? WARP_DEPLOY_OUTPUT_PATH_FUEL : WARP_DEPLOY_OUTPUT_PATH,
+      fuelKey,
     );
+
+    let expectedMailboxAddress: string;
+    switch (chainName) {
+      case CHAIN_NAME_2:
+        expectedMailboxAddress = chain2Addresses.mailbox;
+        break;
+      case CHAIN_NAME_3:
+        expectedMailboxAddress = chain3Addresses.mailbox;
+        break;
+      case CHAIN_NAME_FUEL_1:
+        expectedMailboxAddress = chainFuel1Addresses.mailbox;
+        break;
+      default:
+        throw new Error(`Unexpected chain name: ${chainName}`);
+    }
 
     expect(currentWarpDeployConfig[chainName].type).to.equal(
       warpDeployConfig[chainName].type,
@@ -108,7 +155,7 @@ describe('hyperlane warp deploy e2e tests', async function () {
       warpDeployConfig[chainName].symbol ?? expectedMetadata.symbol,
     );
     expect(currentWarpDeployConfig[chainName].mailbox).to.equal(
-      chain2Addresses.mailbox,
+      expectedMailboxAddress,
     );
   }
 
@@ -151,7 +198,7 @@ describe('hyperlane warp deploy e2e tests', async function () {
       ).to.be.true;
     });
 
-    it(`should successfully deploy a ${TokenType.collateral} -> ${TokenType.synthetic} warp route`, async function () {
+    it(`should successfully deploy a ${TokenType.collateral} -> ${TokenType.synthetic} EVM warp route`, async function () {
       const token = await deployToken(ANVIL_KEY, CHAIN_NAME_2);
 
       const [expectedTokenSymbol, expectedTokenDecimals] = await Promise.all([
@@ -168,12 +215,12 @@ describe('hyperlane warp deploy e2e tests', async function () {
           type: TokenType.collateral,
           token: token.address,
           mailbox: chain2Addresses.mailbox,
-          owner: ownerAddress,
+          owner: evmOwnerAddress,
         },
         [CHAIN_NAME_3]: {
           type: TokenType.synthetic,
           mailbox: chain3Addresses.mailbox,
-          owner: ownerAddress,
+          owner: evmOwnerAddress,
         },
       };
 
@@ -214,6 +261,160 @@ describe('hyperlane warp deploy e2e tests', async function () {
           COMBINED_WARP_CORE_CONFIG_PATH,
           chainName,
           { decimals: expectedTokenDecimals, symbol: expectedTokenSymbol },
+          walletChainFuel1.privateKey,
+        );
+      }
+    });
+
+    it(`should successfully deploy a ${TokenType.collateral} -> ${TokenType.synthetic} | FuelVM -> EVM warp route`, async function () {
+      const { contract: token } = await (
+        await Src20TestFactory.deploy(walletChainFuel1)
+      ).waitForResult();
+      const assetId = (await token.functions.asset_id().simulate()).value;
+
+      let [expectedTokenSymbol, expectedTokenDecimals] = await Promise.all([
+        (await token.functions.symbol(assetId).simulate()).value,
+        (await token.functions.decimals(assetId).simulate()).value,
+      ]);
+
+      expect(expectedTokenDecimals).to.not.be.undefined;
+      expect(expectedTokenSymbol).to.not.be.undefined;
+      expectedTokenDecimals = expectedTokenDecimals!;
+      expectedTokenSymbol = expectedTokenSymbol!;
+
+      const COMBINED_WARP_CORE_CONFIG_PATH = getCombinedWarpRoutePath(
+        expectedTokenSymbol,
+        [CHAIN_NAME_FUEL_1, CHAIN_NAME_2],
+      );
+
+      const warpConfig: WarpRouteDeployConfig = {
+        [CHAIN_NAME_FUEL_1]: {
+          type: TokenType.collateral,
+          token: token.id.b256Address,
+          assetId: assetId.bits,
+          mailbox: chainFuel1Addresses.mailbox,
+          owner: fuelOwnerAddress,
+        },
+        [CHAIN_NAME_2]: {
+          type: TokenType.synthetic,
+          mailbox: chain2Addresses.mailbox,
+          owner: evmOwnerAddress,
+          name: (await token.functions.name(assetId).simulate()).value,
+          symbol: (await token.functions.symbol(assetId).simulate()).value,
+          decimals: (await token.functions.decimals(assetId).simulate()).value,
+          totalSupply: (
+            await token.functions.total_supply(assetId).simulate()
+          ).value?.toNumber(),
+        },
+      };
+
+      writeYamlOrJson(WARP_DEPLOY_OUTPUT_PATH_FUEL, warpConfig);
+
+      const steps: TestPromptAction[] = [
+        {
+          check: (currentOutput) =>
+            currentOutput.includes('Please enter the private key for chain'),
+          input: `${ANVIL_KEY}${KeyBoardKeys.ENTER}`,
+        },
+        {
+          check: (currentOutput) =>
+            currentOutput.includes('Please enter your Fuel private key'),
+          input: `${walletChainFuel1.privateKey}${KeyBoardKeys.ENTER}`,
+        },
+        {
+          check: (currentOutput) =>
+            currentOutput.includes('Is this deployment plan correct?'),
+          input: KeyBoardKeys.ENTER,
+        },
+      ];
+
+      const output = hyperlaneWarpDeployRaw({
+        warpCorePath: WARP_DEPLOY_OUTPUT_PATH_FUEL,
+      })
+        .stdio('pipe')
+        .nothrow();
+
+      const finalOutput = await handlePrompts(output, steps);
+
+      // Assertions
+      expect(finalOutput.exitCode).to.equal(0);
+      for (const chainName of [CHAIN_NAME_FUEL_1, CHAIN_NAME_2]) {
+        await assertWarpRouteConfig(
+          warpConfig,
+          COMBINED_WARP_CORE_CONFIG_PATH,
+          chainName,
+          { decimals: expectedTokenDecimals, symbol: expectedTokenSymbol },
+          walletChainFuel1.privateKey,
+        );
+      }
+    });
+
+    it(`should successfully deploy a ${TokenType.collateral} -> ${TokenType.synthetic} | EVM -> FuelVM warp route`, async function () {
+      const token = await deployToken(ANVIL_KEY, CHAIN_NAME_2);
+
+      const [expectedTokenName, expectedTokenSymbol, expectedTokenDecimals] =
+        await Promise.all([token.name(), token.symbol(), token.decimals()]);
+
+      const COMBINED_WARP_CORE_CONFIG_PATH = getCombinedWarpRoutePath(
+        expectedTokenSymbol,
+        [CHAIN_NAME_2, CHAIN_NAME_FUEL_1],
+      );
+
+      const warpConfig: WarpRouteDeployConfig = {
+        [CHAIN_NAME_2]: {
+          type: TokenType.collateral,
+          token: token.address,
+          mailbox: chain2Addresses.mailbox,
+          owner: evmOwnerAddress,
+        },
+        [CHAIN_NAME_FUEL_1]: {
+          type: TokenType.synthetic,
+          mailbox: chainFuel1Addresses.mailbox,
+          owner: fuelOwnerAddress,
+          name: expectedTokenName,
+          symbol: expectedTokenSymbol,
+          decimals: expectedTokenDecimals,
+          totalSupply: 0,
+        },
+      };
+
+      writeYamlOrJson(WARP_DEPLOY_OUTPUT_PATH_FUEL, warpConfig);
+
+      const steps: TestPromptAction[] = [
+        {
+          check: (currentOutput) =>
+            currentOutput.includes('Please enter the private key for chain'),
+          input: `${ANVIL_KEY}${KeyBoardKeys.ENTER}`,
+        },
+        {
+          check: (currentOutput) =>
+            currentOutput.includes('Please enter your Fuel private key'),
+          input: `${walletChainFuel1.privateKey}${KeyBoardKeys.ENTER}`,
+        },
+        {
+          check: (currentOutput) =>
+            currentOutput.includes('Is this deployment plan correct?'),
+          input: KeyBoardKeys.ENTER,
+        },
+      ];
+
+      const output = hyperlaneWarpDeployRaw({
+        warpCorePath: WARP_DEPLOY_OUTPUT_PATH_FUEL,
+      })
+        .stdio('pipe')
+        .nothrow();
+
+      const finalOutput = await handlePrompts(output, steps);
+
+      // Assertions
+      expect(finalOutput.exitCode).to.equal(0);
+      for (const chainName of [CHAIN_NAME_FUEL_1, CHAIN_NAME_2]) {
+        await assertWarpRouteConfig(
+          warpConfig,
+          COMBINED_WARP_CORE_CONFIG_PATH,
+          chainName,
+          { decimals: expectedTokenDecimals, symbol: expectedTokenSymbol },
+          walletChainFuel1.privateKey,
         );
       }
     });
@@ -272,12 +473,12 @@ describe('hyperlane warp deploy e2e tests', async function () {
           type: TokenType.collateral,
           token: token.address,
           mailbox: chain2Addresses.mailbox,
-          owner: ownerAddress,
+          owner: evmOwnerAddress,
         },
         [CHAIN_NAME_3]: {
           type: TokenType.synthetic,
           mailbox: chain3Addresses.mailbox,
-          owner: ownerAddress,
+          owner: evmOwnerAddress,
         },
       };
 
@@ -315,6 +516,85 @@ describe('hyperlane warp deploy e2e tests', async function () {
           COMBINED_WARP_CORE_CONFIG_PATH,
           chainName,
           { decimals: expectedTokenDecimals, symbol: expectedTokenSymbol },
+        );
+      }
+    });
+
+    it(`should successfully deploy a ${TokenType.collateral} -> ${TokenType.synthetic} | FuelVM -> EVM warp route`, async function () {
+      const { contract: token } = await (
+        await Src20TestFactory.deploy(walletChainFuel1)
+      ).waitForResult();
+      const assetId = (await token.functions.asset_id().simulate()).value;
+
+      let [expectedTokenSymbol, expectedTokenDecimals] = await Promise.all([
+        (await token.functions.symbol(assetId).simulate()).value,
+        (await token.functions.decimals(assetId).simulate()).value,
+      ]);
+
+      expect(expectedTokenDecimals).to.not.be.undefined;
+      expect(expectedTokenSymbol).to.not.be.undefined;
+      expectedTokenDecimals = expectedTokenDecimals!;
+      expectedTokenSymbol = expectedTokenSymbol!;
+
+      const COMBINED_WARP_CORE_CONFIG_PATH = getCombinedWarpRoutePath(
+        expectedTokenSymbol,
+        [CHAIN_NAME_FUEL_1, CHAIN_NAME_2],
+      );
+
+      const warpConfig: WarpRouteDeployConfig = {
+        [CHAIN_NAME_FUEL_1]: {
+          type: TokenType.collateral,
+          token: token.id.b256Address,
+          assetId: assetId.bits,
+          mailbox: chainFuel1Addresses.mailbox,
+          owner: fuelOwnerAddress,
+        },
+        [CHAIN_NAME_2]: {
+          type: TokenType.synthetic,
+          mailbox: chain2Addresses.mailbox,
+          owner: evmOwnerAddress,
+          name: (await token.functions.name(assetId).simulate()).value,
+          symbol: (await token.functions.symbol(assetId).simulate()).value,
+          decimals: (await token.functions.decimals(assetId).simulate()).value,
+          totalSupply: (
+            await token.functions.total_supply(assetId).simulate()
+          ).value?.toNumber(),
+        },
+      };
+
+      writeYamlOrJson(WARP_DEPLOY_OUTPUT_PATH_FUEL, warpConfig);
+
+      const steps: TestPromptAction[] = [
+        {
+          check: (currentOutput) =>
+            currentOutput.includes('Please enter the private key for chain'),
+          input: `${ANVIL_KEY}${KeyBoardKeys.ENTER}`,
+        },
+        {
+          check: (currentOutput) =>
+            currentOutput.includes('Please enter your Fuel private key'),
+          input: `${walletChainFuel1.privateKey}${KeyBoardKeys.ENTER}`,
+        },
+      ];
+
+      const output = hyperlaneWarpDeployRaw({
+        warpCorePath: WARP_DEPLOY_OUTPUT_PATH_FUEL,
+        skipConfirmationPrompts: true,
+      })
+        .stdio('pipe')
+        .nothrow();
+
+      const finalOutput = await handlePrompts(output, steps);
+
+      // Assertions
+      expect(finalOutput.exitCode).to.equal(0);
+      for (const chainName of [CHAIN_NAME_FUEL_1, CHAIN_NAME_2]) {
+        await assertWarpRouteConfig(
+          warpConfig,
+          COMBINED_WARP_CORE_CONFIG_PATH,
+          chainName,
+          { decimals: expectedTokenDecimals, symbol: expectedTokenSymbol },
+          walletChainFuel1.privateKey,
         );
       }
     });
@@ -362,14 +642,14 @@ describe('hyperlane warp deploy e2e tests', async function () {
         {
           chainName: CHAIN_NAME_2,
           mailbox: chain2Addresses.mailbox,
-          owner: ownerAddress,
+          owner: evmOwnerAddress,
           token: tokenChain2.address,
           vault: vaultChain2.address,
         },
         {
           chainName: CHAIN_NAME_3,
           mailbox: chain3Addresses.mailbox,
-          owner: ownerAddress,
+          owner: evmOwnerAddress,
           token: tokenChain3.address,
           vault: vaultChain3.address,
         },
@@ -441,7 +721,7 @@ describe('hyperlane warp deploy e2e tests', async function () {
           }),
       );
     }
-
+    // TODO fails
     it('Should deploy and bridge different types of warp routes:', async function () {
       // Timeout increased only for this test because it runs multiple times with different deployment configs
       this.timeout(warpConfigTestCases.length * DEFAULT_E2E_TEST_TIMEOUT);

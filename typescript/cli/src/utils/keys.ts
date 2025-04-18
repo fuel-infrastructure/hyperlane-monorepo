@@ -143,7 +143,9 @@ function privateKeyToEvmSigner(key: string): ethers.Wallet {
  * @param key a Fuel private key
  * @returns a Fuel signer for the private key
  */
-function privateKeyToFuelSigner(key: string): WalletUnlocked | WalletLocked {
+export function privateKeyToFuelSigner(
+  key: string,
+): WalletUnlocked | WalletLocked {
   if (!key) throw new Error('No private key provided');
 
   const formattedKey = key.trim().toLowerCase();

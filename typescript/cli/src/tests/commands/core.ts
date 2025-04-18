@@ -5,6 +5,7 @@ import { DerivedCoreConfig } from '@hyperlane-xyz/sdk';
 import { Address } from '@hyperlane-xyz/utils';
 
 import { readYamlOrJson, writeYamlOrJson } from '../../utils/files.js';
+import { IsmTestFactory } from '../fuel-core-abis/IsmTestFactory.js';
 import { MailboxFactory } from '../fuel-core-abis/MailboxFactory.js';
 import { MockPostDispatchFactory } from '../fuel-core-abis/MockPostDispatchFactory.js';
 
@@ -69,25 +70,42 @@ export async function mockFuelCoreDeploy(
 ) {
   const { contractId: mailboxId, waitForResult } = await MailboxFactory.deploy(
     wallet,
+    {
+      configurableConstants: { EXPECTED_OWNER: wallet.address.b256Address },
+      salt: getRandomB256(),
+    },
   );
   const mailbox = (await waitForResult()).contract;
 
   const deployHook = async () => {
     const { contractId, waitForResult } = await MockPostDispatchFactory.deploy(
       wallet,
+      { salt: getRandomB256() },
     );
     await waitForResult();
     return contractId;
   };
 
-  await mailbox.functions
-    .initialize(
-      { Address: { bits: wallet.address.b256Address } },
-      getRandomB256(), // ISM
-      await deployHook(),
-      await deployHook(),
-    )
-    .call();
+  const deployIsm = async () => {
+    const { contractId, waitForResult } = await IsmTestFactory.deploy(wallet, {
+      salt: getRandomB256(),
+    });
+    await waitForResult();
+    return contractId;
+  };
+
+  const res = await (
+    await mailbox.functions
+      .initialize(
+        { Address: { bits: wallet.address.b256Address } },
+        await deployIsm(),
+        await deployHook(),
+        await deployHook(),
+      )
+      .call()
+  ).waitForResult();
+  if (!res.transactionResult.isStatusSuccess)
+    throw new Error('Fuel Core Deployment: Mailbox initialization failed');
 
   const addressMap = { mailbox: mailboxId };
 

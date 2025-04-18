@@ -1,4 +1,4 @@
-import { confirm } from '@inquirer/prompts';
+import { confirm, password } from '@inquirer/prompts';
 import { ethers } from 'ethers';
 import { TransactionResponse } from 'fuels';
 import { groupBy } from 'lodash-es';
@@ -85,6 +85,7 @@ import {
   runFileSelectionStep,
   writeYamlOrJson,
 } from '../utils/files.js';
+import { privateKeyToFuelSigner } from '../utils/keys.js';
 
 import {
   completeDeploy,
@@ -139,23 +140,38 @@ export async function runWarpRouteDeploy({
   if (!skipConfirmation)
     apiKeys = await requestAndSaveApiKeys(chains, chainMetadata, registry);
 
-  const deploymentParams = {
-    context,
-    warpDeployConfig: warpRouteConfig,
-  };
-
-  await runDeployPlanStep(deploymentParams);
-
   // Only Ethereum and Fuel chains are supported for now
+  const fuelChains: string[] = [];
   const protocols = new Set(
     chains.map((chain) => {
       const protocol = chainMetadata[chain].protocol;
       if (protocol !== ProtocolType.Ethereum && protocol !== ProtocolType.Fuel)
         throw new Error(`Unsupported protocol ${protocol} `);
+      if (protocol === ProtocolType.Fuel) fuelChains.push(chain);
 
       return protocol;
     }),
   );
+  for (const chain of fuelChains) {
+    if (
+      !(await context.multiProtocolProvider.tryGetSigner(
+        ProtocolType.Fuel,
+        chain,
+      ))
+    ) {
+      const fuelPk = await password({
+        message: 'Please enter your Fuel private key:',
+      });
+
+      await context.multiProtocolProvider.setFuelSigner(
+        chain,
+        privateKeyToFuelSigner(fuelPk),
+      );
+    }
+  }
+
+  const deploymentParams = { context, warpDeployConfig: warpRouteConfig };
+  await runDeployPlanStep(deploymentParams);
 
   const evmParams: {
     context: WriteCommandContext;
