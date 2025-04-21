@@ -105,15 +105,34 @@ export async function hyperlaneWarpApply(
   warpDeployPath: string,
   warpCorePath: string,
   strategyUrl = '',
+  fuelKey?: string,
 ) {
-  return $`yarn workspace @hyperlane-xyz/cli run hyperlane warp apply \
-        --registry ${REGISTRY_PATH} \
-        --config ${warpDeployPath} \
-        --warp ${warpCorePath} \
-        --key ${ANVIL_KEY} \
-        --verbosity debug \
-        --strategy ${strategyUrl} \
-        --yes`;
+  // Two dimensional array for readability
+  const args = [
+    ['workspace', '@hyperlane-xyz/cli'],
+    ['run', 'hyperlane', 'warp', 'apply'],
+    ['--registry', REGISTRY_PATH],
+    ['--config', warpDeployPath],
+    ['--warp', warpCorePath],
+    ['--key', ANVIL_KEY],
+    ['--verbosity', 'debug'],
+    ['--strategy', strategyUrl],
+    ['--yes'],
+  ];
+
+  // Conditionally add optional arguments
+  if (fuelKey) args.push(['--keys', `fuel:${fuelKey}`]);
+
+  return $`yarn ${args.flat()}`;
+
+  // return $`yarn workspace @hyperlane-xyz/cli run hyperlane warp apply \
+  //       --registry ${REGISTRY_PATH} \
+  //       --config ${warpDeployPath} \
+  //       --warp ${warpCorePath} \
+  //       --key ${ANVIL_KEY} \
+  //       --verbosity debug \
+  //       --strategy ${strategyUrl} \
+  //       --yes`;
 }
 
 export function hyperlaneWarpReadRaw({

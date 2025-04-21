@@ -1,5 +1,7 @@
 import { expect } from 'chai';
 import { Wallet } from 'ethers';
+import { WalletUnlocked, getRandomB256 } from 'fuels';
+import { DeployContractConfig, LaunchTestNodeReturn } from 'fuels/test-utils';
 
 import { ChainAddresses } from '@hyperlane-xyz/registry';
 import {
@@ -16,18 +18,26 @@ import {
   ANVIL_KEY,
   CHAIN_NAME_2,
   CHAIN_NAME_3,
+  CHAIN_NAME_FUEL_1,
   CORE_CONFIG_PATH,
+  CORE_CONFIG_PATH_FUEL,
   DEFAULT_E2E_TEST_TIMEOUT,
   E2E_TEST_BURN_ADDRESS,
+  E2E_TEST_BURN_ADDRESS_FUEL,
   EXAMPLES_PATH,
+  FUEL_WARP_CONFIG_PATH,
+  FUEL_WARP_CONFIG_PATH_EXAMPLE,
   TEMP_PATH,
   WARP_CONFIG_PATH_2,
   WARP_CONFIG_PATH_EXAMPLE,
   WARP_CORE_CONFIG_PATH_2,
+  WARP_CORE_CONFIG_PATH_FUEL,
+  cleanupFuelNodes,
   deployOrUseExistingCore,
   extendWarpConfig,
   getCombinedWarpRoutePath,
   getDomainId,
+  launchFuelNodes,
   updateOwner,
 } from '../commands/helpers.js';
 import {
@@ -41,8 +51,21 @@ describe('hyperlane warp apply e2e tests', async function () {
 
   let chain2Addresses: ChainAddresses = {};
 
+  let fuelWallet: WalletUnlocked;
+
+  let fuelNodes: Record<string, LaunchTestNodeReturn<DeployContractConfig[]>>;
+
   before(async function () {
+    fuelNodes = await launchFuelNodes();
+    [fuelWallet] = fuelNodes[CHAIN_NAME_FUEL_1].wallets;
+
     await deployOrUseExistingCore(CHAIN_NAME_2, CORE_CONFIG_PATH, ANVIL_KEY);
+    await deployOrUseExistingCore(
+      CHAIN_NAME_FUEL_1,
+      CORE_CONFIG_PATH_FUEL,
+      fuelWallet.privateKey,
+      fuelWallet,
+    );
     chain2Addresses = await deployOrUseExistingCore(
       CHAIN_NAME_3,
       CORE_CONFIG_PATH,
@@ -50,15 +73,26 @@ describe('hyperlane warp apply e2e tests', async function () {
     );
 
     // Create a new warp config using the example
-    const warpConfig: WarpRouteDeployConfig = readYamlOrJson(
+    const evmWarpConfig: WarpRouteDeployConfig = readYamlOrJson(
       WARP_CONFIG_PATH_EXAMPLE,
     );
-    const anvil2Config = { anvil2: { ...warpConfig.anvil1 } };
+    const fuelWarpConfig: WarpRouteDeployConfig = readYamlOrJson(
+      FUEL_WARP_CONFIG_PATH_EXAMPLE,
+    );
+    fuelWarpConfig.fueltest1.owner = fuelWallet.address.b256Address;
+    const anvil2Config = { anvil2: { ...evmWarpConfig.anvil1 } };
+    const fuelConfig = { fueltest1: { ...fuelWarpConfig.fueltest1 } };
     writeYamlOrJson(WARP_CONFIG_PATH_2, anvil2Config);
+    writeYamlOrJson(FUEL_WARP_CONFIG_PATH, fuelConfig);
   });
 
   beforeEach(async function () {
     await hyperlaneWarpDeploy(WARP_CONFIG_PATH_2);
+    await hyperlaneWarpDeploy(FUEL_WARP_CONFIG_PATH, fuelWallet.privateKey);
+  });
+
+  after(async function () {
+    await cleanupFuelNodes(fuelNodes);
   });
 
   it('should burn owner address', async function () {
@@ -79,6 +113,26 @@ describe('hyperlane warp apply e2e tests', async function () {
     );
   });
 
+  it('FuelVM - should burn owner address', async function () {
+    const warpConfigPath = `${TEMP_PATH}/warp-route-deployment-fuel.yaml`;
+    await updateOwner(
+      E2E_TEST_BURN_ADDRESS_FUEL,
+      CHAIN_NAME_FUEL_1,
+      warpConfigPath,
+      WARP_CORE_CONFIG_PATH_FUEL,
+      fuelWallet.privateKey,
+    );
+    const updatedWarpDeployConfig = await readWarpConfig(
+      CHAIN_NAME_FUEL_1,
+      WARP_CORE_CONFIG_PATH_FUEL,
+      warpConfigPath,
+      fuelWallet.privateKey,
+    );
+    expect(updatedWarpDeployConfig.fueltest1.owner).to.equal(
+      E2E_TEST_BURN_ADDRESS_FUEL,
+    );
+  });
+
   it('should not update the same owner', async () => {
     const warpConfigPath = `${TEMP_PATH}/warp-route-deployment-2.yaml`;
     await updateOwner(
@@ -95,6 +149,28 @@ describe('hyperlane warp apply e2e tests', async function () {
     );
     expect(stdout).to.include(
       'Warp config is the same as target. No updates needed.',
+    );
+  });
+
+  it('FuelVM - should not update the same owner', async function () {
+    const warpConfigPath = `${TEMP_PATH}/warp-route-deployment-fuel.yaml`;
+    await updateOwner(
+      E2E_TEST_BURN_ADDRESS_FUEL,
+      CHAIN_NAME_FUEL_1,
+      warpConfigPath,
+      WARP_CORE_CONFIG_PATH_FUEL,
+      fuelWallet.privateKey,
+    );
+    const { stdout } = await updateOwner(
+      E2E_TEST_BURN_ADDRESS_FUEL,
+      CHAIN_NAME_FUEL_1,
+      warpConfigPath,
+      WARP_CORE_CONFIG_PATH_FUEL,
+      fuelWallet.privateKey,
+    );
+
+    expect(stdout).to.include(
+      'Warp config is the same as target. No updates applied.',
     );
   });
 
@@ -135,6 +211,52 @@ describe('hyperlane warp apply e2e tests', async function () {
     expect(normalizeConfig(updatedConfig[CHAIN_NAME_2].hook)).to.deep.equal(
       normalizeConfig(warpDeployConfig[CHAIN_NAME_2].hook),
     );
+  });
+
+  it('FuelVM - should update hook configuration', async () => {
+    const warpDeployPath = `${TEMP_PATH}/warp-route-deployment-fuel.yaml`;
+
+    // First read the existing config
+    const warpDeployConfig = await readWarpConfig(
+      CHAIN_NAME_FUEL_1,
+      WARP_CORE_CONFIG_PATH_FUEL,
+      warpDeployPath,
+      fuelWallet.privateKey,
+    );
+
+    // Update with a new hook config
+    const owner = getRandomB256();
+    warpDeployConfig[CHAIN_NAME_FUEL_1].hook = {
+      type: HookType.PROTOCOL_FEE,
+      beneficiary: owner,
+      maxProtocolFee: '1000000',
+      protocolFee: '100000',
+      owner,
+    };
+
+    // Write the updated config
+    await writeYamlOrJson(warpDeployPath, warpDeployConfig);
+
+    // Apply the changes
+    await hyperlaneWarpApply(
+      warpDeployPath,
+      WARP_CORE_CONFIG_PATH_FUEL,
+      '',
+      fuelWallet.privateKey,
+    );
+
+    // Read back the config to verify changes
+    const updatedConfig = await readWarpConfig(
+      CHAIN_NAME_FUEL_1,
+      WARP_CORE_CONFIG_PATH_FUEL,
+      warpDeployPath,
+      fuelWallet.privateKey,
+    );
+
+    // Verify the hook was updated with all properties
+    expect(
+      normalizeConfig(updatedConfig[CHAIN_NAME_FUEL_1].hook),
+    ).to.deep.equal(normalizeConfig(warpDeployConfig[CHAIN_NAME_FUEL_1].hook));
   });
 
   it('should extend an existing warp route', async () => {

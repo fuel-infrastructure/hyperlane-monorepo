@@ -721,7 +721,6 @@ describe('hyperlane warp deploy e2e tests', async function () {
           }),
       );
     }
-    // TODO fails
     it('Should deploy and bridge different types of warp routes:', async function () {
       // Timeout increased only for this test because it runs multiple times with different deployment configs
       this.timeout(warpConfigTestCases.length * DEFAULT_E2E_TEST_TIMEOUT);
