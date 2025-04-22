@@ -198,14 +198,22 @@ export function hyperlaneWarpCheckRaw({
   warpDeployPath?: string;
   hypKey?: string;
 }): ProcessPromise {
-  return $`${
-    hypKey && !privateKey ? ['HYP_KEY=' + hypKey] : ''
-  } yarn workspace @hyperlane-xyz/cli run hyperlane warp check \
-        --registry ${REGISTRY_PATH} \
-        ${symbol ? ['--symbol', symbol] : ''} \
-        ${privateKey && !hypKey ? ['--key', privateKey] : ''} \
-        --verbosity debug \
-        ${warpDeployPath ? ['--config', warpDeployPath] : ''}`;
+  // Two dimensional array for readability
+  const args = [
+    ['workspace', '@hyperlane-xyz/cli'],
+    ['run', 'hyperlane', 'warp', 'check'],
+    ['--registry', REGISTRY_PATH],
+    ['--verbosity', 'debug'],
+  ];
+
+  // Conditionally add optional arguments
+  if (warpDeployPath) args.push(['--config', warpDeployPath]);
+  if (symbol) args.push(['--symbol', symbol]);
+  if (privateKey) args.push(['--key', privateKey]);
+
+  return hypKey && !privateKey
+    ? $`HYP_KEY=${hypKey} yarn ${args.flat()}`
+    : $`yarn ${args.flat()}`;
 }
 
 export function hyperlaneWarpCheck(
