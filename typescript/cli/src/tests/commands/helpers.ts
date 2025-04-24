@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { WalletUnlocked } from 'fuels';
+import { WalletUnlocked, getRandomB256 } from 'fuels';
 import {
   DeployContractConfig,
   LaunchTestNodeReturn,
@@ -19,6 +19,8 @@ import {
 } from '@hyperlane-xyz/registry';
 import {
   HypTokenRouterConfig,
+  Src20Test,
+  Src20TestFactory,
   WarpCoreConfig,
   WarpCoreConfigSchema,
 } from '@hyperlane-xyz/sdk';
@@ -50,6 +52,8 @@ export const E2E_TEST_BURN_ADDRESS =
   '0x0000000000000000000000000000000000000001';
 export const E2E_TEST_BURN_ADDRESS_FUEL =
   '0x0000000000000000000000000000000000000000000000000000000000000001';
+export const FUEL_TOKEN_DEFAULT_SUBID =
+  '0x0000000000000000000000000000000000000000000000000000000000000000';
 
 export const CHAIN_NAME_2 = 'anvil2';
 export const CHAIN_NAME_3 = 'anvil3';
@@ -65,7 +69,7 @@ export const CORE_READ_CONFIG_PATH_2 = `${TEMP_PATH}/${CHAIN_NAME_2}/core-config
 
 export const CHAIN_2_METADATA_PATH = `${REGISTRY_PATH}/chains/${CHAIN_NAME_2}/metadata.yaml`;
 export const CHAIN_3_METADATA_PATH = `${REGISTRY_PATH}/chains/${CHAIN_NAME_3}/metadata.yaml`;
-export const CHAIN_FUEL_1_METADATA_PATH = `${FUEL_REGISTRY_PATH}/chains/${CHAIN_NAME_FUEL_1}/metadata.yaml`;
+export const CHAIN_FUEL_1_METADATA_PATH = `${REGISTRY_PATH}/chains/${CHAIN_NAME_FUEL_1}/metadata.yaml`;
 export const CHAIN_FUEL_2_METADATA_PATH = `${FUEL_REGISTRY_PATH}/chains/${CHAIN_NAME_FUEL_2}/metadata.yaml`;
 
 export const FUEL_LOCAL_REGISTRY_PATH = `${E2E_TEST_CONFIGS_PATH}/fuel`;
@@ -131,16 +135,6 @@ export function getCombinedWarpRoutePath(
   chains: string[],
 ): string {
   return `${REGISTRY_PATH}/deployments/warp_routes/${createWarpRouteConfigId(
-    tokenSymbol.toUpperCase(),
-    chains,
-  )}-config.yaml`;
-}
-
-export function getCombinedWarpRoutePathFuel(
-  tokenSymbol: string,
-  chains: string[],
-): string {
-  return `${FUEL_REGISTRY_PATH}/deployments/warp_routes/${createWarpRouteConfigId(
     tokenSymbol.toUpperCase(),
     chains,
   )}-config.yaml`;
@@ -423,6 +417,16 @@ export async function deployToken(
   await token.deployed();
 
   return token;
+}
+
+export async function deployTokenFuel(
+  wallet: WalletUnlocked,
+): Promise<Src20Test> {
+  const { waitForResult } = await Src20TestFactory.deploy(wallet, {
+    salt: getRandomB256(),
+  });
+  const src20 = (await waitForResult()).contract;
+  return src20;
 }
 
 export async function deploy4626Vault(

@@ -779,7 +779,7 @@ function generateFuelTokenConfigs(
     warpRouteDeployments,
   )) {
     const collateralAddressOrDenom = isCollateralTokenConfig(config)
-      ? config.token // gets set in the above deriveTokenMetadata()
+      ? config.assetId // gets set in the above deriveTokenMetadata()
       : undefined;
     if (!isFuelTokenType(config.type))
       throw new Error('Unsupported Fuel token type');

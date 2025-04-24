@@ -1,14 +1,14 @@
 import { WalletUnlocked, getRandomB256 } from 'fuels';
 import { $, ProcessPromise } from 'zx';
 
-import { DerivedCoreConfig } from '@hyperlane-xyz/sdk';
+import { DerivedCoreConfig, FuelPausableHookFactory } from '@hyperlane-xyz/sdk';
 import { Address } from '@hyperlane-xyz/utils';
 
 import { readYamlOrJson, writeYamlOrJson } from '../../utils/files.js';
 import { IsmTestFactory } from '../fuel-core-abis/IsmTestFactory.js';
 import { MailboxFactory } from '../fuel-core-abis/MailboxFactory.js';
-import { MockPostDispatchFactory } from '../fuel-core-abis/MockPostDispatchFactory.js';
 
+//import { MockPostDispatchFactory } from '../fuel-core-abis/MockPostDispatchFactory.js';
 import { ANVIL_KEY, REGISTRY_PATH } from './helpers.js';
 
 /**
@@ -67,22 +67,39 @@ export async function hyperlaneCoreDeploy(
 export async function mockFuelCoreDeploy(
   chain: string,
   wallet: WalletUnlocked,
+  LOCAL_DOMAIN: string | undefined = '13373',
 ) {
   const { contractId: mailboxId, waitForResult } = await MailboxFactory.deploy(
     wallet,
     {
-      configurableConstants: { EXPECTED_OWNER: wallet.address.b256Address },
+      configurableConstants: {
+        EXPECTED_OWNER: wallet.address.b256Address,
+        LOCAL_DOMAIN,
+      },
       salt: getRandomB256(),
     },
   );
   const mailbox = (await waitForResult()).contract;
 
   const deployHook = async () => {
-    const { contractId, waitForResult } = await MockPostDispatchFactory.deploy(
+    const { contractId, waitForResult } = await FuelPausableHookFactory.deploy(
       wallet,
-      { salt: getRandomB256() },
+      {
+        configurableConstants: { EXPECTED_OWNER: wallet.address.b256Address },
+        salt: getRandomB256(),
+      },
     );
-    await waitForResult();
+    const hook = await waitForResult();
+    const init_res = await (
+      await hook.contract.functions
+        .initialize_ownership({ Address: { bits: wallet.address.b256Address } })
+        .call()
+    ).waitForResult();
+
+    if (!init_res.transactionResult.isStatusSuccess)
+      throw new Error(
+        'Fuel Core Deployment: Hook ownership initialization failed',
+      );
     return contractId;
   };
 

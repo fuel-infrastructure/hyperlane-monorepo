@@ -192,11 +192,13 @@ export function hyperlaneWarpCheckRaw({
   symbol,
   privateKey,
   hypKey,
+  fuelKey,
 }: {
   symbol?: string;
   privateKey?: string;
   warpDeployPath?: string;
   hypKey?: string;
+  fuelKey?: string;
 }): ProcessPromise {
   // Two dimensional array for readability
   const args = [
@@ -210,6 +212,7 @@ export function hyperlaneWarpCheckRaw({
   if (warpDeployPath) args.push(['--config', warpDeployPath]);
   if (symbol) args.push(['--symbol', symbol]);
   if (privateKey) args.push(['--key', privateKey]);
+  if (fuelKey) args.push(['--keys', `fuel:${fuelKey}`]);
 
   return hypKey && !privateKey
     ? $`HYP_KEY=${hypKey} yarn ${args.flat()}`
@@ -219,11 +222,13 @@ export function hyperlaneWarpCheckRaw({
 export function hyperlaneWarpCheck(
   warpDeployPath: string,
   symbol: string,
+  fuelKey?: string,
 ): ProcessPromise {
   return hyperlaneWarpCheckRaw({
     warpDeployPath,
     privateKey: ANVIL_KEY,
     symbol,
+    fuelKey,
   });
 }
 
@@ -233,17 +238,25 @@ export function hyperlaneWarpSendRelay(
   warpCorePath: string,
   relay = true,
   value = 1,
+  fuelKey?: string,
 ): ProcessPromise {
-  return $`yarn workspace @hyperlane-xyz/cli run hyperlane warp send \
-        ${relay ? '--relay' : ''} \
-        --registry ${REGISTRY_PATH} \
-        --origin ${origin} \
-        --destination ${destination} \
-        --warp ${warpCorePath} \
-        --key ${ANVIL_KEY} \
-        --verbosity debug \
-        --yes \
-        --amount ${value}`;
+  const args: string[][] = [
+    ['workspace', '@hyperlane-xyz/cli'],
+    ['run', 'hyperlane', 'warp', 'send'],
+    ['--key', ANVIL_KEY],
+    ['--registry', REGISTRY_PATH],
+    ['--origin', origin],
+    ['--destination', destination],
+    ['--warp', warpCorePath],
+    ['--verbosity', 'debug'],
+    ['--yes'],
+    ['--amount', String(value)],
+  ];
+
+  if (relay) args.push(['--relay']);
+  if (fuelKey) args.push(['--keys', `fuel:${fuelKey}`]);
+
+  return $`yarn ${args.flat()}`;
 }
 
 /**
