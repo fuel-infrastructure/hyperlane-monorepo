@@ -1,22 +1,20 @@
 import { expect } from 'chai';
 import { Wallet } from 'ethers';
-import { Provider, WalletUnlocked, getRandomB256 } from 'fuels';
+import { getRandomB256 } from 'fuels';
 import { DeployContractConfig, LaunchTestNodeReturn } from 'fuels/test-utils';
 
 import { ERC20Test } from '@hyperlane-xyz/core';
 import { ChainAddresses } from '@hyperlane-xyz/registry';
 import {
-  ChainMetadata,
   TokenType,
   WarpRouteDeployConfig,
   randomAddress,
 } from '@hyperlane-xyz/sdk';
 import { Address } from '@hyperlane-xyz/utils';
 
-import { readYamlOrJson, writeYamlOrJson } from '../../utils/files.js';
+import { writeYamlOrJson } from '../../utils/files.js';
 import {
   ANVIL_KEY,
-  CHAIN_FUEL_1_METADATA_PATH,
   CHAIN_NAME_2,
   CHAIN_NAME_3,
   CHAIN_NAME_FUEL_1,
@@ -50,15 +48,15 @@ describe('hyperlane warp check e2e tests', async function () {
   let token: ERC20Test;
   let tokenSymbol: string;
   let ownerAddress: Address;
+  let ownerAddressFuel: string;
 
   let fuelOwnerPk: string;
   let fuelNodes: Record<string, LaunchTestNodeReturn<DeployContractConfig[]>>;
-  let walletFuel1: WalletUnlocked;
 
   before(async function () {
     fuelNodes = await launchFuelNodes();
-    const fuelWallet = fuelNodes[CHAIN_NAME_FUEL_1].wallets[0];
-    const fuel_pk = fuelWallet.privateKey;
+    const walletFuel1 = fuelNodes[CHAIN_NAME_FUEL_1].wallets[0];
+    const fuel_pk = walletFuel1.privateKey;
     fuelOwnerPk = fuel_pk;
 
     [chain2Addresses, chain3Addresses, fuelChain1Addresses] = await Promise.all(
@@ -69,7 +67,7 @@ describe('hyperlane warp check e2e tests', async function () {
           CHAIN_NAME_FUEL_1,
           CORE_CONFIG_PATH_FUEL,
           fuel_pk,
-          fuelWallet,
+          walletFuel1,
         ),
       ],
     );
@@ -77,12 +75,7 @@ describe('hyperlane warp check e2e tests', async function () {
     token = await deployToken(ANVIL_KEY, CHAIN_NAME_2);
     tokenSymbol = await token.symbol();
     ownerAddress = new Wallet(ANVIL_KEY).address;
-
-    const fuel1Metadata: ChainMetadata = readYamlOrJson(
-      CHAIN_FUEL_1_METADATA_PATH,
-    );
-    const providerFuel1: Provider = new Provider(fuel1Metadata.rpcUrls[0].http);
-    walletFuel1 = new WalletUnlocked(fuel_pk, providerFuel1);
+    ownerAddressFuel = walletFuel1.address.toString();
   });
 
   after(async function () {
@@ -112,7 +105,7 @@ describe('hyperlane warp check e2e tests', async function () {
       [CHAIN_NAME_FUEL_1]: {
         type: TokenType.synthetic,
         mailbox: fuelChain1Addresses.mailbox,
-        owner: walletFuel1.address.toString(),
+        owner: ownerAddressFuel,
         name: collateralTokenSymbol,
         symbol: tokenSymbol,
         decimals: 9,
@@ -226,15 +219,11 @@ describe('hyperlane warp check e2e tests', async function () {
             currentOutput.includes('Please enter the private key for chain'),
           input: `${fuelOwnerPk}${KeyBoardKeys.ENTER}`,
         },
-        {
-          check: (currentOutput) =>
-            currentOutput.includes('Please enter the private key for chain'),
-          input: `${fuelOwnerPk}${KeyBoardKeys.ENTER}`,
-        },
       ];
 
       const output = hyperlaneWarpCheckRaw({
         symbol: tokenSymbol,
+        privateKey: ANVIL_KEY,
         warpDeployPath: WARP_DEPLOY_OUTPUT_PATH,
         fuelKey: fuelOwnerPk,
       })
@@ -296,9 +285,7 @@ describe('hyperlane warp check e2e tests', async function () {
       const wrongOwner = getRandomB256();
       warpDeployConfig[CHAIN_NAME_FUEL_1].owner = wrongOwner;
       const expectedDiffText = `EXPECTED: "${wrongOwner.toLowerCase()}"\n`;
-      const expectedActualText = `ACTUAL: "${walletFuel1.address
-        .toString()
-        .toLowerCase()}"\n`;
+      const expectedActualText = `ACTUAL: "${ownerAddressFuel.toLowerCase()}"\n`;
 
       writeYamlOrJson(WARP_DEPLOY_OUTPUT_PATH, warpDeployConfig);
 

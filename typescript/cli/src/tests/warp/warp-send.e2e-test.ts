@@ -24,7 +24,6 @@ import {
   ANVIL_KEY,
   CHAIN_2_METADATA_PATH,
   CHAIN_3_METADATA_PATH,
-  CHAIN_FUEL_1_METADATA_PATH,
   CHAIN_NAME_2,
   CHAIN_NAME_3,
   CHAIN_NAME_FUEL_1,
@@ -65,8 +64,8 @@ describe('hyperlane warp deploy e2e tests', async function () {
 
   before(async function () {
     fuelNodes = await launchFuelNodes();
-    const fuelWallet = fuelNodes[CHAIN_NAME_FUEL_1].wallets[0];
-    const fuel_pk = fuelWallet.privateKey;
+    walletFuel1 = fuelNodes[CHAIN_NAME_FUEL_1].wallets[0];
+    const fuel_pk = walletFuel1.privateKey;
     fuelOwnerPk = fuel_pk;
 
     [chain2Addresses, chain3Addresses, fuelChain1Addresses] = await Promise.all(
@@ -77,20 +76,17 @@ describe('hyperlane warp deploy e2e tests', async function () {
           CHAIN_NAME_FUEL_1,
           CORE_CONFIG_PATH_FUEL,
           fuel_pk,
-          fuelWallet,
+          walletFuel1,
         ),
       ],
     );
 
     const chain2Metadata: ChainMetadata = readYamlOrJson(CHAIN_2_METADATA_PATH);
     const chain3Metadata: ChainMetadata = readYamlOrJson(CHAIN_3_METADATA_PATH);
-    const fuel1Metadata: ChainMetadata = readYamlOrJson(
-      CHAIN_FUEL_1_METADATA_PATH,
-    );
 
     const providerChain2 = new JsonRpcProvider(chain2Metadata.rpcUrls[0].http);
     const providerChain3 = new JsonRpcProvider(chain3Metadata.rpcUrls[0].http);
-    providerFuel1 = new Provider(fuel1Metadata.rpcUrls[0].http);
+    providerFuel1 = fuelNodes[CHAIN_NAME_FUEL_1].provider;
 
     walletChain2 = new Wallet(ANVIL_KEY).connect(providerChain2);
     walletChain3 = new Wallet(ANVIL_KEY).connect(providerChain3);

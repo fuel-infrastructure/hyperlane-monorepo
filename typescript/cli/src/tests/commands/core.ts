@@ -8,7 +8,6 @@ import { readYamlOrJson, writeYamlOrJson } from '../../utils/files.js';
 import { IsmTestFactory } from '../fuel-core-abis/IsmTestFactory.js';
 import { MailboxFactory } from '../fuel-core-abis/MailboxFactory.js';
 
-//import { MockPostDispatchFactory } from '../fuel-core-abis/MockPostDispatchFactory.js';
 import { ANVIL_KEY, REGISTRY_PATH } from './helpers.js';
 
 /**
