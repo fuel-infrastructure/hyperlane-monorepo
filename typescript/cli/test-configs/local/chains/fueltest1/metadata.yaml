@@ -1,21 +1,19 @@
-# yaml-language-server: $schema=../schema.json
-# Configs for describing chain metadata for use in Hyperlane deployments or apps
-# Consists of a map of chain names to metadata
-# Schema here: https://github.com/hyperlane-xyz/hyperlane-monorepo/blob/main/typescript/sdk/src/metadata/chainMetadataTypes.ts
----
-chainId: 13373
-domainId: 13373
-name: fueltest1
-protocol: fuel
-rpcUrls:
-  - http: http://local.fuel.network
 blockExplorers:
   - apiUrl: http://local.fuel.network
     family: other
     name: Fuel Testnet Explorer
     url: http://local.fuel.network/
+chainId: 13373
+domainId: 13373
+name: fueltest1
 nativeToken:
   decimals: 9
+  denom: "0xf8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad07"
   name: Ethereum
   symbol: ETH
-  denom: '0xf8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad07'
+protocol: fuel
+rpcUrls:
+  - http: http://0.0.0.0:54697/v1/graphql
+transactionOverrides:
+  gasPrice: 1
+

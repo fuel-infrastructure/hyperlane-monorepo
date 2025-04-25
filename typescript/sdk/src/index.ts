@@ -412,7 +412,6 @@ export {
   EV5InterchainAccountTxTransformerProps,
   EV5InterchainAccountTxTransformerPropsSchema,
 } from './providers/transactions/transformer/ethersV5/types.js';
-export { AggregationIsmFactory as FuelAggregationIsmFactory } from './fuel-types/AggregationIsmFactory.js';
 
 export { EvmCoreModule } from './core/EvmCoreModule.js';
 export {
@@ -648,5 +647,13 @@ export {
 } from './warp/types.js';
 export { WarpCore, WarpCoreOptions } from './warp/WarpCore.js';
 export { FuelHookModule } from './hook/FuelHookModule.js';
-export { WarpRoute as FuelWarpRouteType } from './fuel-types/WarpRoute.js';
+export {
+  WarpRoute as FuelWarpRouteType,
+  WarpRouteFactory as FuelWarpRouteFactory,
+  AggregationIsmFactory as FuelAggregationIsmFactory,
+  Src20Test,
+  Src20TestFactory,
+  PausableHookFactory as FuelPausableHookFactory,
+  MailboxFactory as FuelMailboxFactory,
+} from './fuel-types/index.js';
 export { FuelCoreAdapter } from './core/adapters/FuelCoreAdapter.js';

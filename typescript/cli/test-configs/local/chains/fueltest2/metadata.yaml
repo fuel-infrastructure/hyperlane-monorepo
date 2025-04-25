@@ -13,5 +13,7 @@ nativeToken:
   symbol: ETH
 protocol: fuel
 rpcUrls:
-  - http: http://0.0.0.0:60832/v1/graphql
+  - http: http://0.0.0.0:54699/v1/graphql
+transactionOverrides:
+  gasPrice: 1
 

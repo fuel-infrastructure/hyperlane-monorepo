@@ -1,11 +1,6 @@
 import { TransactionReceipt } from '@ethersproject/providers';
 import { BigNumber } from 'ethers';
-import {
-  Address,
-  ScriptTransactionRequest,
-  TransactionResult,
-  WalletUnlocked,
-} from 'fuels';
+import { TransactionResult, WalletUnlocked } from 'fuels';
 import { stringify as yamlStringify } from 'yaml';
 
 import {
@@ -19,7 +14,7 @@ import {
   Token,
   TokenAmount,
   WarpCore,
-  WarpCoreConfig, // FuelCoreAdapter,
+  WarpCoreConfig,
 } from '@hyperlane-xyz/sdk';
 import {
   ProtocolType,
@@ -186,6 +181,19 @@ export async function sendTestTransfer({
       token = warpCore.findToken(origin, routerAddress)!;
     }
 
+    if (isDestinationFuel) {
+      const isAmountConvertible =
+        await warpCore.isAmountConvertibleBetweenChains({
+          originTokenAmount: token.amount(amount),
+          destination,
+          fromFuel: false,
+        });
+      if (!isAmountConvertible) {
+        logRed('Selected amount cannot be converted to the destination token');
+        throw new Error('Error validating transfer');
+      }
+    }
+
     const errors = await warpCore.validateTransfer({
       originTokenAmount: token.amount(amount),
       destination,
@@ -197,7 +205,6 @@ export async function sendTestTransfer({
       throw new Error('Error validating transfer');
     }
 
-    // TODO: override hook address for self-relay
     const transferTxs = await warpCore.getTransferRemoteTxs({
       originTokenAmount: new TokenAmount(amount, token),
       destination,
@@ -405,6 +412,16 @@ async function executeFuelDelivery({
     token = warpCore.findToken(origin, routerAddress)!;
   }
 
+  const isAmountConvertible = await warpCore.isAmountConvertibleBetweenChains({
+    originTokenAmount: token.amount(amount),
+    destination,
+    fromFuel: true,
+  });
+  if (!isAmountConvertible) {
+    logRed('Selected amount cannot be converted to the destination token');
+    throw new Error('Error validating transfer');
+  }
+
   const errors = await warpCore.validateTransfer({
     originTokenAmount: token.amount(amount),
     destination,
@@ -424,29 +441,11 @@ async function executeFuelDelivery({
     recipient,
   });
 
-  const isAssetSendToContract = await warpCore.assetSendToContractFuel({
-    originTokenAmount,
-    destinationName: destination,
-  });
-  if (transferTxn.type !== ProviderType.Fuels || !isAssetSendToContract)
+  if (transferTxn.type !== ProviderType.Fuels)
     throw new Error('Invalid transfer transaction');
 
-  const request = new ScriptTransactionRequest(transferTxn.transaction);
-  const txCost = await signer.getTransactionCost(request);
-  const { gasUsed, missingContractIds, outputVariables, maxFee } = txCost;
-
-  missingContractIds.forEach((contractId: string) => {
-    request.addContractInputAndOutput(new Address(contractId));
-  });
-
-  request.addVariableOutputs(outputVariables);
-
-  request.gasLimit = gasUsed;
-  request.maxFee = maxFee;
-
-  await signer.fund(request, txCost);
   const txResult = await (
-    await signer.sendTransaction(request)
+    await signer.sendTransaction(transferTxn.transaction)
   ).waitForResult();
 
   const message = HyperlaneCore.getDispatchedMessagesFromFuel(txResult);

@@ -30,6 +30,7 @@ import {
 } from '../token/TokenStandard.js';
 import { EVM_TRANSFER_REMOTE_GAS_ESTIMATE } from '../token/adapters/EvmTokenAdapter.js';
 import {
+  BaseFuelHypTokenAdapter,
   FuelHypCollateralAdapter,
   FuelHypNativeAdapter,
   FuelHypSyntheticAdapter,
@@ -911,23 +912,34 @@ export class WarpCore {
     originTokenAmount: TokenAmount;
     destination: ChainName;
     fromFuel: boolean;
-  }): Promise<boolean> {
+  }): Promise<{ remainder: number; decimalDiff: number }> {
     const { token, amount } = originTokenAmount;
-    const hypAdapter = token.getHypAdapter(this.multiProvider, destination);
+    const originDomain = this.multiProvider.getDomainId(token.chainName);
     const destinationDomain = this.multiProvider.getDomainId(destination);
+    const destinationToken = token.getConnectionForChain(destination)?.token;
 
-    if (
-      hypAdapter instanceof FuelHypCollateralAdapter ||
-      hypAdapter instanceof FuelHypSyntheticAdapter ||
-      hypAdapter instanceof FuelHypNativeAdapter
-    ) {
+    if (!destinationToken && !fromFuel) {
+      throw new Error('isAmountCausingPrecisionLoss only supported for Fuel');
+    } else {
+      const addresses = {
+        token: fromFuel
+          ? token.collateralAddressOrDenom
+          : destinationToken!.collateralAddressOrDenom,
+        warpRouter: fromFuel
+          ? token.addressOrDenom
+          : destinationToken!.addressOrDenom,
+      };
+
+      const hypAdapter = new BaseFuelHypTokenAdapter(
+        fromFuel ? token.chainName : destination,
+        this.multiProvider,
+        addresses,
+      );
       return hypAdapter.isAmountCausingPrecisionLoss(
         amount,
-        destinationDomain,
+        fromFuel ? destinationDomain : originDomain,
         fromFuel,
       );
-    } else {
-      return false;
     }
   }
 
@@ -941,20 +953,32 @@ export class WarpCore {
     fromFuel: boolean;
   }): Promise<boolean> {
     const { token, amount } = originTokenAmount;
-    const hypAdapter = token.getHypAdapter(this.multiProvider, destination);
+    const originDomain = this.multiProvider.getDomainId(token.chainName);
     const destinationDomain = this.multiProvider.getDomainId(destination);
-    if (
-      hypAdapter instanceof FuelHypCollateralAdapter ||
-      hypAdapter instanceof FuelHypSyntheticAdapter ||
-      hypAdapter instanceof FuelHypNativeAdapter
-    ) {
+    const destinationToken = token.getConnectionForChain(destination)?.token;
+
+    if (!destinationToken && !fromFuel) {
+      return false;
+    } else {
+      const addresses = {
+        token: fromFuel
+          ? token.collateralAddressOrDenom
+          : destinationToken!.collateralAddressOrDenom,
+        warpRouter: fromFuel
+          ? token.addressOrDenom
+          : destinationToken!.addressOrDenom,
+      };
+
+      const hypAdapter = new BaseFuelHypTokenAdapter(
+        fromFuel ? token.chainName : destination,
+        this.multiProvider,
+        addresses,
+      );
       return hypAdapter.isAmountConvertibleBetweenChains(
-        destinationDomain,
         amount,
+        fromFuel ? destinationDomain : originDomain,
         fromFuel,
       );
-    } else {
-      return false;
     }
   }
 }

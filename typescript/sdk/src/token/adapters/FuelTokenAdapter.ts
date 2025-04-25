@@ -1,7 +1,9 @@
 import { hexZeroPad } from 'ethers/lib/utils.js';
 import {
   BN,
+  Address as FuelAddress,
   Provider,
+  Script,
   TransactionRequest,
   Wallet,
   WalletLocked,
@@ -13,6 +15,8 @@ import { Address, Domain, Numberish, ProtocolType } from '@hyperlane-xyz/utils';
 import { BaseFuelAdapter } from '../../app/MultiProtocolApp.js';
 import { Mailbox } from '../../fuel-types/Mailbox.js';
 import { TokenMetadataOutput, WarpRoute } from '../../fuel-types/WarpRoute.js';
+import { WrMulticall } from '../../fuel-types/WrMulticall.js';
+import { WrMulticallFactory } from '../../fuel-types/WrMulticallFactory.js';
 import { MultiProtocolProvider } from '../../providers/MultiProtocolProvider.js';
 import { ChainName } from '../../types.js';
 import { TokenMetadata } from '../types.js';
@@ -150,23 +154,52 @@ export class BaseFuelHypTokenAdapter
 
     const baseAssetId = await this.getBaseAssetId();
     const mailbox = await this.contract.functions.get_mailbox().get();
-    const amount = this.getTransferAmount(gasPayment, BigInt(weiAmountOrId));
 
-    const tx = await this.contract.functions
-      .transfer_remote(
+    const multicallScript = new Script(
+      WrMulticallFactory.bytecode,
+      WrMulticall.abi,
+      this.signer,
+    );
+
+    const amount = this.getTransferAmount(gasPayment, BigInt(weiAmountOrId));
+    const request = await multicallScript.functions
+      .main(
+        this.addresses.warpRouter,
+        mailbox.value,
         destination,
         recipientB256,
-        new BN(weiAmountOrId.toString()),
+        BigInt(weiAmountOrId),
+        this.addresses.token,
+        amount,
       )
-      .callParams({
-        forward: {
-          amount: amount.toString(),
-          assetId: baseAssetId,
-        },
-      })
       .addContracts([new Mailbox(mailbox.value.bits, this.signer)])
       .getTransactionRequest();
-    return tx;
+
+    const txCost = await this.signer.getTransactionCost(request, {
+      quantities: [
+        {
+          assetId: this.addresses.token!,
+          amount: new BN(weiAmountOrId.toString()),
+        },
+        {
+          assetId: baseAssetId,
+          amount: new BN(amount.toString()),
+        },
+      ],
+    });
+    const { gasUsed, missingContractIds, outputVariables, maxFee } = txCost;
+
+    missingContractIds.forEach((contractId: string) => {
+      request.addContractInputAndOutput(new FuelAddress(contractId));
+    });
+
+    request.addVariableOutputs(outputVariables);
+
+    request.gasLimit = gasUsed;
+    request.maxFee = maxFee;
+
+    await this.signer.fund(request, txCost);
+    return request;
   }
 
   async getRouterAddress(domain: Domain): Promise<Buffer> {
@@ -271,9 +304,11 @@ export class BaseFuelHypTokenAdapter
     weiAmountOrId: Numberish,
     destination: Domain,
     fromFuel: boolean = true,
-  ): Promise<boolean> {
+  ): Promise<{ remainder: number; decimalDiff: number }> {
     const fuelDecimals = (await this.getMetadata()).decimals;
-    if (!fuelDecimals) return false;
+    if (!fuelDecimals) {
+      throw new Error('Token info not found');
+    }
 
     const remoteRouter = await this.getRouterAddress(destination);
     const remoteRouterB256 = '0x' + remoteRouter.toString('hex');
@@ -283,10 +318,10 @@ export class BaseFuelHypTokenAdapter
       ? fuelDecimals - remoteDecimals // Fuel → other chain
       : remoteDecimals - fuelDecimals; // Other chain → Fuel
 
-    if (decimalDiff <= 0) return false;
+    if (decimalDiff <= 0) return { remainder: 0, decimalDiff };
 
-    const divisor = BigInt(10 ** decimalDiff);
-    return BigInt(weiAmountOrId) % divisor !== BigInt(0);
+    const divisor = Number(10 ** decimalDiff);
+    return { remainder: Number(weiAmountOrId) % divisor, decimalDiff };
   }
 
   protected getTransferAmount(gasPayment: bigint, _amount: bigint): bigint {
@@ -294,8 +329,8 @@ export class BaseFuelHypTokenAdapter
   }
 
   async isAmountConvertibleBetweenChains(
-    destination: Domain,
     amount: Numberish,
+    destination: Domain,
     fromFuel: boolean = true,
   ): Promise<boolean> {
     const fuelDecimals = (await this.getMetadata()).decimals;
@@ -317,7 +352,7 @@ export class BaseFuelHypTokenAdapter
 
     //if amount is greater than 10^decimalDiff,
     //means can be divided to comply with remote chains lower decimals
-    return BigInt(amount) > BigInt(10 ** decimalDiff);
+    return BigInt(amount) >= BigInt(10 ** decimalDiff);
   }
 }
 
