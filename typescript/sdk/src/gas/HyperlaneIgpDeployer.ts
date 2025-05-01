@@ -5,11 +5,7 @@ import {
   ProxyAdmin,
   StorageGasOracle,
 } from '@hyperlane-xyz/core';
-import {
-  addBufferToGasLimit,
-  eqAddress,
-  rootLogger,
-} from '@hyperlane-xyz/utils';
+import { addBufferToGasLimit, rootLogger } from '@hyperlane-xyz/utils';
 
 import { TOKEN_EXCHANGE_RATE_SCALE_ETHEREUM } from '../consts/igp.js';
 import { HyperlaneContracts } from '../contracts/types.js';
@@ -51,7 +47,7 @@ export class HyperlaneIgpDeployer extends HyperlaneDeployer<
       chain,
       'interchainGasPaymaster',
       'interchainGasPaymaster',
-      proxyAdmin.address,
+      '0x225ffC5D510c555214126bE5f9c9e914490c71cC', // proxy admin owner here ser
       [],
       [await this.multiProvider.getSignerAddress(chain), config.beneficiary],
     );
@@ -60,7 +56,7 @@ export class HyperlaneIgpDeployer extends HyperlaneDeployer<
     for (const [remote, newGasOverhead] of Object.entries(config.overhead)) {
       // TODO: add back support for non-EVM remotes.
       // Previously would check core metadata for non EVMs and fallback to multiprovider for custom EVMs
-      const remoteId = this.multiProvider.tryGetDomainId(remote);
+      const remoteId = 1717982312;
       if (remoteId === null) {
         this.logger.warn(
           `Skipping overhead ${chain} -> ${remote}. Expected if the remote is a non-EVM chain.`,
@@ -68,22 +64,22 @@ export class HyperlaneIgpDeployer extends HyperlaneDeployer<
         continue;
       }
 
-      const currentGasConfig = await igp.destinationGasConfigs(remoteId);
-      if (
-        !eqAddress(currentGasConfig.gasOracle, storageGasOracle.address) ||
-        !currentGasConfig.gasOverhead.eq(newGasOverhead)
-      ) {
-        this.logger.debug(
-          `Setting gas params for ${chain} -> ${remote}: gasOverhead = ${newGasOverhead} gasOracle = ${storageGasOracle.address}`,
-        );
-        gasParamsToSet.push({
-          remoteDomain: remoteId,
-          config: {
-            gasOverhead: newGasOverhead,
-            gasOracle: storageGasOracle.address,
-          },
-        });
-      }
+      // const currentGasConfig = await igp.destinationGasConfigs(remoteId);
+      // if (
+      //   !eqAddress(currentGasConfig.gasOracle, storageGasOracle.address) ||
+      //   !currentGasConfig.gasOverhead.eq(newGasOverhead)
+      // ) {
+      this.logger.debug(
+        `Setting gas params for ${chain} -> ${remote}: gasOverhead = ${newGasOverhead} gasOracle = ${storageGasOracle.address}`,
+      );
+      gasParamsToSet.push({
+        remoteDomain: remoteId,
+        config: {
+          gasOverhead: newGasOverhead,
+          gasOracle: storageGasOracle.address,
+        },
+      });
+      // }
     }
 
     if (gasParamsToSet.length > 0) {
@@ -122,7 +118,7 @@ export class HyperlaneIgpDeployer extends HyperlaneDeployer<
     for (const [remote, desired] of Object.entries(config.oracleConfig)) {
       // TODO: add back support for non-EVM remotes.
       // Previously would check core metadata for non EVMs and fallback to multiprovider for custom EVMs
-      const remoteDomain = this.multiProvider.tryGetDomainId(remote);
+      const remoteDomain = 1717982312;
       if (remoteDomain === null) {
         this.logger.warn(
           `Skipping gas oracle ${chain} -> ${remote}. Expected if the remote is a non-EVM chain.`,
@@ -195,6 +191,13 @@ export class HyperlaneIgpDeployer extends HyperlaneDeployer<
       storageGasOracle,
       config,
     );
+
+    // eslint-disable-next-line no-console
+    console.log('\ninterchainGasPaymaster', interchainGasPaymaster.address);
+    // eslint-disable-next-line no-console
+    console.log('storageGasOracle', storageGasOracle.address);
+
+    throw new Error("deployed whet's needed\n");
 
     const contracts = {
       proxyAdmin,

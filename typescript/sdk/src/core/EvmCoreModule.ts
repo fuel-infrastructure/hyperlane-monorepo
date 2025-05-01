@@ -1,10 +1,6 @@
 import { ethers } from 'ethers';
 
-import {
-  Mailbox,
-  Mailbox__factory,
-  Ownable__factory,
-} from '@hyperlane-xyz/core';
+import { Mailbox, Mailbox__factory } from '@hyperlane-xyz/core';
 import {
   Address,
   Domain,
@@ -19,10 +15,7 @@ import {
   serializeContractsMap,
   transferOwnershipTransactions,
 } from '../contracts/contracts.js';
-import {
-  HyperlaneAddresses,
-  HyperlaneContractsMap,
-} from '../contracts/types.js';
+import { HyperlaneAddresses } from '../contracts/types.js';
 import {
   CoreConfig,
   CoreConfigSchema,
@@ -36,7 +29,6 @@ import {
 } from '../deploy/contracts.js';
 import { proxyAdminUpdateTxs } from '../deploy/proxy.js';
 import { ContractVerifier } from '../deploy/verify/ContractVerifier.js';
-import { HookFactories } from '../hook/contracts.js';
 import { EvmIsmModule } from '../ism/EvmIsmModule.js';
 import { DerivedIsmConfig } from '../ism/EvmIsmReader.js';
 import { HyperlaneIsmFactory } from '../ism/HyperlaneIsmFactory.js';
@@ -53,7 +45,6 @@ import {
 import { EvmCoreReader } from './EvmCoreReader.js';
 import { EvmIcaModule } from './EvmIcaModule.js';
 import { HyperlaneCoreDeployer } from './HyperlaneCoreDeployer.js';
-import { CoreFactories } from './contracts.js';
 
 export class EvmCoreModule extends HyperlaneModule<
   ProtocolType.Ethereum,
@@ -282,18 +273,15 @@ export class EvmCoreModule extends HyperlaneModule<
     const { config, multiProvider, chain, contractVerifier } = params;
     const chainName = multiProvider.getChainName(chain);
 
-    const ismFactoryFactories = await EvmCoreModule.deployIsmFactories({
-      chainName,
-      config,
-      multiProvider,
-      contractVerifier,
-    });
+    // const ismFactoryFactories = await EvmCoreModule.deployIsmFactories({
+    //   chainName,
+    //   config,
+    //   multiProvider,
+    //   contractVerifier,
+    // });
 
     const ismFactory = new HyperlaneIsmFactory(
-      attachContractsMap(
-        { [chainName]: ismFactoryFactories },
-        proxyFactoryFactories,
-      ),
+      attachContractsMap({ [chainName]: {} }, proxyFactoryFactories),
       multiProvider,
     );
 
@@ -304,95 +292,101 @@ export class EvmCoreModule extends HyperlaneModule<
     );
 
     // Deploy proxyAdmin
-    const proxyAdmin = await coreDeployer.deployContract(
-      chainName,
-      'proxyAdmin',
-      [],
-    );
+    // const proxyAdmin = await coreDeployer.deployContract(
+    //   chainName,
+    //   'proxyAdmin',
+    //   [],
+    // );
 
     // Deploy Mailbox
-    const mailbox = await this.deployMailbox({
+    await this.deployMailbox({
       config,
       coreDeployer,
-      proxyAdmin: proxyAdmin.address,
+      proxyAdmin: 'proxyAdmin.address',
       multiProvider,
       chain,
     });
 
-    // Deploy ICA ISM and Router
-    const { interchainAccountRouter, interchainAccountIsm } = (
-      await EvmIcaModule.create({
-        chain: chainName,
-        multiProvider: multiProvider,
-        config: {
-          mailbox: mailbox.address,
-          owner: await multiProvider.getSigner(chain).getAddress(),
-        },
-        contractVerifier,
-      })
-    ).serialize();
+    // // Deploy ICA ISM and Router
+    // const { interchainAccountRouter, interchainAccountIsm } = (
+    //   await EvmIcaModule.create({
+    //     chain: chainName,
+    //     multiProvider: multiProvider,
+    //     config: {
+    //       mailbox: mailbox.address,
+    //       owner: await multiProvider.getSigner(chain).getAddress(),
+    //     },
+    //     contractVerifier,
+    //   })
+    // ).serialize();
 
     // Deploy Validator announce
-    const validatorAnnounce = (
-      await coreDeployer.deployValidatorAnnounce(chainName, mailbox.address)
-    ).address;
+    // const validatorAnnounce = (
+    //   await coreDeployer.deployValidatorAnnounce(chainName, mailbox.address)
+    // ).address;
 
-    // Deploy timelock controller if config.upgrade is set
-    let timelockController;
-    if (config.upgrade) {
-      timelockController = (
-        await coreDeployer.deployTimelock(chainName, config.upgrade.timelock)
-      ).address;
-    }
+    // // Deploy timelock controller if config.upgrade is set
+    // let timelockController;
+    // if (config.upgrade) {
+    //   timelockController = (
+    //     await coreDeployer.deployTimelock(chainName, config.upgrade.timelock)
+    //   ).address;
+    // }
 
     // Deploy Test Recipient
-    const testRecipient = (
-      await coreDeployer.deployTestRecipient(
-        chainName,
-        await mailbox.defaultIsm(),
-      )
-    ).address;
+    // const testRecipient = (
+    //   await coreDeployer.deployTestRecipient(
+    //     chainName,
+    //     await mailbox.defaultIsm(),
+    //   )
+    // ).address;
 
     // Obtain addresses of every contract created by the deployer
     // and extract only the merkleTreeHook and interchainGasPaymaster
-    const serializedContracts = serializeContractsMap(
-      coreDeployer.deployedContracts as HyperlaneContractsMap<
-        CoreFactories & HookFactories
-      >,
+    // const serializedContracts = serializeContractsMap(
+    //   coreDeployer.deployedContracts as HyperlaneContractsMap<
+    //     CoreFactories & HookFactories
+    //   >,
+    // );
+    // const { merkleTreeHook, interchainGasPaymaster } =
+    //   serializedContracts[chainName];
+
+    // eslint-disable-next-line no-console
+    console.log(
+      'Deployments ',
+      JSON.stringify(coreDeployer.deployedContracts, null, 2),
     );
-    const { merkleTreeHook, interchainGasPaymaster } =
-      serializedContracts[chainName];
 
     // Update the ProxyAdmin owner of the Mailbox if the config defines a different owner from the current signer
-    const currentProxyOwner = await proxyAdmin.owner();
-    if (
-      config?.proxyAdmin?.owner &&
-      !eqAddress(config.proxyAdmin.owner, currentProxyOwner)
-    ) {
-      await multiProvider.sendTransaction(chainName, {
-        annotation: `Transferring ownership of ProxyAdmin to the configured address ${config.proxyAdmin.owner}`,
-        to: proxyAdmin.address,
-        data: Ownable__factory.createInterface().encodeFunctionData(
-          'transferOwnership(address)',
-          [config.proxyAdmin.owner],
-        ),
-      });
-    }
+    // const currentProxyOwner = await proxyAdmin.owner();
+    // if (
+    //   config?.proxyAdmin?.owner &&
+    //   !eqAddress(config.proxyAdmin.owner, currentProxyOwner)
+    // ) {
+    //   await multiProvider.sendTransaction(chainName, {
+    //     annotation: `Transferring ownership of ProxyAdmin to the configured address ${config.proxyAdmin.owner}`,
+    //     to: proxyAdmin.address,
+    //     data: Ownable__factory.createInterface().encodeFunctionData(
+    //       'transferOwnership(address)',
+    //       [config.proxyAdmin.owner],
+    //     ),
+    //   });
+    // }
+    if (true) throw new Error('Deployment done');
 
     // Set Core & extra addresses
     return {
-      ...ismFactoryFactories,
-
-      proxyAdmin: proxyAdmin.address,
-      mailbox: mailbox.address,
-      interchainAccountRouter,
-      interchainAccountIsm,
-      validatorAnnounce,
-      timelockController,
-      testRecipient,
-      merkleTreeHook,
-      interchainGasPaymaster,
-    };
+      // ...ismFactoryFactories,
+      // proxyAdmin: proxyAdmin.address,
+      // mailbox: mailbox.address,
+      // interchainAccountRouter,
+      // interchainAccountIsm,
+      // validatorAnnounce,
+      // timelockController,
+      // testRecipient,
+      // merkleTreeHook,
+      // interchainGasPaymaster,
+    } as any;
   }
 
   /**
@@ -429,62 +423,67 @@ export class EvmCoreModule extends HyperlaneModule<
     multiProvider: MultiProvider;
     chain: ChainNameOrId;
   }): Promise<Mailbox> {
-    const {
-      config,
-      proxyAdmin,
-      coreDeployer: deployer,
-      multiProvider,
-      chain,
-    } = params;
+    const { config, coreDeployer: deployer, multiProvider, chain } = params;
     const chainName = multiProvider.getChainName(chain);
 
-    const domain = multiProvider.getDomainId(chainName);
-    const mailbox = await deployer.deployProxiedContract(
-      chainName,
-      'mailbox',
-      'mailbox',
-      proxyAdmin,
-      [domain],
-    );
+    // const domain = multiProvider.getDomainId(chainName);
+    // const mailbox = await deployer.deployProxiedContract(
+    //   chainName,
+    //   'mailbox',
+    //   'mailbox',
+    //   proxyAdmin,
+    //   [domain],
+    // );
 
     // @todo refactor when 1) IsmModule is ready
-    const deployedDefaultIsm = await deployer.deployIsm(
-      chainName,
-      config.defaultIsm,
-      mailbox.address,
-    );
+    // const deployedDefaultIsm = await deployer.deployIsm(
+    //   chainName,
+    //   config.defaultIsm,
+    //   mailbox.address,
+    // );
+
+    // eslint-disable-next-line no-console
+    console.log('config', JSON.stringify(config.defaultHook, null, 2));
 
     // @todo refactor when 1) HookModule is ready, and 2) Hooks Config can handle strings
     const deployedDefaultHook = await deployer.deployHook(
       chainName,
       config.defaultHook,
       {
-        mailbox: mailbox.address,
-        proxyAdmin,
+        mailbox: '0xfFAEF09B3cd11D9b20d1a19bECca54EEC2884766',
+        proxyAdmin: '0x03f16B5363CdC3A002e3b8c770273AD0EB034CaB',
       },
     );
+
+    // eslint-disable-next-line no-console
+    console.log('defaultHook', deployedDefaultHook.address);
+
+    // eslint-disable-next-line no-console
+    console.log('core deployer', deployer.deployedContracts);
+
+    throw new Error('Deployment done');
 
     // @todo refactor when 1) HookModule is ready, and 2) Hooks Config can handle strings
-    const deployedRequiredHook = await deployer.deployHook(
-      chainName,
-      config.requiredHook,
-      {
-        mailbox: mailbox.address,
-        proxyAdmin,
-      },
-    );
+    // const deployedRequiredHook = await deployer.deployHook(
+    //   chainName,
+    //   config.requiredHook,
+    //   {
+    //     mailbox: mailbox.address,
+    //     proxyAdmin,
+    //   },
+    // );
 
     // Initialize Mailbox
-    await multiProvider.handleTx(
-      chain,
-      mailbox.initialize(
-        config.owner,
-        deployedDefaultIsm,
-        deployedDefaultHook.address,
-        deployedRequiredHook.address,
-        multiProvider.getTransactionOverrides(chain),
-      ),
-    );
-    return mailbox;
+    // await multiProvider.handleTx(
+    //   chain,
+    //   mailbox.initialize(
+    //     config.owner,
+    //     deployedDefaultIsm,
+    //     deployedDefaultHook.address,
+    //     deployedRequiredHook.address,
+    //     multiProvider.getTransactionOverrides(chain),
+    //   ),
+    // );
+    return {} as any;
   }
 }

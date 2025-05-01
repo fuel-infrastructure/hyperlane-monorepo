@@ -5,12 +5,7 @@ import {
   TestRecipient,
   ValidatorAnnounce,
 } from '@hyperlane-xyz/core';
-import {
-  Address,
-  addBufferToGasLimit,
-  isZeroishAddress,
-  rootLogger,
-} from '@hyperlane-xyz/utils';
+import { Address, rootLogger } from '@hyperlane-xyz/utils';
 
 import { HyperlaneContracts } from '../contracts/types.js';
 import { HyperlaneDeployer } from '../deploy/HyperlaneDeployer.js';
@@ -19,7 +14,6 @@ import { HyperlaneHookDeployer } from '../hook/HyperlaneHookDeployer.js';
 import { HookConfig } from '../hook/types.js';
 import { HyperlaneIsmFactory } from '../ism/HyperlaneIsmFactory.js';
 import { IsmConfig } from '../ism/types.js';
-import { moduleMatchesConfig } from '../ism/utils.js';
 import { MultiProvider } from '../providers/MultiProvider.js';
 import { ChainMap, ChainName } from '../types.js';
 
@@ -71,36 +65,39 @@ export class HyperlaneCoreDeployer extends HyperlaneDeployer<
   async deployMailbox(
     chain: ChainName,
     config: CoreConfig,
-    proxyAdmin: Address,
+    _proxyAdmin: Address,
   ): Promise<Mailbox> {
-    const domain = this.multiProvider.getDomainId(chain);
-    const mailbox = await this.deployProxiedContract(
-      chain,
-      'mailbox',
-      'mailbox',
-      proxyAdmin,
-      [domain],
-    );
+    // const domain = this.multiProvider.getDomainId(chain);
+    // const mailbox = await this.deployProxiedContract(
+    //   chain,
+    //   'mailbox',
+    //   'mailbox',
+    //   proxyAdmin,
+    //   [domain],
+    // );
 
-    let defaultIsm = await mailbox.defaultIsm();
-    const matches = await moduleMatchesConfig(
-      chain,
-      defaultIsm,
-      config.defaultIsm,
-      this.multiProvider,
-      this.ismFactory.getContracts(chain),
-    );
-    if (!matches) {
-      this.logger.debug('Deploying default ISM');
-      defaultIsm = await this.deployIsm(
-        chain,
-        config.defaultIsm,
-        mailbox.address,
-      );
-    }
-    this.cachedAddresses[chain].interchainSecurityModule = defaultIsm;
+    // let defaultIsm = await mailbox.defaultIsm();
+    // const matches = await moduleMatchesConfig(
+    //   chain,
+    //   defaultIsm,
+    //   config.defaultIsm,
+    //   this.multiProvider,
+    //   this.ismFactory.getContracts(chain),
+    // );
+    // if (!matches) {
+    //   this.logger.debug('Deploying default ISM');
+    //   defaultIsm = await this.deployIsm(
+    //     chain,
+    //     config.defaultIsm,
+    //     mailbox.address,
+    //   );
+    // }
+    // this.cachedAddresses[chain].interchainSecurityModule = defaultIsm;
 
-    const hookAddresses = { mailbox: mailbox.address, proxyAdmin };
+    const hookAddresses = {
+      mailbox: '0xfFAEF09B3cd11D9b20d1a19bECca54EEC2884766',
+      proxyAdmin: '0x225ffC5D510c555214126bE5f9c9e914490c71cC',
+    };
 
     this.logger.debug('Deploying default hook');
     const defaultHook = await this.deployHook(
@@ -109,78 +106,81 @@ export class HyperlaneCoreDeployer extends HyperlaneDeployer<
       hookAddresses,
     );
 
-    this.logger.debug('Deploying required hook');
-    const requiredHook = await this.deployHook(
-      chain,
-      config.requiredHook,
-      hookAddresses,
-    );
+    // eslint-disable-next-line no-console
+    console.log('defaultHook', defaultHook.address);
 
-    const txOverrides = this.multiProvider.getTransactionOverrides(chain);
+    // this.logger.debug('Deploying required hook');
+    // const requiredHook = await this.deployHook(
+    //   chain,
+    //   config.requiredHook,
+    //   hookAddresses,
+    // );
+
+    // const txOverrides = this.multiProvider.getTransactionOverrides(chain);
 
     // Check if the mailbox has already been initialized
-    const currentDefaultIsm = await mailbox.defaultIsm();
-    if (isZeroishAddress(currentDefaultIsm)) {
-      // If the default ISM is the zero address, the mailbox hasn't been initialized
-      this.logger.debug('Initializing mailbox');
-      try {
-        const estimatedGas = await mailbox.estimateGas.initialize(
-          config.owner,
-          defaultIsm,
-          defaultHook.address,
-          requiredHook.address,
-        );
-        await this.multiProvider.handleTx(
-          chain,
-          mailbox.initialize(
-            config.owner,
-            defaultIsm,
-            defaultHook.address,
-            requiredHook.address,
-            {
-              gasLimit: addBufferToGasLimit(estimatedGas),
-              ...txOverrides,
-            },
-          ),
-        );
-      } catch (e: any) {
-        // If we still get an error here, it's likely a genuine error
-        this.logger.error('Failed to initialize mailbox:', e);
-        throw e;
-      }
-    } else {
-      // If the default ISM is not the zero address, the mailbox has likely been initialized
-      this.logger.debug('Mailbox appears to be already initialized');
-    }
+    // const currentDefaultIsm = await mailbox.defaultIsm();
+    // if (isZeroishAddress(currentDefaultIsm)) {
+    //   // If the default ISM is the zero address, the mailbox hasn't been initialized
+    //   this.logger.debug('Initializing mailbox');
+    //   try {
+    //     const estimatedGas = await mailbox.estimateGas.initialize(
+    //       config.owner,
+    //       defaultIsm,
+    //       defaultHook.address,
+    //       requiredHook.address,
+    //     );
+    //     await this.multiProvider.handleTx(
+    //       chain,
+    //       mailbox.initialize(
+    //         config.owner,
+    //         defaultIsm,
+    //         defaultHook.address,
+    //         requiredHook.address,
+    //         {
+    //           gasLimit: addBufferToGasLimit(estimatedGas),
+    //           ...txOverrides,
+    //         },
+    //       ),
+    //     );
+    //   } catch (e: any) {
+    //     // If we still get an error here, it's likely a genuine error
+    //     this.logger.error('Failed to initialize mailbox:', e);
+    //     throw e;
+    //   }
+    // } else {
+    //   // If the default ISM is not the zero address, the mailbox has likely been initialized
+    //   this.logger.debug('Mailbox appears to be already initialized');
+    // }
 
-    await this.configureHook(
-      chain,
-      mailbox,
-      defaultHook.address,
-      (_mailbox) => _mailbox.defaultHook(),
-      (_mailbox, _hook) =>
-        _mailbox.populateTransaction.setDefaultHook(_hook, { ...txOverrides }),
-    );
+    // await this.configureHook(
+    //   chain,
+    //   mailbox,
+    //   defaultHook.address,
+    //   (_mailbox) => _mailbox.defaultHook(),
+    //   (_mailbox, _hook) =>
+    //     _mailbox.populateTransaction.setDefaultHook(_hook, { ...txOverrides }),
+    // );
 
-    await this.configureHook(
-      chain,
-      mailbox,
-      requiredHook.address,
-      (_mailbox) => _mailbox.requiredHook(),
-      (_mailbox, _hook) =>
-        _mailbox.populateTransaction.setRequiredHook(_hook, { ...txOverrides }),
-    );
+    // await this.configureHook(
+    //   chain,
+    //   mailbox,
+    //   requiredHook.address,
+    //   (_mailbox) => _mailbox.requiredHook(),
+    //   (_mailbox, _hook) =>
+    //     _mailbox.populateTransaction.setRequiredHook(_hook, { ...txOverrides }),
+    // );
 
-    await this.configureIsm(
-      chain,
-      mailbox,
-      defaultIsm,
-      (_mailbox) => _mailbox.defaultIsm(),
-      (_mailbox, _module) =>
-        _mailbox.populateTransaction.setDefaultIsm(_module),
-    );
+    // await this.configureIsm(
+    //   chain,
+    //   mailbox,
+    //   defaultIsm,
+    //   (_mailbox) => _mailbox.defaultIsm(),
+    //   (_mailbox, _module) =>
+    //     _mailbox.populateTransaction.setDefaultIsm(_module),
+    // );
 
-    return mailbox;
+    return {} as any;
   }
 
   async deployValidatorAnnounce(

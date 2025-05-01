@@ -170,16 +170,17 @@ export class HyperlaneHookDeployer extends HyperlaneDeployer<
       this.igpDeployer.writeCache(
         chain,
         'proxyAdmin',
-        coreAddresses.proxyAdmin,
+        '0x225ffC5D510c555214126bE5f9c9e914490c71cC', // proxy admin owner address here ser
       );
     }
     const igpContracts = await this.igpDeployer.deployContracts(chain, config);
+
     // bubbling up addresses and verification input artifacts
-    this.addDeployedContracts(
-      chain,
-      igpContracts,
-      this.igpDeployer.verificationInputs[chain],
-    );
+    // this.addDeployedContracts(
+    //   chain,
+    //   igpContracts,
+    //   this.igpDeployer.verificationInputs[chain],
+    // );
     return igpContracts;
   }
 
