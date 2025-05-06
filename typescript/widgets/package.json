@@ -1,14 +1,14 @@
 {
   "name": "@fuel-infrastructure/fuel-hyperlane-widgets",
   "description": "Common react components for Hyperlane projects",
-  "version": "0.0.2",
+  "version": "0.0.6",
   "peerDependencies": {
     "react": "^18",
     "react-dom": "^18"
   },
   "dependencies": {
     "@cosmos-kit/react": "^2.18.0",
-    "@fuel-wallet/react": "^0.16.1",
+    "@fuels/react": "^0.40.0",
     "@headlessui/react": "^2.1.8",
     "@hyperlane-xyz/sdk": "8.6.1",
     "@hyperlane-xyz/utils": "8.6.1",
@@ -29,7 +29,7 @@
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@eslint/js": "^9.15.0",
-    "@hyperlane-xyz/registry": "9.5.0",
+    "@hyperlane-xyz/registry": "npm:@fuel-infrastructure/fuel-hyperlane-registry@0.0.4",
     "@storybook/addon-essentials": "^7.6.14",
     "@storybook/addon-interactions": "^7.6.14",
     "@storybook/addon-links": "^7.6.14",

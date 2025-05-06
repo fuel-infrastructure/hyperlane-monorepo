@@ -4,18 +4,16 @@ import {
   useChain,
   useConnect,
   useConnectors,
+  useCurrentConnector,
   useDisconnect,
   useIsConnected,
   useNetwork,
+  useSelectNetwork,
   useWallet,
-} from '@fuel-wallet/react';
+} from '@fuels/react';
 import { BigNumber } from 'ethers';
-import {
-  ScriptTransactionRequest,
-  TransactionResult,
-  WalletLocked,
-} from 'fuels';
-import { useCallback, useMemo } from 'react';
+import { Network, TransactionResult } from 'fuels';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   ChainName,
@@ -24,10 +22,7 @@ import {
   TypedTransactionReceipt,
   WarpTypedTransaction,
 } from '@hyperlane-xyz/sdk';
-import {
-  ProtocolType, //  assert,
-  sleep,
-} from '@hyperlane-xyz/utils';
+import { ProtocolType, assert, sleep } from '@hyperlane-xyz/utils';
 
 import { widgetLogger } from '../logger.js';
 
@@ -62,33 +57,27 @@ export function useFuelAccount(
     return {
       protocol: ProtocolType.Fuel,
       addresses,
-      publicKey: undefined,
       isReady: !!isConnected,
     };
   }, [account, isConnected, multiProvider]);
 }
 
 export function useFuelWalletDetails(): WalletDetails {
-  const { connectors } = useConnectors();
-  const fallbackName = 'Fuel Wallet';
+  const { currentConnector } = useCurrentConnector();
 
-  return useMemo(() => {
-    if (connectors && connectors.length > 0) {
-      const connector = connectors[0];
+  const name = currentConnector?.name;
+  const logoUrl =
+    typeof currentConnector?.metadata?.image === 'string'
+      ? currentConnector.metadata.image
+      : currentConnector?.metadata.image?.light;
 
-      const name = connector.name || fallbackName;
-      const logoUrl = FALLBACK_LOGO;
-
-      return {
-        name,
-        logoUrl,
-      };
-    }
-
-    return {
-      fallbackName,
-    };
-  }, [connectors]);
+  return useMemo<WalletDetails>(
+    () => ({
+      name,
+      logoUrl,
+    }),
+    [name, logoUrl],
+  );
 }
 
 export function useFuelConnectFn(): () => void {
@@ -97,26 +86,12 @@ export function useFuelConnectFn(): () => void {
 
   return useCallback(() => {
     if (!connectors || connectors.length === 0) {
-      logger.warn(
+      throw new Error(
         'No Fuel wallet connectors found. Please install a Fuel wallet extension.',
       );
-      return;
     }
-
-    // Find the first available Fuel wallet connector
-    const fuelConnector = connectors.find(
-      (c) =>
-        c.name === 'Fuel Wallet' ||
-        c.name === 'Fuelet Wallet' ||
-        c.name.toLowerCase().includes('fuel'),
-    );
-
-    if (fuelConnector) {
-      return connect(fuelConnector.name);
-    } else {
-      // If no specific Fuel connector found, use the first available
-      return connect(connectors[0].name);
-    }
+    const fuelConnector = connectors.find((c) => c.name === 'Fuel Wallet');
+    return connect(fuelConnector?.name || connectors[0].name);
   }, [connect, connectors]);
 }
 
@@ -130,45 +105,76 @@ export function useFuelDisconnectFn(): () => Promise<void> {
 export function useFuelActiveChain(
   _multiProvider: MultiProtocolProvider,
 ): ActiveChainInfo {
-  const { network } = useNetwork();
   const { isConnected } = useIsConnected();
   const { chain } = useChain();
-
-  return useMemo<ActiveChainInfo>(
-    () => ({
-      chainDisplayName: chain?.name,
-      chainName: network ? network.chainName : 'fueltestnet',
-      // multiProvider.tryGetChainMetadata(network.chainId)?.name,
-      isConnected: !!isConnected,
-    }),
-    [chain, isConnected, network],
+  const { network: hookNetwork } = useNetwork();
+  const { currentConnector } = useCurrentConnector();
+  const [connectorNetwork, setConnectorNetwork] = useState<Network | undefined>(
+    undefined,
   );
+
+  useEffect(() => {
+    if (isConnected && currentConnector) {
+      setConnectorNetwork(undefined);
+
+      currentConnector
+        .currentNetwork()
+        .then((network) => {
+          logger.info('Network fetched from connector:', network);
+          setConnectorNetwork(network);
+        })
+        .catch((e) => {
+          logger.info('Error fetching network from connector:', e);
+          setConnectorNetwork(undefined);
+        });
+    }
+  }, [currentConnector, isConnected]);
+
+  return useMemo<ActiveChainInfo>(() => {
+    const network = connectorNetwork || hookNetwork; // Use connector network if available, otherwise fall back to hook network
+    let chainName = '';
+
+    if (network) {
+      if (network.chainId === 0) {
+        chainName = 'fueltestnet';
+      } else if (network.chainId === 9889) {
+        chainName = 'fuelignition';
+      }
+    }
+
+    return {
+      chainDisplayName: chain?.name,
+      chainName,
+      isConnected,
+    };
+  }, [chain, isConnected, connectorNetwork, hookNetwork]);
 }
 
 export function useFuelTransactionFns(
   multiProvider: MultiProtocolProvider,
 ): ChainTransactionFns {
   const { wallet } = useWallet();
-  // const { network } = useNetwork();
+  const { network } = useNetwork();
+  const { selectNetwork } = useSelectNetwork();
 
   const onSwitchNetwork = useCallback(
     async (chainName: ChainName) => {
-      if (!wallet?.switchNetwork) {
+      if (!selectNetwork) {
         throw new Error('Fuel wallet does not support switching networks');
       }
-      const chainId = multiProvider.getChainMetadata(chainName).chainId;
-      await wallet.switchNetwork(chainId);
-      // Some wallets need a brief pause after switch
+      const chainMetadata = multiProvider.getChainMetadata(chainName);
+      const url = chainMetadata.rpcUrls[0].http;
+      await selectNetwork({ url });
       await sleep(2000);
     },
-    [wallet, multiProvider],
+    [multiProvider, selectNetwork],
   );
 
   const onSendTx = useCallback(
     async ({
       tx,
-      chainName: _chainName,
-      activeChainName: _activeChainName,
+      chainName,
+      activeChainName,
     }: {
       tx: WarpTypedTransaction;
       chainName: ChainName;
@@ -179,22 +185,31 @@ export function useFuelTransactionFns(
         throw new Error(`Invalid Fuel provider type ${tx.type}`);
       }
 
-      const transactionRequest: ScriptTransactionRequest =
-        await buildTransactionRequest(wallet, tx);
+      logger.debug('Checking wallet current chain');
+      if (activeChainName && activeChainName !== chainName) {
+        await onSwitchNetwork(chainName);
+      }
+
+      const chainMetadata = multiProvider.getChainMetadata(chainName);
+      assert(
+        network && network.url === chainMetadata.rpcUrls[0].http,
+        `Wallet on ${activeChainName} not on chain ${chainName} (ChainMismatchError)`,
+      );
 
       return {
-        hash: transactionRequest.flag.transactionId ?? '',
+        hash: '',
         confirm: async (): Promise<TypedTransactionReceipt> => {
-          const response = await wallet.sendTransaction(transactionRequest);
           const receipt: TransactionReceipt[] = [];
-          const fuelReceipt = await response.waitForResult();
-          const evmCompatibleReciept = fuelTxToEvmReceipt(
-            fuelReceipt,
+          const txResult = await (
+            await wallet.sendTransaction(tx.transaction)
+          ).waitForResult();
+          const evmCompatibleReceipt = fuelTxToEvmReceipt(
+            txResult,
             wallet.address.toString(),
             wallet.address.toString(),
-            fuelReceipt.receipts ?? [],
+            txResult.receipts ?? [],
           );
-          receipt.push(evmCompatibleReciept);
+          receipt.push(evmCompatibleReceipt);
           return {
             type: ProviderType.Fuels,
             receipt,
@@ -202,28 +217,10 @@ export function useFuelTransactionFns(
         },
       };
     },
-    [wallet],
+    [wallet, onSwitchNetwork, multiProvider, network],
   );
 
   return { sendTransaction: onSendTx, switchNetwork: onSwitchNetwork };
-}
-
-async function buildTransactionRequest(
-  wallet: WalletLocked,
-  transferTx: WarpTypedTransaction,
-) {
-  if (transferTx.type !== ProviderType.Fuels) {
-    throw Error('transferTx.type not equal to ProviderType.Fuels');
-  }
-  const request = new ScriptTransactionRequest(transferTx.transaction);
-
-  const cost = await wallet.getTransactionCost(request);
-  request.addVariableOutputs(cost.outputVariables);
-  request.gasLimit = cost.gasUsed;
-  request.maxFee = cost.maxFee;
-
-  await wallet.fund(request, cost);
-  return request;
 }
 
 function fuelTxToEvmReceipt(
@@ -258,6 +255,3 @@ function fuelTxToEvmReceipt(
     type: 0,
   };
 }
-
-const FALLBACK_LOGO =
-  'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzU0IiBoZWlnaHQ9IjM1NCIgdmlld0JveD0iMCAwIDM1NCAzNTQiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgY2xpcC1wYXRoPSJ1cmwoI2EpIj48cGF0aCBkPSJNMjMuNDg2IDBBMjMuNDggMjMuNDggMCAwIDAgMCAyMy40ODJ2MzI5LjY4NWgyOTIuMjY4YTM3LjMgMzcuMyAwIDAgMCAyNi4zODktMTAuOTIybDIzLjY4MS0yMy42NzFhMzcuMyAzNy4zIDAgMCAwIDEwLjkyMS0yNi4zNjZWMHoiIGZpbGw9IiMwMEY1OEMiLz48cGF0aCBkPSJNNTcuMjU1IDQ1LjQwN2gxNzMuMzc5TDExNS43NTkgMTYwLjI2YTE1LjIxIDE1LjIxIDAgMCAxLTI0LjQ5NS00LjI1TDQ2Ljc1OSA2MS45MzVhMTEuNTczIDExLjU3MyAwIDAgMSAxMC40OTYtMTYuNTI4TTQ1LjQxNyAzMDcuNzQxVjE5Ni4wMDVhMTAuNzk1IDEwLjc5NSAwIDAgMSAxMC43OTYtMTAuNzkyaDExMS43NzN6bTE1MS4wNi0xNTEuMDFhMjcuMjYgMjcuMjYgMCAwIDEtMTkuMjY5IDcuOTc3aC0zN0wyNTEuNTU1IDUzLjM4NGEyNy4yNyAyNy4yNyAwIDAgMSAxOS4yNjktNy45NzdoMzd6IiBmaWxsPSIjMDAwIi8+PC9nPjxkZWZzPjxjbGlwUGF0aCBpZD0iYSI+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTAgMGgzNTMuMjQxdjM1My4yNDFIMHoiLz48L2NsaXBQYXRoPjwvZGVmcz48L3N2Zz4=';
