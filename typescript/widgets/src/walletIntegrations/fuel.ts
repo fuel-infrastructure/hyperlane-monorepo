@@ -7,13 +7,12 @@ import {
   useCurrentConnector,
   useDisconnect,
   useIsConnected,
-  useNetwork,
   useSelectNetwork,
   useWallet,
 } from '@fuels/react';
 import { BigNumber } from 'ethers';
-import { Network, TransactionResult } from 'fuels';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { TransactionResult } from 'fuels';
+import { useCallback, useMemo } from 'react';
 
 import {
   ChainName,
@@ -102,59 +101,29 @@ export function useFuelDisconnectFn(): () => Promise<void> {
   }, [disconnect]);
 }
 
-export function useFuelActiveChain(
-  _multiProvider: MultiProtocolProvider,
-): ActiveChainInfo {
+export function useFuelActiveChain(multiProvider) {
   const { isConnected } = useIsConnected();
   const { chain } = useChain();
-  const { network: hookNetwork } = useNetwork();
-  const { currentConnector } = useCurrentConnector();
-  const [connectorNetwork, setConnectorNetwork] = useState<Network | undefined>(
-    undefined,
-  );
-
-  useEffect(() => {
-    if (isConnected && currentConnector) {
-      setConnectorNetwork(undefined);
-
-      currentConnector
-        .currentNetwork()
-        .then((network) => {
-          logger.info('Network fetched from connector:', network);
-          setConnectorNetwork(network);
-        })
-        .catch((e) => {
-          logger.info('Error fetching network from connector:', e);
-          setConnectorNetwork(undefined);
-        });
-    }
-  }, [currentConnector, isConnected]);
+  const { wallet } = useWallet();
+  const TESTNET_NAME = 'fueltestnet';
+  const MAINNET_NAME = 'fuelignition';
+  const testnetProvider =
+    multiProvider.getChainMetadata(TESTNET_NAME).rpcUrls[0].http;
 
   return useMemo<ActiveChainInfo>(() => {
-    const network = connectorNetwork || hookNetwork; // Use connector network if available, otherwise fall back to hook network
-    let chainName = '';
-
-    if (network) {
-      if (network.chainId === 0) {
-        chainName = 'fueltestnet';
-      } else if (network.chainId === 9889) {
-        chainName = 'fuelignition';
-      }
-    }
-
+    if (!isConnected || !wallet) return {};
     return {
       chainDisplayName: chain?.name,
-      chainName,
+      chainName:
+        wallet.provider.url == testnetProvider ? TESTNET_NAME : MAINNET_NAME,
       isConnected,
     };
-  }, [chain, isConnected, connectorNetwork, hookNetwork]);
+  }, [chain, isConnected, wallet, testnetProvider]);
 }
-
 export function useFuelTransactionFns(
   multiProvider: MultiProtocolProvider,
 ): ChainTransactionFns {
   const { wallet } = useWallet();
-  const { network } = useNetwork();
   const { selectNetwork } = useSelectNetwork();
 
   const onSwitchNetwork = useCallback(
@@ -164,10 +133,10 @@ export function useFuelTransactionFns(
       }
       const chainMetadata = multiProvider.getChainMetadata(chainName);
       const url = chainMetadata.rpcUrls[0].http;
-      await selectNetwork({ url });
-      await sleep(2000);
+      await wallet?.provider.connect(url);
+      await sleep(5000);
     },
-    [multiProvider, selectNetwork],
+    [multiProvider, selectNetwork, wallet],
   );
 
   const onSendTx = useCallback(
@@ -192,7 +161,8 @@ export function useFuelTransactionFns(
 
       const chainMetadata = multiProvider.getChainMetadata(chainName);
       assert(
-        network && network.url === chainMetadata.rpcUrls[0].http,
+        wallet.provider &&
+          wallet.provider.url === chainMetadata.rpcUrls[0].http,
         `Wallet on ${activeChainName} not on chain ${chainName} (ChainMismatchError)`,
       );
 
@@ -217,7 +187,7 @@ export function useFuelTransactionFns(
         },
       };
     },
-    [wallet, onSwitchNetwork, multiProvider, network],
+    [wallet, onSwitchNetwork, multiProvider],
   );
 
   return { sendTransaction: onSendTx, switchNetwork: onSwitchNetwork };
