@@ -2,8 +2,7 @@ import { TransactionReceipt } from '@ethersproject/providers';
 import {
   useAccount,
   useChain,
-  useConnect,
-  useConnectors,
+  useConnectUI,
   useCurrentConnector,
   useDisconnect,
   useIsConnected,
@@ -32,24 +31,31 @@ import {
   ChainTransactionFns,
   WalletDetails,
 } from './types.js';
-import { getChainsForProtocol } from './utils.js';
 
 const logger = widgetLogger.child({
   module: 'widgets/walletIntegrations/fuel',
 });
+
+const TESTNET_NAME = 'fueltestnet';
+const MAINNET_NAME = 'fuelignition';
 
 export function useFuelAccount(
   multiProvider: MultiProtocolProvider,
 ): AccountInfo {
   const { account } = useAccount();
   const { isConnected } = useIsConnected();
+  const { wallet } = useWallet();
 
   return useMemo<AccountInfo>(() => {
     const addresses: Array<ChainAddress> = [];
-    if (account) {
-      const fuelChains = getChainsForProtocol(multiProvider, ProtocolType.Fuel);
-      fuelChains.forEach((chain) => {
-        addresses.push({ address: account, chainName: chain.name });
+    if (account && wallet) {
+      const testnetProvider =
+        multiProvider.getChainMetadata(TESTNET_NAME).rpcUrls[0].http;
+
+      addresses.push({
+        address: account,
+        chainName:
+          wallet.provider.url == testnetProvider ? TESTNET_NAME : MAINNET_NAME,
       });
     }
 
@@ -58,7 +64,7 @@ export function useFuelAccount(
       addresses,
       isReady: !!isConnected,
     };
-  }, [account, isConnected, multiProvider]);
+  }, [account, isConnected, multiProvider, wallet]);
 }
 
 export function useFuelWalletDetails(): WalletDetails {
@@ -79,19 +85,11 @@ export function useFuelWalletDetails(): WalletDetails {
   );
 }
 
-export function useFuelConnectFn(): () => void {
-  const { connect } = useConnect();
-  const { connectors } = useConnectors();
-
-  return useCallback(() => {
-    if (!connectors || connectors.length === 0) {
-      throw new Error(
-        'No Fuel wallet connectors found. Please install a Fuel wallet extension.',
-      );
-    }
-    const fuelConnector = connectors.find((c) => c.name === 'Fuel Wallet');
-    return connect(fuelConnector?.name || connectors[0].name);
-  }, [connect, connectors]);
+export function useFuelConnectFn() {
+  const { connect } = useConnectUI();
+  return useCallback(async () => {
+    await connect();
+  }, [connect]);
 }
 
 export function useFuelDisconnectFn(): () => Promise<void> {
@@ -105,8 +103,7 @@ export function useFuelActiveChain(multiProvider) {
   const { isConnected } = useIsConnected();
   const { chain } = useChain();
   const { wallet } = useWallet();
-  const TESTNET_NAME = 'fueltestnet';
-  const MAINNET_NAME = 'fuelignition';
+
   const testnetProvider =
     multiProvider.getChainMetadata(TESTNET_NAME).rpcUrls[0].http;
 

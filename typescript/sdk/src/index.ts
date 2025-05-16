@@ -655,5 +655,6 @@ export {
   Src20TestFactory,
   PausableHookFactory as FuelPausableHookFactory,
   MailboxFactory as FuelMailboxFactory,
+  Mailbox as FuelMailbox,
 } from './fuel-types/index.js';
 export { FuelCoreAdapter } from './core/adapters/FuelCoreAdapter.js';

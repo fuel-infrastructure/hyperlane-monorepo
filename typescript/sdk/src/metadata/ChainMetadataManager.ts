@@ -12,6 +12,7 @@ import { ChainMap, ChainName, ChainNameOrId } from '../types.js';
 
 import {
   getExplorerAddressUrl,
+  getExplorerAddressUrlFuel,
   getExplorerApi,
   getExplorerApiUrl,
   getExplorerBaseUrl,
@@ -392,7 +393,9 @@ export class ChainMetadataManager<MetaExt = {}> {
   ): Promise<string | null> {
     const metadata = this.tryGetChainMetadata(chainNameOrId);
     if (!metadata || !address) return null;
-    return getExplorerAddressUrl(metadata, address);
+    return metadata.protocol === ProtocolType.Fuel
+      ? getExplorerAddressUrlFuel(metadata, address)
+      : getExplorerAddressUrl(metadata, address);
   }
 
   /**

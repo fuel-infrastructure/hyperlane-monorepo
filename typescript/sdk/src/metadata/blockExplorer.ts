@@ -66,6 +66,15 @@ export function getExplorerAddressUrl(
   return appendToPath(baseUrl, `address/${address}`).toString();
 }
 
+export function getExplorerAddressUrlFuel(
+  metadata: ChainMetadata,
+  address: string,
+): string | null {
+  const baseUrl = getExplorerBaseUrl(metadata);
+  if (!baseUrl) return null;
+  return appendToPath(baseUrl, `account/${address}`).toString();
+}
+
 function appendToPath(baseUrl: string, pathExtension: string) {
   const base = new URL(baseUrl);
   let currentPath = base.pathname;

@@ -213,8 +213,10 @@ export class HyperlaneRelayer {
     message: DispatchedMessage,
   ): Promise<DerivedIsmConfig> {
     const destinationChain = this.core.getDestination(message);
+    const destinationProtocol =
+      this.multiProvider.getChainMetadata(destinationChain).protocol;
     let ism;
-    if (destinationChain === 'fuel' || destinationChain === 'fueltestnet') {
+    if (destinationProtocol === ProtocolType.Fuel) {
       ism = await this.core.getRecipientIsmAddressFuel(message);
     } else {
       ism = await this.core.getRecipientIsmAddress(message);
