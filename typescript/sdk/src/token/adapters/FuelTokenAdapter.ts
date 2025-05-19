@@ -429,9 +429,14 @@ export class FuelHypSyntheticAdapter extends BaseFuelHypTokenAdapter {
       this.chainName,
     )) as unknown as WalletLocked | WalletUnlocked;
     this.contract = new WarpRoute(this.addresses.warpRouter, this.signer);
-    this.addresses.token = await (
-      await this.contract.functions.get_token_info().get()
-    ).value.asset_id.bits.toString();
+
+    try {
+      this.addresses.token = await (
+        await this.contract.functions.get_token_info().get()
+      ).value.asset_id.bits.toString();
+    } catch (_error) {
+      this.addresses.token = '';
+    }
   }
 
   async getBridgedSupply(): Promise<bigint | undefined> {
