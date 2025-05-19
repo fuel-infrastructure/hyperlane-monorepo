@@ -6848,7 +6848,7 @@ __metadata:
     "@eslint/js": "npm:^9.15.0"
     "@fuels/react": "npm:^0.41.0"
     "@headlessui/react": "npm:^2.1.8"
-    "@hyperlane-xyz/registry": "npm:@fuel-infrastructure/fuel-hyperlane-registry@0.0.4"
+    "@hyperlane-xyz/registry": "npm:@fuel-infrastructure/fuel-hyperlane-registry@0.0.14"
     "@hyperlane-xyz/sdk": "npm:8.6.1"
     "@hyperlane-xyz/utils": "npm:8.6.1"
     "@interchain-ui/react": "npm:^1.23.28"
@@ -7342,13 +7342,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@hyperlane-xyz/cli@npm:8.6.1":
+"@hyperlane-xyz/cli@file:./typescript/cli::locator=%40hyperlane-xyz%2Fmonorepo%40workspace%3A.":
   version: 8.6.1
-  resolution: "@hyperlane-xyz/cli@npm:8.6.1"
+  resolution: "@hyperlane-xyz/cli@file:./typescript/cli#./typescript/cli::hash=e8fded&locator=%40hyperlane-xyz%2Fmonorepo%40workspace%3A."
   dependencies:
     "@aws-sdk/client-kms": "npm:^3.577.0"
     "@aws-sdk/client-s3": "npm:^3.577.0"
-    "@hyperlane-xyz/registry": "npm:9.1.0"
+    "@hyperlane-xyz/registry": "npm:9.5.0"
     "@hyperlane-xyz/sdk": "npm:8.6.1"
     "@hyperlane-xyz/utils": "npm:8.6.1"
     "@inquirer/core": "npm:9.0.10"
@@ -7360,6 +7360,7 @@ __metadata:
     bignumber.js: "npm:^9.1.1"
     chalk: "npm:^5.3.0"
     ethers: "npm:^5.7.2"
+    fuels: "npm:^0.100.1"
     latest-version: "npm:^8.0.0"
     terminal-link: "npm:^3.0.0"
     tsx: "npm:^4.19.1"
@@ -7370,8 +7371,8 @@ __metadata:
     zod-validation-error: "npm:^3.3.0"
     zx: "npm:^8.1.4"
   bin:
-    hyperlane: dist/cli.js
-  checksum: 10/50d52552e69edecd3c4390037deb21bd29ca3a8be22d2b2ce38daf939a1f800ba6d36d469f5c25bbd1f91e40709913fcb88340cf4d89a3ed6bf8e28fd41a60f9
+    hyperlane: ./dist/cli.js
+  checksum: 10/dde802efbabdf661a5475bef6844811b9e49410dccf78a5b119cc75b3c46739a39c1817bc278c2069f5e5eba4ba2365beeddb135c9737a0d459ee2f60814e6d3
   languageName: node
   linkType: hard
 
@@ -7642,19 +7643,19 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@hyperlane-xyz/registry@npm:@fuel-infrastructure/fuel-hyperlane-registry@0.0.4":
-  version: 0.0.4
-  resolution: "@fuel-infrastructure/fuel-hyperlane-registry@npm:0.0.4"
+"@hyperlane-xyz/registry@npm:@fuel-infrastructure/fuel-hyperlane-registry@0.0.15":
+  version: 0.0.15
+  resolution: "@fuel-infrastructure/fuel-hyperlane-registry@npm:0.0.15"
   dependencies:
     yaml: "npm:2.4.5"
     zod: "npm:^3.21.2"
-  checksum: 10/17ef0173d1626a5b6416bb2a91fa860b992bb57b779902c669da270d90e41a56a642fd79d056df24b802ae7aea5e8ca009dea99c23b44d2cf7dec98a504f2dce
+  checksum: 10/cf3cf628f128d88469eb9ec20583f0a44aeda3c62c1e9dc7602f2002c360deff8e0a5325250860bae8271704105b1f7728d3bc7d63341b54be87cebb7da44b6f
   languageName: node
   linkType: hard
 
-"@hyperlane-xyz/sdk@file:../hyperlane-monorepo/typescript/sdk::locator=%40hyperlane-xyz%2Fmonorepo%40workspace%3A.":
-  version: 0.0.4
-  resolution: "@hyperlane-xyz/sdk@file:../hyperlane-monorepo/typescript/sdk#../hyperlane-monorepo/typescript/sdk::hash=57d0c4&locator=%40hyperlane-xyz%2Fmonorepo%40workspace%3A."
+"@hyperlane-xyz/sdk@npm:@fuel-infrastructure/fuel-hyperlane-sdk@0.0.6":
+  version: 0.0.6
+  resolution: "@fuel-infrastructure/fuel-hyperlane-sdk@npm:0.0.6"
   dependencies:
     "@arbitrum/sdk": "npm:^4.0.0"
     "@aws-sdk/client-s3": "npm:^3.577.0"
@@ -7679,7 +7680,7 @@ __metadata:
   peerDependencies:
     "@ethersproject/abi": "*"
     "@ethersproject/providers": "*"
-  checksum: 10/d8bf498f3760ae217b88abcce65db07a3564a2c340b05a69521a5decfb2e4af21b546d659822d9cea691fbe6f7c04fa9b62c3df1ba83971d39d023a249a4257a
+  checksum: 10/8a9453d1da715c0e1b503f4b686376b740964853105cc73621477433aef15afee6197c6c9e131519600174b17a641ed18ffcac911d3960b3fcd1cccce9dd5044
   languageName: node
   linkType: hard
 
