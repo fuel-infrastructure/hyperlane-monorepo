@@ -55,8 +55,8 @@
     "typechain@npm:^8.0.0": "patch:typechain@npm%3A8.3.2#~/.yarn/patches/typechain-npm-8.3.2-b02e27439e.patch",
     "@hyperlane-xyz/utils": "npm:@fuel-infrastructure/fuel-hyperlane-utils@0.0.3",
     "@hyperlane-xyz/sdk": "npm:@fuel-infrastructure/fuel-hyperlane-sdk@0.0.6",
-    "@hyperlane-xyz/registry": "npm:@fuel-infrastructure/fuel-hyperlane-registry@0.0.15",
+    "@hyperlane-xyz/registry": "npm:@fuel-infrastructure/fuel-hyperlane-registry@0.0.1-main",
     "@hyperlane-xyz/widgets": "npm:@fuel-infrastructure/fuel-hyperlane-widgets@0.0.12",
-    "@hyperlane-xyz/cli": "file:./typescript/cli"
+    "@hyperlane-xyz/cli": "npm:@fuel-infrastructure/fuel-hyperlane-cli@0.0.1"
   }
 }

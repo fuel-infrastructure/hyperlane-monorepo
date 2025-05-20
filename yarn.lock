@@ -6750,6 +6750,57 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@fuel-infrastructure/fuel-hyperlane-cli@workspace:typescript/cli":
+  version: 0.0.0-use.local
+  resolution: "@fuel-infrastructure/fuel-hyperlane-cli@workspace:typescript/cli"
+  dependencies:
+    "@aws-sdk/client-kms": "npm:^3.577.0"
+    "@aws-sdk/client-s3": "npm:^3.577.0"
+    "@eslint/js": "npm:^9.15.0"
+    "@ethersproject/abi": "npm:*"
+    "@ethersproject/providers": "npm:*"
+    "@hyperlane-xyz/registry": "npm:9.5.0"
+    "@hyperlane-xyz/sdk": "npm:8.6.1"
+    "@hyperlane-xyz/utils": "npm:8.6.1"
+    "@inquirer/core": "npm:9.0.10"
+    "@inquirer/figures": "npm:1.0.5"
+    "@inquirer/prompts": "npm:3.3.2"
+    "@inquirer/search": "npm:^3.0.1"
+    "@types/chai-as-promised": "npm:^8"
+    "@types/mocha": "npm:^10.0.1"
+    "@types/node": "npm:^18.14.5"
+    "@types/yargs": "npm:^17.0.24"
+    "@typescript-eslint/eslint-plugin": "npm:^8.1.6"
+    "@typescript-eslint/parser": "npm:^8.1.6"
+    ansi-escapes: "npm:^7.0.0"
+    asn1.js: "npm:^5.4.1"
+    bignumber.js: "npm:^9.1.1"
+    chai: "npm:^4.5.0"
+    chai-as-promised: "npm:^8.0.0"
+    chalk: "npm:^5.3.0"
+    eslint: "npm:^9.15.0"
+    eslint-config-prettier: "npm:^9.1.0"
+    eslint-import-resolver-typescript: "npm:^3.6.3"
+    eslint-plugin-import: "npm:^2.31.0"
+    ethers: "npm:^5.7.2"
+    fuels: "npm:^0.100.1"
+    latest-version: "npm:^8.0.0"
+    mocha: "npm:^10.2.0"
+    prettier: "npm:^2.8.8"
+    terminal-link: "npm:^3.0.0"
+    tsx: "npm:^4.19.1"
+    typescript: "npm:5.3.3"
+    yaml: "npm:2.4.5"
+    yargs: "npm:^17.7.2"
+    zksync-ethers: "npm:^5.10.0"
+    zod: "npm:^3.21.2"
+    zod-validation-error: "npm:^3.3.0"
+    zx: "npm:^8.1.4"
+  bin:
+    hyperlane: ./dist/cli.js
+  languageName: unknown
+  linkType: soft
+
 "@fuel-infrastructure/fuel-hyperlane-sdk@workspace:typescript/sdk":
   version: 0.0.0-use.local
   resolution: "@fuel-infrastructure/fuel-hyperlane-sdk@workspace:typescript/sdk"
@@ -6848,7 +6899,6 @@ __metadata:
     "@eslint/js": "npm:^9.15.0"
     "@fuels/react": "npm:^0.41.0"
     "@headlessui/react": "npm:^2.1.8"
-    "@hyperlane-xyz/registry": "npm:@fuel-infrastructure/fuel-hyperlane-registry@0.0.14"
     "@hyperlane-xyz/sdk": "npm:8.6.1"
     "@hyperlane-xyz/utils": "npm:8.6.1"
     "@interchain-ui/react": "npm:^1.23.28"
@@ -7342,9 +7392,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@hyperlane-xyz/cli@file:./typescript/cli::locator=%40hyperlane-xyz%2Fmonorepo%40workspace%3A.":
-  version: 8.6.1
-  resolution: "@hyperlane-xyz/cli@file:./typescript/cli#./typescript/cli::hash=e8fded&locator=%40hyperlane-xyz%2Fmonorepo%40workspace%3A."
+"@hyperlane-xyz/cli@npm:@fuel-infrastructure/fuel-hyperlane-cli@0.0.1":
+  version: 0.0.1
+  resolution: "@fuel-infrastructure/fuel-hyperlane-cli@npm:0.0.1"
   dependencies:
     "@aws-sdk/client-kms": "npm:^3.577.0"
     "@aws-sdk/client-s3": "npm:^3.577.0"
@@ -7371,61 +7421,10 @@ __metadata:
     zod-validation-error: "npm:^3.3.0"
     zx: "npm:^8.1.4"
   bin:
-    hyperlane: ./dist/cli.js
-  checksum: 10/dde802efbabdf661a5475bef6844811b9e49410dccf78a5b119cc75b3c46739a39c1817bc278c2069f5e5eba4ba2365beeddb135c9737a0d459ee2f60814e6d3
+    hyperlane: dist/cli.js
+  checksum: 10/77ac1083a7def383b4b1cca677fdbe55037ca3e9136849d0829a0d95ea3830909c03f1130235933c561ca235e82f253da625f95a850165cd4f8ac61b7042586d
   languageName: node
   linkType: hard
-
-"@hyperlane-xyz/cli@workspace:typescript/cli":
-  version: 0.0.0-use.local
-  resolution: "@hyperlane-xyz/cli@workspace:typescript/cli"
-  dependencies:
-    "@aws-sdk/client-kms": "npm:^3.577.0"
-    "@aws-sdk/client-s3": "npm:^3.577.0"
-    "@eslint/js": "npm:^9.15.0"
-    "@ethersproject/abi": "npm:*"
-    "@ethersproject/providers": "npm:*"
-    "@hyperlane-xyz/registry": "npm:9.5.0"
-    "@hyperlane-xyz/sdk": "npm:8.6.1"
-    "@hyperlane-xyz/utils": "npm:8.6.1"
-    "@inquirer/core": "npm:9.0.10"
-    "@inquirer/figures": "npm:1.0.5"
-    "@inquirer/prompts": "npm:3.3.2"
-    "@inquirer/search": "npm:^3.0.1"
-    "@types/chai-as-promised": "npm:^8"
-    "@types/mocha": "npm:^10.0.1"
-    "@types/node": "npm:^18.14.5"
-    "@types/yargs": "npm:^17.0.24"
-    "@typescript-eslint/eslint-plugin": "npm:^8.1.6"
-    "@typescript-eslint/parser": "npm:^8.1.6"
-    ansi-escapes: "npm:^7.0.0"
-    asn1.js: "npm:^5.4.1"
-    bignumber.js: "npm:^9.1.1"
-    chai: "npm:^4.5.0"
-    chai-as-promised: "npm:^8.0.0"
-    chalk: "npm:^5.3.0"
-    eslint: "npm:^9.15.0"
-    eslint-config-prettier: "npm:^9.1.0"
-    eslint-import-resolver-typescript: "npm:^3.6.3"
-    eslint-plugin-import: "npm:^2.31.0"
-    ethers: "npm:^5.7.2"
-    fuels: "npm:^0.100.1"
-    latest-version: "npm:^8.0.0"
-    mocha: "npm:^10.2.0"
-    prettier: "npm:^2.8.8"
-    terminal-link: "npm:^3.0.0"
-    tsx: "npm:^4.19.1"
-    typescript: "npm:5.3.3"
-    yaml: "npm:2.4.5"
-    yargs: "npm:^17.7.2"
-    zksync-ethers: "npm:^5.10.0"
-    zod: "npm:^3.21.2"
-    zod-validation-error: "npm:^3.3.0"
-    zx: "npm:^8.1.4"
-  bin:
-    hyperlane: ./dist/cli.js
-  languageName: unknown
-  linkType: soft
 
 "@hyperlane-xyz/core@npm:5.11.3":
   version: 5.11.3
@@ -7643,13 +7642,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@hyperlane-xyz/registry@npm:@fuel-infrastructure/fuel-hyperlane-registry@0.0.15":
-  version: 0.0.15
-  resolution: "@fuel-infrastructure/fuel-hyperlane-registry@npm:0.0.15"
+"@hyperlane-xyz/registry@npm:@fuel-infrastructure/fuel-hyperlane-registry@0.0.1-main":
+  version: 0.0.1-main
+  resolution: "@fuel-infrastructure/fuel-hyperlane-registry@npm:0.0.1-main"
   dependencies:
     yaml: "npm:2.4.5"
     zod: "npm:^3.21.2"
-  checksum: 10/cf3cf628f128d88469eb9ec20583f0a44aeda3c62c1e9dc7602f2002c360deff8e0a5325250860bae8271704105b1f7728d3bc7d63341b54be87cebb7da44b6f
+  checksum: 10/7b954228d7f7f98cb1143d5a2e71d1d55fddfd1107d40d2e208d3f810e2dfb8a64cba301ed27cadb6ef4a35fc62ace5273b20299e1468cda7c908d7b380b359e
   languageName: node
   linkType: hard
 

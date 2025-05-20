@@ -1,6 +1,6 @@
 {
-  "name": "@hyperlane-xyz/cli",
-  "version": "8.6.1",
+  "name": "@fuel-infrastructure/fuel-hyperlane-cli",
+  "version": "0.0.1",
   "description": "A command-line utility for common Hyperlane operations",
   "dependencies": {
     "@aws-sdk/client-kms": "^3.577.0",
@@ -88,5 +88,9 @@
     "Permissionless",
     "Deployment",
     "Typescript"
+  ],
+  "workspaces": [
+    "@fuel-infrastructure/fuel-hyperlane-cli",
+    "@hyperlane-xyz/cli"
   ]
 }

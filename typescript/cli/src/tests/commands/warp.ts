@@ -26,7 +26,7 @@ export function hyperlaneWarpInit(
 ): ProcessPromise {
   // Two dimensional array for readability
   const args = [
-    ['workspace', '@hyperlane-xyz/cli'],
+    ['workspace', '@fuel-infrastructure/fuel-hyperlane-cli'],
     ['run', 'hyperlane', 'warp', 'init'],
     ['--registry', REGISTRY_PATH],
     ['--out', warpCorePath],
@@ -62,7 +62,7 @@ export function hyperlaneWarpDeployRaw({
 }): ProcessPromise {
   // Two dimensional array for readability
   const args = [
-    ['workspace', '@hyperlane-xyz/cli'],
+    ['workspace', '@fuel-infrastructure/fuel-hyperlane-cli'],
     ['run', 'hyperlane', 'warp', 'deploy'],
     ['--registry', REGISTRY_PATH],
     ['--verbosity', 'debug'],
@@ -109,7 +109,7 @@ export async function hyperlaneWarpApply(
 ) {
   // Two dimensional array for readability
   const args = [
-    ['workspace', '@hyperlane-xyz/cli'],
+    ['workspace', '@fuel-infrastructure/fuel-hyperlane-cli'],
     ['run', 'hyperlane', 'warp', 'apply'],
     ['--registry', REGISTRY_PATH],
     ['--config', warpDeployPath],
@@ -125,7 +125,7 @@ export async function hyperlaneWarpApply(
 
   return $`yarn ${args.flat()}`;
 
-  // return $`yarn workspace @hyperlane-xyz/cli run hyperlane warp apply \
+  // return $`yarn workspace @fuel-infrastructure/fuel-hyperlane-cli run hyperlane warp apply \
   //       --registry ${REGISTRY_PATH} \
   //       --config ${warpDeployPath} \
   //       --warp ${warpCorePath} \
@@ -152,7 +152,7 @@ export function hyperlaneWarpReadRaw({
 }): ProcessPromise {
   // Two dimensional array for readability
   const args = [
-    ['workspace', '@hyperlane-xyz/cli'],
+    ['workspace', '@fuel-infrastructure/fuel-hyperlane-cli'],
     ['run', 'hyperlane', 'warp', 'read'],
     ['--registry', REGISTRY_PATH],
     ['--verbosity', 'debug'],
@@ -202,7 +202,7 @@ export function hyperlaneWarpCheckRaw({
 }): ProcessPromise {
   // Two dimensional array for readability
   const args = [
-    ['workspace', '@hyperlane-xyz/cli'],
+    ['workspace', '@fuel-infrastructure/fuel-hyperlane-cli'],
     ['run', 'hyperlane', 'warp', 'check'],
     ['--registry', REGISTRY_PATH],
     ['--verbosity', 'debug'],
@@ -241,7 +241,7 @@ export function hyperlaneWarpSendRelay(
   fuelKey?: string,
 ): ProcessPromise {
   const args: string[][] = [
-    ['workspace', '@hyperlane-xyz/cli'],
+    ['workspace', '@fuel-infrastructure/fuel-hyperlane-cli'],
     ['run', 'hyperlane', 'warp', 'send'],
     ['--key', ANVIL_KEY],
     ['--registry', REGISTRY_PATH],

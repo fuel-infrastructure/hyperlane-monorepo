@@ -20,7 +20,7 @@ export function hyperlaneCoreDeployRaw(
   hypKey?: string,
 ): ProcessPromise {
   if (hypKey) {
-    return $`HYP_KEY=${hypKey} yarn workspace @hyperlane-xyz/cli run hyperlane core deploy \
+    return $`HYP_KEY=${hypKey} yarn workspace @fuel-infrastructure/fuel-hyperlane-cli run hyperlane core deploy \
         --registry ${REGISTRY_PATH} \
         --config ${coreInputPath} \
         --verbosity debug \
@@ -28,7 +28,7 @@ export function hyperlaneCoreDeployRaw(
   }
 
   if (privateKey) {
-    return $`yarn workspace @hyperlane-xyz/cli run hyperlane core deploy \
+    return $`yarn workspace @fuel-infrastructure/fuel-hyperlane-cli run hyperlane core deploy \
         --registry ${REGISTRY_PATH} \
         --config ${coreInputPath} \
         --key ${privateKey} \
@@ -36,7 +36,7 @@ export function hyperlaneCoreDeployRaw(
         ${skipConfirmationPrompts ? '--yes' : ''}`;
   }
 
-  return $`yarn workspace @hyperlane-xyz/cli run hyperlane core deploy \
+  return $`yarn workspace @fuel-infrastructure/fuel-hyperlane-cli run hyperlane core deploy \
         --registry ${REGISTRY_PATH} \
         --config ${coreInputPath} \
         --verbosity debug \
@@ -50,7 +50,7 @@ export async function hyperlaneCoreDeploy(
   chain: string,
   coreInputPath: string,
 ) {
-  return $`yarn workspace @hyperlane-xyz/cli run hyperlane core deploy \
+  return $`yarn workspace @fuel-infrastructure/fuel-hyperlane-cli run hyperlane core deploy \
         --registry ${REGISTRY_PATH} \
         --config ${coreInputPath} \
         --chain ${chain} \
@@ -136,7 +136,7 @@ export async function mockFuelCoreDeploy(
  * Reads a Hyperlane core deployment on the specified chain using the provided config.
  */
 export async function hyperlaneCoreRead(chain: string, coreOutputPath: string) {
-  return $`yarn workspace @hyperlane-xyz/cli run hyperlane core read \
+  return $`yarn workspace @fuel-infrastructure/fuel-hyperlane-cli run hyperlane core read \
         --registry ${REGISTRY_PATH} \
         --config ${coreOutputPath} \
         --chain ${chain} \
@@ -153,7 +153,7 @@ export function hyperlaneCoreCheck(
   mailbox?: Address,
 ): ProcessPromise {
   if (mailbox) {
-    return $`yarn workspace @hyperlane-xyz/cli run hyperlane core check \
+    return $`yarn workspace @fuel-infrastructure/fuel-hyperlane-cli run hyperlane core check \
         --registry ${REGISTRY_PATH} \
         --config ${coreOutputPath} \
         --chain ${chain} \
@@ -162,7 +162,7 @@ export function hyperlaneCoreCheck(
         --yes`;
   }
 
-  return $`yarn workspace @hyperlane-xyz/cli run hyperlane core check \
+  return $`yarn workspace @fuel-infrastructure/fuel-hyperlane-cli run hyperlane core check \
         --registry ${REGISTRY_PATH} \
         --config ${coreOutputPath} \
         --chain ${chain} \
@@ -181,7 +181,7 @@ export function hyperlaneCoreInit(
   if (hyp_key) {
     return $`${
       hyp_key ? `HYP_KEY=${hyp_key}` : ''
-    } yarn workspace @hyperlane-xyz/cli run hyperlane core init \
+    } yarn workspace @fuel-infrastructure/fuel-hyperlane-cli run hyperlane core init \
         --registry ${REGISTRY_PATH} \
         --config ${coreOutputPath} \
         --verbosity debug \
@@ -191,7 +191,7 @@ export function hyperlaneCoreInit(
   if (privateKey) {
     return $`${
       hyp_key ? 'HYP_KEY=${hyp_key}' : ''
-    } yarn workspace @hyperlane-xyz/cli run hyperlane core init \
+    } yarn workspace @fuel-infrastructure/fuel-hyperlane-cli run hyperlane core init \
         --registry ${REGISTRY_PATH} \
         --config ${coreOutputPath} \
         --verbosity debug \
@@ -199,7 +199,7 @@ export function hyperlaneCoreInit(
         --yes`;
   }
 
-  return $`yarn workspace @hyperlane-xyz/cli run hyperlane core init \
+  return $`yarn workspace @fuel-infrastructure/fuel-hyperlane-cli run hyperlane core init \
         --registry ${REGISTRY_PATH} \
         --config ${coreOutputPath} \
         --verbosity debug \
@@ -213,7 +213,7 @@ export async function hyperlaneCoreApply(
   chain: string,
   coreOutputPath: string,
 ) {
-  return $`yarn workspace @hyperlane-xyz/cli run hyperlane core apply \
+  return $`yarn workspace @fuel-infrastructure/fuel-hyperlane-cli run hyperlane core apply \
         --registry ${REGISTRY_PATH} \
         --config ${coreOutputPath} \
         --chain ${chain} \
