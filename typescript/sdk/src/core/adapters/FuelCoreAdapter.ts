@@ -192,8 +192,7 @@ export class FuelCoreAdapter extends BaseFuelAdapter implements ICoreAdapter {
 
     let destination = '';
     try {
-      const messageHexString = '0x' + Buffer.from(messageBytes).toString('hex');
-      const parsedMessage = parseMessage(messageHexString);
+      const parsedMessage = parseMessage(messageBytes);
       destination = this.multiProvider.getChainName(parsedMessage.destination);
     } catch (e: any) {
       this.logger.warn('Can not get destination from parsed message', e);

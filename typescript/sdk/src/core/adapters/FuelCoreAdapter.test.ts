@@ -18,11 +18,11 @@ describe('FuelCoreAdapter', () => {
       testFuelChain.name,
       MultiProtocolProvider.createTestMultiProtocolProvider({
         ...multiProtocolTestChainMetadata,
-        inevm: {
+        sepolia: {
           ...test1,
-          name: 'inevm',
-          chainId: 2525,
-          domainId: 2525,
+          name: 'sepolia',
+          chainId: 11155111,
+          domainId: 11155111,
         },
       }),
       { mailbox: '' },
@@ -31,38 +31,35 @@ describe('FuelCoreAdapter', () => {
   });
 
   it('Extracts message IDs', () => {
-    const logs: any = [
-      {
-        type: 'dispatch',
-        sender: 'inj16paaazy6t2ac02q5t8en099csy7pkyh3hw35up',
-        destination_domain: 2525,
-        recipient_address: 'inj17xpfvakm2amg962yls6f84z3kell8c5l6s5ye9',
-      },
-      {
-        type: 'dispatch_id',
-        message_id: 'abc',
-      },
-      {
-        type: 'dispatch',
-        sender: 'inj16paaazy6t2ac02q5t8en099csy7pkyh3hw35up',
-        destination_domain: 2525,
-        recipient_address: 'inj1mv9tjvkaw7x8w8y9vds8pkfq46g2vcfkjehc6k',
-      },
-      {
-        type: 'dispatch_id',
-        message_id: 'def',
-      },
-    ];
-
     const messages = adapter.extractMessageIds({
       type: ProviderType.Fuels,
-      receipt: logs,
+      receipt: TX_RECEIPT_EXAMPLE,
     });
 
-    expect(messages).to.have.length(2);
-    expect(messages[0].messageId).to.equal('abc');
-    expect(messages[0].destination).to.equal('inevm');
-    expect(messages[1].messageId).to.equal('def');
-    expect(messages[1].destination).to.equal('inevm');
+    expect(messages).to.have.length(1);
+    expect(messages[0].messageId).to.equal(
+      '0xf7ae465c336cd68d97b103b5e61f13a27a64cd1ea166c192fb1d352c043962bd',
+    );
+    expect(messages[0].destination).to.equal('sepolia');
   });
 });
+
+// A minimal transaction receipt example with the necessary logs for extractMessageIds to work
+export const TX_RECEIPT_EXAMPLE = [
+  {
+    logs: [
+      {
+        data: '0x00aa36a70000000000000000000000000ae30543a22c74123d9c64f64b9cb9bbb7268eea0000000000000001',
+        id: '0x23e3703017b1b333c3a855ee17ee64093fc9e32458515949778890c0c6bc4c64',
+      },
+      {
+        data: '0x03000000e466665468fe93aaebea83b024776d0f842aa4ecf812c5ad762790534a99285b95452b060a00aa36a7000000000000000000000000b0e03bf85baca7874c44dbe2c961515e7f4529fe0000000000000000000000000ae30543a22c74123d9c64f64b9cb9bbb7268eea0000000000000000000000000000000000000000000000000000000000000001',
+        id: '0xb0d20266f540e5693634e86f93d237ac6713ab4cf93570f2ad61c7d7b442816f',
+      },
+      {
+        data: '0xf7ae465c336cd68d97b103b5e61f13a27a64cd1ea166c192fb1d352c043962bd',
+        id: '0xb0d20266f540e5693634e86f93d237ac6713ab4cf93570f2ad61c7d7b442816f',
+      },
+    ],
+  },
+];

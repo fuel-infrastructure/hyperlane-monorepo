@@ -28,7 +28,7 @@ describe('hyperlane core check e2e tests', async function () {
 
   it('should throw an error if the --chain param is not provided', async () => {
     const wrongCommand =
-      $`yarn workspace @hyperlane-xyz/cli run hyperlane core check \
+      $`yarn workspace @fuel-infrastructure/fuel-hyperlane-cli run hyperlane core check \
               --registry ${REGISTRY_PATH} \
               --config ${CORE_CONFIG_PATH} \
               --verbosity debug \

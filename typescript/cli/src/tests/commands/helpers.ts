@@ -471,7 +471,7 @@ export async function hyperlaneSendMessage(
   origin: string,
   destination: string,
 ) {
-  return $`yarn workspace @hyperlane-xyz/cli run hyperlane send message \
+  return $`yarn workspace @fuel-infrastructure/fuel-hyperlane-cli run hyperlane send message \
         --registry ${REGISTRY_PATH} \
         --origin ${origin} \
         --destination ${destination} \
@@ -481,7 +481,7 @@ export async function hyperlaneSendMessage(
 }
 
 export function hyperlaneRelayer(chains: string[], warp?: string) {
-  return $`yarn workspace @hyperlane-xyz/cli run hyperlane relayer \
+  return $`yarn workspace @fuel-infrastructure/fuel-hyperlane-cli run hyperlane relayer \
         --registry ${REGISTRY_PATH} \
         --chains ${chains.join(',')} \
         --warp ${warp ?? ''} \
